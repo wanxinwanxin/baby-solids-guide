@@ -120,6 +120,8 @@ export type CheckIn = {
   babyId: string;
   foodSlug: string;
   logId: string;
+  /** When the food was served (check-in creation time) — drives onset mapping. */
+  createdAt?: string;
   dueAt: string; // ISO datetime
   status: "pending" | "done" | "dismissed";
   updatedAt?: string;

@@ -7,6 +7,7 @@ import type {
   AllergenStatus,
   BabyProfile,
   ExposureLog,
+  Plan,
   TextureStage,
 } from "@/lib/storage/types";
 import { TEXTURE_STAGES } from "@/lib/storage/types";
@@ -30,6 +31,7 @@ export const RETRY_MIN_DAYS = 3; // R6
 export const RETRY_MAX_ATTEMPTS = 15; // R6
 export const IRON_BONUS = 2.0; // R1
 export const ALLERGEN_BONUS = 1.5; // R2
+export const PLAN_BONUS = 1.25; // R10
 export const VARIETY_BONUS = 1.0; // R5
 export const RETRY_BONUS = 0.8; // R6
 
@@ -51,7 +53,33 @@ export type EngineInput = {
   overrides: AllergenOverride[];
   foods: Food[];
   today: Date;
+  /** Optional 12-week plan (Phase 11) — reorders allergens and boosts planned foods (R10). */
+  plan?: Plan | null;
 };
+
+/** Allergen order implied by a plan: first-appearance week, ties broken by the default order. */
+export function allergenOrderFromPlan(plan: Plan, foods: Food[]): AllergenId[] {
+  const allergenOfFood = new Map(foods.map((f) => [f.slug, f.commonAllergen]));
+  const firstWeek = new Map<AllergenId, number>();
+  for (const entry of plan.entries) {
+    const allergen = allergenOfFood.get(entry.foodSlug);
+    if (!allergen) continue;
+    const prev = firstWeek.get(allergen);
+    if (prev === undefined || entry.weekIndex < prev) firstWeek.set(allergen, entry.weekIndex);
+  }
+  const planned = [...firstWeek.entries()].sort(
+    (a, b) =>
+      a[1] - b[1] ||
+      DEFAULT_ALLERGEN_ORDER.indexOf(a[0]) - DEFAULT_ALLERGEN_ORDER.indexOf(b[0]),
+  );
+  const rest = DEFAULT_ALLERGEN_ORDER.filter((id) => !firstWeek.has(id));
+  return [...planned.map(([id]) => id), ...rest];
+}
+
+/** Which plan week `today` falls in (negative before the anchor week). */
+export function planWeekIndex(plan: Plan, today: Date): number {
+  return Math.floor(daysBetween(plan.anchorMonday, today) / 7);
+}
 
 export type ScoredFood = {
   slug: string;
@@ -199,7 +227,7 @@ export function riskTier(baby: BabyProfile): "high" | "moderate" | "low" {
 // ——— The engine ———
 
 export function recommend(input: EngineInput): Recommendation {
-  const { baby, logs, overrides, foods, today } = input;
+  const { baby, logs, overrides, foods, today, plan } = input;
   const age = correctedAgeMonths(baby, today);
   const stats = deriveFoodStats(logs);
   const allergenStates = deriveAllergenStates({ baby, logs, overrides, foods });
@@ -287,7 +315,11 @@ export function recommend(input: EngineInput): Recommendation {
     logs.filter((l) => l.amountEaten !== "none" && !triage(l.symptoms).pausesAllergen).map((l) => l.date),
   ).size;
 
-  const order = baby.allergenOrder ?? DEFAULT_ALLERGEN_ORDER;
+  // Plan-derived order wins when a plan exists; then the user's manual order.
+  const order =
+    plan && plan.entries.length > 0
+      ? allergenOrderFromPlan(plan, foods)
+      : (baby.allergenOrder ?? DEFAULT_ALLERGEN_ORDER);
   const lastNewAllergenFirstExposure = [...allergenStates.values()]
     .map((s) => (s as { firstExposureDate?: string }).firstExposureDate)
     .filter((d): d is string => !!d)
@@ -412,6 +444,14 @@ export function recommend(input: EngineInput): Recommendation {
     (a, b) => (stats.get(a.slug)!.attempts - stats.get(b.slug)!.attempts) || a.slug.localeCompare(b.slug),
   );
 
+  // ——— R10: foods planned for the current week ———
+  const currentWeek = plan && plan.entries.length > 0 ? planWeekIndex(plan, today) : null;
+  const plannedThisWeek = new Set(
+    currentWeek === null
+      ? []
+      : plan!.entries.filter((e) => e.weekIndex === currentWeek).map((e) => e.foodSlug),
+  );
+
   // ——— R9 scoring ———
   const eligibleNextAllergen = next && !next.gated ? next.allergenId : null;
   const scored: ScoredFood[] = [];
@@ -443,6 +483,12 @@ export function recommend(input: EngineInput): Recommendation {
     if (food.ironRich && ironPressure) {
       score += IRON_BONUS;
       reason = "Iron stores dip around 6 months — iron-rich foods are the priority.";
+    }
+    // R10 last: when a food is both planned and otherwise prioritized, the
+    // user's own plan is the clearest reason to surface.
+    if (plannedThisWeek.has(food.slug)) {
+      score += PLAN_BONUS;
+      reason = "On your plan for this week.";
     }
     scored.push({
       slug: food.slug,

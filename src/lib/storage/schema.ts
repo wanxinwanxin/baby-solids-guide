@@ -61,6 +61,7 @@ export const checkInSchema = z.object({
   babyId: z.string().min(1),
   foodSlug: z.string().min(1),
   logId: z.string().min(1),
+  createdAt: isoDateTime.optional(),
   dueAt: isoDateTime,
   status: z.enum(["pending", "done", "dismissed"]),
   updatedAt: isoDateTime.optional(),
