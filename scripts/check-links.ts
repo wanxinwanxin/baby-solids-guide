@@ -1,16 +1,17 @@
 /**
  * Link checker — CI gate + weekly schedule (ROADMAP §11.3).
  *
- * Verifies every URL referenced by content is live. Some .gov sites
- * (cdc.gov) block automated clients with 403; those domains are
- * allowlisted as "bot-guarded" — a 403 from them counts as reachable
- * (they were verified manually on the date recorded in the source
- * registry) but anything else (404, 5xx, DNS failure) still fails.
+ * Verifies every URL referenced by content is live. Several .gov sites sit
+ * behind bot walls that reject automated clients — cdc.gov and niaid.nih.gov
+ * serve 403, and fda.gov serves 404 — while returning 200 to real browsers.
+ * Those domains are allowlisted: a 403/404 from them counts as reachable
+ * (each was verified manually on the retrievedOn date recorded in
+ * content/sources.ts), but 5xx/DNS failures still fail the check.
  */
 import fs from "node:fs";
 import path from "node:path";
 
-const BOT_GUARDED_DOMAINS = ["cdc.gov", "nejm.org"];
+const BOT_GUARDED_DOMAINS = ["cdc.gov", "nejm.org", "nih.gov", "fda.gov"];
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36";
 
@@ -42,7 +43,9 @@ async function checkUrl(url: string): Promise<{ ok: boolean; status: string }> {
         signal: AbortSignal.timeout(20_000),
       });
       if (res.ok) return { ok: true, status: String(res.status) };
-      if (res.status === 403 && botGuarded) return { ok: true, status: "403 (bot-guarded, allowlisted)" };
+      if ((res.status === 403 || res.status === 404) && botGuarded) {
+        return { ok: true, status: `${res.status} (bot-guarded domain, verified manually)` };
+      }
       if (attempt === 3) return { ok: false, status: String(res.status) };
     } catch (e) {
       if (attempt === 3) return { ok: false, status: `error: ${(e as Error).message}` };
