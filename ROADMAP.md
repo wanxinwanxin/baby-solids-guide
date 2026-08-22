@@ -468,6 +468,25 @@ Recipes/meal plans, photos of real prepared food (diagrams suffice), native apps
 ---
 # Part II — Post-v1 roadmap (rev. 2, 2026-08-22)
 
+> **Status (2026-08-22, end of day): PART II IMPLEMENTED AND SHIPPED.** All phases live in production:
+> 6.0 (backup nudges) · 6 (email+password sign-in & LWW snapshot sync on Railway Postgres; Google/Resend
+> light up when the owner adds credentials; verified end-to-end with a two-browser test against the real
+> database) · 8 (reaction check-ins with Google Calendar/.ics delivery + server push/email pipeline with
+> a 5-minute cron; VAPID keys provisioned) · 9 (six Learn chapters + landing/nav IA) · 10 (nutrition
+> tags, serving guidance, watch-outs on every food) · 11 (drag-and-drop 12-week planner, generatePlan/
+> validatePlan, engine R10, allergen reorder UI) · 12 (153 foods incl. herbs & spices; per-category lint
+> minimums; first-band diagrams enforced on high-risk foods) · 13 (multi-baby switcher + add-baby flow) ·
+> 14 (insights dashboard + acceptance surfacing) · 15 (brand.ts, /api/health, per-food OG images, 9-route
+> axe CI gate, LICENSE/SECURITY; **name + custom domain + Google OAuth/Resend/Apple credentials remain
+> owner decisions**). Gates at ship: 134 unit tests, 26 e2e + gated real-DB sync e2e, content-lint
+> (153 foods, 9/9 allergens, 35 iron-rich, 6 guides), links verified, mobile 0-overflow at 390px,
+> visually reviewed page-by-page in a real browser (which caught and fixed a global font-fallback bug,
+> friendlier pick tie-breaks, classic allergen vehicles, and planner warning noise).
+> Documented deviations: the first-login conflict screen became a safe multi-baby union merge; the
+> allergen reorder list uses accessible up/down controls instead of drag; SMS was replaced by
+> calendar/push/email as specced.
+
+
 Revised after owner feedback on rev. 1. Changes: **Spanish localization is cut** (owner call — revisit post-launch); **sign-in persistence is priority #1** (Google chosen as the primary provider); new phases for **reaction check-in reminders**, a **"why solids at all" education layer**, **nutrition & serving guidance**, and an **evidence-honest ordering + drag-and-drop planner**; preference (thumbs) surfacing folded into Insights — note that v1 already *records* enjoyment per log (loved / neutral / disliked / refused, a superset of thumbs up/down); what's missing is surfacing it.
 
 Same contract as Part I: an implementation agent works phase by phase, passes every check in a phase's **Verification** block before moving on, and commits per phase (or per lettered sub-phase).
