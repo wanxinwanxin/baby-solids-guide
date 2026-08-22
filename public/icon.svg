@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#047857"/>
+  <!-- spoon -->
+  <ellipse cx="256" cy="180" rx="88" ry="104" fill="#ecfdf5"/>
+  <rect x="236" y="264" width="40" height="176" rx="20" fill="#ecfdf5"/>
+  <!-- sprout leaf on the spoon -->
+  <path d="M256 150 q-52 -10 -60 -62 q52 10 60 62 z" fill="#34d399"/>
+  <path d="M256 150 q52 -10 60 -62 q-52 10 -60 62 z" fill="#6ee7b7"/>
+</svg>
