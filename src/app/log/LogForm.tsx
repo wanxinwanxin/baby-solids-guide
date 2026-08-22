@@ -7,7 +7,7 @@ import { allFoods, foodBySlug } from "../../../content/foods";
 import type { AgeBand } from "@/content-schema/food";
 import { BAND_LABELS, bandForAgeMonths, todayIso } from "@/lib/food-utils";
 import { correctedAgeMonths } from "@/lib/age";
-import { useHydrated } from "@/lib/hooks";
+import { useActiveBaby, useHydrated } from "@/lib/hooks";
 import { newId, useGuideStore } from "@/lib/storage/store";
 import type { AmountEaten, Enjoyment, SymptomId } from "@/lib/storage/types";
 import { SYMPTOM_IDS, SYMPTOM_LABELS } from "@/lib/storage/types";
@@ -58,7 +58,8 @@ export function LogForm() {
   const hydrated = useHydrated();
   const router = useRouter();
   const params = useSearchParams();
-  const { baby, addLog } = useGuideStore();
+  const baby = useActiveBaby();
+  const addLog = useGuideStore((s) => s.addLog);
 
   const [foodSlug, setFoodSlug] = useState(params.get("food") ?? "");
   const [foodQuery, setFoodQuery] = useState("");

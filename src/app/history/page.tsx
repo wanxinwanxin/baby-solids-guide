@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { foodBySlug } from "../../../content/foods";
-import { useHydrated } from "@/lib/hooks";
+import { useActiveBaby, useActiveLogs, useHydrated } from "@/lib/hooks";
 import { useGuideStore } from "@/lib/storage/store";
 import { SYMPTOM_LABELS } from "@/lib/storage/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -14,7 +14,9 @@ const ENJOYMENT_EMOJI = { loved: "😍", neutral: "😐", disliked: "😖", refu
 
 export default function HistoryPage() {
   const hydrated = useHydrated();
-  const { baby, logs, deleteLog, exportJson, importJson, reset } = useGuideStore();
+  const baby = useActiveBaby();
+  const logs = useActiveLogs();
+  const { deleteLog, exportJson, importJson, reset } = useGuideStore();
   const fileRef = useRef<HTMLInputElement>(null);
   const [importMessage, setImportMessage] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);

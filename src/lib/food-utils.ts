@@ -19,7 +19,23 @@ export const CATEGORY_LABELS: Record<FoodCategory, string> = {
   grain: "Grains",
   dairy: "Dairy",
   legume: "Legumes",
+  "herb-spice": "Herbs & spices",
   "fat-other": "Fats & other",
+};
+
+export const NUTRIENT_LABELS: Record<import("@/content-schema/food").NutrientTag, string> = {
+  iron: "Iron",
+  zinc: "Zinc",
+  protein: "Protein",
+  omega3: "Omega-3",
+  vitaminA: "Vitamin A",
+  vitaminC: "Vitamin C",
+  vitaminD: "Vitamin D",
+  calcium: "Calcium",
+  folate: "Folate",
+  fiber: "Fiber",
+  healthyFats: "Healthy fats",
+  potassium: "Potassium",
 };
 
 export const BAND_LABELS: Record<AgeBand, string> = {

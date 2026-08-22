@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { allFoods } from "../../../content/foods";
 import { correctedAgeMonths } from "@/lib/age";
 import { ALLERGEN_LABELS, BAND_LABELS } from "@/lib/food-utils";
-import { useHydrated } from "@/lib/hooks";
+import { useActiveBaby, useActiveLogs, useActiveOverrides, useHydrated } from "@/lib/hooks";
 import { recommend } from "@/lib/engine";
 import { useGuideStore } from "@/lib/storage/store";
 import { TEXTURE_STAGES } from "@/lib/storage/types";
@@ -18,7 +18,10 @@ import { cn } from "@/lib/utils";
 
 export default function TodayPage() {
   const hydrated = useHydrated();
-  const { baby, logs, overrides, setTextureStage } = useGuideStore();
+  const baby = useActiveBaby();
+  const logs = useActiveLogs();
+  const overrides = useActiveOverrides();
+  const setTextureStage = useGuideStore((s) => s.setTextureStage);
 
   const rec = useMemo(() => {
     if (!baby) return null;

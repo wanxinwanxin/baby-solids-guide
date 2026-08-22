@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { todayIso } from "@/lib/food-utils";
-import { useHydrated } from "@/lib/hooks";
+import { useActiveBaby, useHydrated } from "@/lib/hooks";
 import { newId, useGuideStore } from "@/lib/storage/store";
 import type { BabyProfile, EczemaSeverity, FeedingStyle } from "@/lib/storage/types";
 import { Button } from "@/components/ui/button";
@@ -65,7 +65,10 @@ export function OnboardingWizard() {
   const router = useRouter();
   const params = useSearchParams();
   const editing = params.get("edit") === "1";
-  const { baby, saveBaby } = useGuideStore();
+  const adding = params.get("add") === "1";
+  const activeBaby = useActiveBaby();
+  const baby = adding ? null : activeBaby;
+  const { saveBaby, setActiveBaby } = useGuideStore();
 
   const [step, setStep] = useState(0);
   const [nickname, setNickname] = useState(baby?.nickname ?? "");
@@ -119,7 +122,9 @@ export function OnboardingWizard() {
   }
 
   function finish(then: "today" | "import") {
-    saveBaby(buildProfile());
+    const profile = buildProfile();
+    saveBaby(profile);
+    setActiveBaby(profile.id);
     router.push(then === "today" ? "/today" : "/onboarding/import");
   }
 
@@ -293,7 +298,9 @@ export function OnboardingWizard() {
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <div className="space-y-3">
-        <h1 className="text-2xl font-bold">{editing ? "Edit profile" : "Let's set up your plan"}</h1>
+        <h1 className="text-2xl font-bold">
+          {editing ? "Edit profile" : adding ? "Add another baby" : "Let's set up your plan"}
+        </h1>
         <StepDots step={step} total={steps.length} />
       </div>
       {steps[step]}

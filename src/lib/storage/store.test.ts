@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { BabyProfile, ExposureLog } from "./types";
-import { newId, useGuideStore } from "./store";
+import { migrateV1ToV2, newId, useGuideStore } from "./store";
 
-const baby: BabyProfile = {
-  id: "b1",
-  nickname: "Testling",
+const makeBaby = (id = "b1", nickname = "Testling"): BabyProfile => ({
+  id,
+  nickname,
   birthDate: "2026-02-01",
   feedingStyle: "mixed",
   allergyRisk: { eczema: "none", existingFoodAllergy: false, familyHistoryAtopy: false },
@@ -14,11 +14,11 @@ const baby: BabyProfile = {
   conditions: [],
   textureStage: "S1",
   readiness: { confirmedAt: "2026-08-01" },
-};
+});
 
-const log = (foodSlug: string, date: string): ExposureLog => ({
+const log = (foodSlug: string, date: string, babyId = "b1"): ExposureLog => ({
   id: newId(),
-  babyId: "b1",
+  babyId,
   foodSlug,
   date,
   prepBandUsed: "6-8m",
@@ -28,35 +28,106 @@ const log = (foodSlug: string, date: string): ExposureLog => ({
   symptoms: [],
 });
 
+const active = () => {
+  const s = useGuideStore.getState();
+  return s.babies.find((b) => b.id === s.activeBabyId) ?? null;
+};
+
 beforeEach(() => {
   useGuideStore.getState().reset();
 });
 
-describe("GuideStore (local-first, ROADMAP §5.6)", () => {
-  it("saves a baby and logs exposures", () => {
+describe("GuideStore v2 (multi-baby, local-first)", () => {
+  it("saves a baby, sets it active, and logs exposures", () => {
     const s = useGuideStore.getState();
-    s.saveBaby(baby);
+    s.saveBaby(makeBaby());
     s.addLog(log("carrot", "2026-08-20"));
-    s.addLog(log("banana", "2026-08-21"));
-    expect(useGuideStore.getState().baby?.nickname).toBe("Testling");
-    expect(useGuideStore.getState().logs).toHaveLength(2);
+    expect(active()?.nickname).toBe("Testling");
+    expect(useGuideStore.getState().logs).toHaveLength(1);
+    expect(useGuideStore.getState().logs[0].updatedAt).toBeDefined();
   });
 
-  it("export → reset → import roundtrip preserves everything", () => {
+  it("supports two babies with isolated logs/overrides/plans", () => {
     const s = useGuideStore.getState();
-    s.saveBaby(baby);
+    s.saveBaby(makeBaby("b1", "A"));
+    s.saveBaby(makeBaby("b2", "B"));
+    s.addLog(log("carrot", "2026-08-20", "b1"));
+    s.addLog(log("banana", "2026-08-20", "b2"));
+    s.setOverride({ babyId: "b2", allergenId: "peanut", status: "maintaining", setOn: "2026-08-20" });
+    s.setPlan({ babyId: "b1", anchorMonday: "2026-08-17", entries: [{ id: "e1", foodSlug: "beef", weekIndex: 0 }] });
+
+    const st = useGuideStore.getState();
+    expect(st.logs.filter((l) => l.babyId === "b1")).toHaveLength(1);
+    expect(st.overrides.filter((o) => o.babyId === "b1")).toHaveLength(0);
+    expect(st.plans.find((p) => p.babyId === "b1")?.entries).toHaveLength(1);
+
+    st.removeBaby("b1");
+    const after = useGuideStore.getState();
+    expect(after.babies.map((b) => b.id)).toEqual(["b2"]);
+    expect(after.logs.every((l) => l.babyId === "b2")).toBe(true);
+    expect(after.plans).toHaveLength(0);
+    expect(after.activeBabyId).toBe("b2");
+  });
+
+  it("deleteLog records a tombstone and removes linked check-ins", () => {
+    const s = useGuideStore.getState();
+    s.saveBaby(makeBaby());
+    const l = log("peanut-butter", "2026-08-20");
+    s.addLog(l);
+    s.addCheckIns([
+      { id: "c1", babyId: "b1", foodSlug: "peanut-butter", logId: l.id, dueAt: "2026-08-20T14:00:00.000Z", status: "pending" },
+    ]);
+    useGuideStore.getState().deleteLog(l.id);
+    const st = useGuideStore.getState();
+    expect(st.logs).toHaveLength(0);
+    expect(st.deletedLogIds).toContain(l.id);
+    expect(st.checkIns).toHaveLength(0);
+  });
+
+  it("resolveCheckIn flips status", () => {
+    const s = useGuideStore.getState();
+    s.saveBaby(makeBaby());
+    s.addCheckIns([
+      { id: "c1", babyId: "b1", foodSlug: "egg", logId: "l1", dueAt: "2026-08-20T14:00:00.000Z", status: "pending" },
+    ]);
+    useGuideStore.getState().resolveCheckIn("c1", "done");
+    expect(useGuideStore.getState().checkIns[0].status).toBe("done");
+  });
+
+  it("export (v2) → reset → import roundtrip preserves everything", () => {
+    const s = useGuideStore.getState();
+    s.saveBaby(makeBaby());
     s.addLog(log("carrot", "2026-08-20"));
-    s.setOverride({ allergenId: "peanut", status: "maintaining", setOn: "2026-08-21" });
+    s.setOverride({ babyId: "b1", allergenId: "peanut", status: "maintaining", setOn: "2026-08-21" });
+    s.setPlan({ babyId: "b1", anchorMonday: "2026-08-17", entries: [{ id: "e1", foodSlug: "beef", weekIndex: 1 }] });
 
     const json = useGuideStore.getState().exportJson();
+    expect(useGuideStore.getState().lastExportAt).toBeDefined();
     useGuideStore.getState().reset();
-    expect(useGuideStore.getState().baby).toBeNull();
 
     const result = useGuideStore.getState().importJson(json);
     expect(result.ok).toBe(true);
-    expect(useGuideStore.getState().baby?.id).toBe("b1");
-    expect(useGuideStore.getState().logs).toHaveLength(1);
-    expect(useGuideStore.getState().overrides[0]?.allergenId).toBe("peanut");
+    const st = useGuideStore.getState();
+    expect(st.babies[0]?.id).toBe("b1");
+    expect(st.logs).toHaveLength(1);
+    expect(st.overrides[0]?.allergenId).toBe("peanut");
+    expect(st.plans[0]?.entries[0]?.foodSlug).toBe("beef");
+  });
+
+  it("still imports a v1 (single-baby) envelope", () => {
+    const v1 = {
+      schemaVersion: 1,
+      exportedAt: "2026-08-20T00:00:00.000Z",
+      baby: makeBaby(),
+      logs: [log("carrot", "2026-08-20")],
+      overrides: [{ allergenId: "milk", status: "reacted-paused", setOn: "2026-08-19" }],
+    };
+    const result = useGuideStore.getState().importJson(JSON.stringify(v1));
+    expect(result.ok).toBe(true);
+    const st = useGuideStore.getState();
+    expect(st.babies).toHaveLength(1);
+    expect(st.activeBabyId).toBe("b1");
+    expect(st.overrides[0]?.babyId).toBe("b1"); // stamped during import
   });
 
   it("rejects non-JSON and foreign shapes with a friendly error", () => {
@@ -68,7 +139,7 @@ describe("GuideStore (local-first, ROADMAP §5.6)", () => {
 
   it("skips invalid rows but imports the valid ones", () => {
     const s = useGuideStore.getState();
-    s.saveBaby(baby);
+    s.saveBaby(makeBaby());
     s.addLog(log("carrot", "2026-08-20"));
     const envelope = JSON.parse(useGuideStore.getState().exportJson());
     envelope.logs.push({ nonsense: true });
@@ -80,17 +151,34 @@ describe("GuideStore (local-first, ROADMAP §5.6)", () => {
     }
   });
 
-  it("setOverride replaces an existing override for the same allergen", () => {
+  it("setOverride replaces only the same (baby, allergen) pair", () => {
     const s = useGuideStore.getState();
-    s.setOverride({ allergenId: "milk", status: "reacted-paused", setOn: "2026-08-01" });
-    s.setOverride({ allergenId: "milk", status: "maintaining", setOn: "2026-08-21" });
-    expect(useGuideStore.getState().overrides).toHaveLength(1);
-    expect(useGuideStore.getState().overrides[0].status).toBe("maintaining");
+    s.setOverride({ babyId: "b1", allergenId: "milk", status: "reacted-paused", setOn: "2026-08-01" });
+    s.setOverride({ babyId: "b1", allergenId: "milk", status: "maintaining", setOn: "2026-08-21" });
+    s.setOverride({ babyId: "b2", allergenId: "milk", status: "avoid-per-doctor", setOn: "2026-08-21" });
+    const st = useGuideStore.getState();
+    expect(st.overrides).toHaveLength(2);
+    expect(st.overrides.find((o) => o.babyId === "b1")?.status).toBe("maintaining");
   });
 
-  it("setTextureStage updates the profile", () => {
-    useGuideStore.getState().saveBaby(baby);
+  it("migrateV1ToV2 wraps a single-baby persisted blob", () => {
+    const old = {
+      baby: makeBaby(),
+      logs: [log("carrot", "2026-08-20")],
+      overrides: [{ allergenId: "egg", status: "introducing", setOn: "2026-08-19" }],
+    };
+    const migrated = migrateV1ToV2(old);
+    expect(migrated.babies).toHaveLength(1);
+    expect(migrated.activeBabyId).toBe("b1");
+    expect(migrated.overrides[0].babyId).toBe("b1");
+    expect(migrated.logs[0].updatedAt).toBeDefined();
+    expect(migrated.checkIns).toEqual([]);
+    expect(migrated.plans).toEqual([]);
+  });
+
+  it("setTextureStage updates the active baby", () => {
+    useGuideStore.getState().saveBaby(makeBaby());
     useGuideStore.getState().setTextureStage("S2");
-    expect(useGuideStore.getState().baby?.textureStage).toBe("S2");
+    expect(active()?.textureStage).toBe("S2");
   });
 });

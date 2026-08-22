@@ -6,7 +6,7 @@ import { allFoods } from "../../../content/foods";
 import { allergenPrograms } from "../../../content/allergens";
 import { deriveAllergenStates, riskTier } from "@/lib/engine";
 import { ALLERGEN_LABELS, todayIso } from "@/lib/food-utils";
-import { useHydrated } from "@/lib/hooks";
+import { useActiveBaby, useActiveLogs, useActiveOverrides, useHydrated } from "@/lib/hooks";
 import { useGuideStore } from "@/lib/storage/store";
 import type { AllergenStatus } from "@/lib/storage/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -32,7 +32,10 @@ const STATUS_STYLE: Record<AllergenStatus, string> = {
 
 export default function AllergensPage() {
   const hydrated = useHydrated();
-  const { baby, logs, overrides, setOverride, clearOverride, saveBaby } = useGuideStore();
+  const baby = useActiveBaby();
+  const logs = useActiveLogs();
+  const overrides = useActiveOverrides();
+  const { setOverride, clearOverride, saveBaby } = useGuideStore();
 
   const states = useMemo(() => {
     if (!baby) return null;
@@ -122,8 +125,8 @@ export default function AllergensPage() {
                       value={overrides.find((o) => o.allergenId === program.id)?.status ?? ""}
                       onChange={(e) => {
                         const v = e.target.value as AllergenStatus | "";
-                        if (v === "") clearOverride(program.id);
-                        else setOverride({ allergenId: program.id, status: v, setOn: todayIso() });
+                        if (v === "") clearOverride(baby.id, program.id);
+                        else setOverride({ babyId: baby.id, allergenId: program.id, status: v, setOn: todayIso() });
                       }}
                     >
                       <option value="">auto (from logs)</option>

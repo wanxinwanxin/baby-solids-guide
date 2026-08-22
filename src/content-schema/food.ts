@@ -24,9 +24,27 @@ export const FOOD_CATEGORIES = [
   "grain",
   "dairy",
   "legume",
+  "herb-spice",
   "fat-other",
 ] as const;
 export type FoodCategory = (typeof FOOD_CATEGORIES)[number];
+
+/** Nutrient tags (Phase 10) — the health story behind each food. */
+export const NUTRIENT_TAGS = [
+  "iron",
+  "zinc",
+  "protein",
+  "omega3",
+  "vitaminA",
+  "vitaminC",
+  "vitaminD",
+  "calcium",
+  "folate",
+  "fiber",
+  "healthyFats",
+  "potassium",
+] as const;
+export type NutrientTag = (typeof NUTRIENT_TAGS)[number];
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "must be an ISO date (YYYY-MM-DD)");
 
@@ -86,8 +104,45 @@ export const foodSchema = z.object({
   /** Kitchen tips for achieving the safe texture — the guide's highlight. */
   tips: z.array(z.string().min(10)).min(2).max(5),
   sources: z.array(sourceRefSchema).min(1),
+  // ——— Phase 10 nutrition & serving fields (lint-required once backfilled) ———
+  /** 1–4 nutrient tags; the prose justification lives in nutritionHighlights. */
+  nutrients: z.array(z.enum(NUTRIENT_TAGS)).min(1).max(4).optional(),
+  /** Sensible amounts per band — responsive-feeding framing, never counting. */
+  servingGuidance: z
+    .array(
+      z.object({
+        band: z.enum(AGE_BANDS),
+        typicalAmount: z.string().min(10),
+        frequency: z.string().optional(),
+        note: z.string().optional(),
+      }),
+    )
+    .optional(),
+  /** Non-choking cautions (sodium, vitamin A caps, acid rash…). Max 3. */
+  watchOuts: z.array(z.string().min(10)).max(3).optional(),
+  /** Single emoji used by planner chips and list views. */
+  emoji: z.string().min(1).max(8).optional(),
+  cuisineTags: z.array(z.string()).optional(),
 });
 export type Food = z.infer<typeof foodSchema>;
+
+/** Learn chapter (Phase 9) — first-visit education content. */
+export const guideSchema = z.object({
+  slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),
+  title: z.string().min(5),
+  summary: z.string().min(20),
+  minRead: z.number().int().min(1).max(15),
+  sections: z
+    .array(
+      z.object({
+        heading: z.string().min(3),
+        paragraphs: z.array(z.string().min(40)).min(1),
+      }),
+    )
+    .min(2),
+  sources: z.array(sourceRefSchema).min(2),
+});
+export type Guide = z.infer<typeof guideSchema>;
 
 export const allergenProgramSchema = z.object({
   id: z.enum(ALLERGEN_IDS),

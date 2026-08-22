@@ -6,7 +6,7 @@ import { useRef, useState } from "react";
 import { allFoods } from "../../../../content/foods";
 import { ALLERGEN_IDS } from "@/content-schema/food";
 import { ALLERGEN_LABELS, CATEGORY_LABELS, todayIso } from "@/lib/food-utils";
-import { useHydrated } from "@/lib/hooks";
+import { useActiveBaby, useHydrated } from "@/lib/hooks";
 import { newId, useGuideStore } from "@/lib/storage/store";
 import type { AllergenStatus, TextureStage } from "@/lib/storage/types";
 import { TEXTURE_STAGES } from "@/lib/storage/types";
@@ -25,7 +25,8 @@ const IMPORT_STATUSES: { id: AllergenStatus | "auto"; label: string }[] = [
 export function ImportFlow() {
   const hydrated = useHydrated();
   const router = useRouter();
-  const { baby, addLog, setOverride, importJson } = useGuideStore();
+  const baby = useActiveBaby();
+  const { addLog, setOverride, importJson } = useGuideStore();
   const [tried, setTried] = useState<Set<string>>(new Set());
   const [allergenStatuses, setAllergenStatuses] = useState<Record<string, AllergenStatus | "auto">>({});
   const [stage, setStage] = useState<TextureStage>(baby?.textureStage ?? "S1");
@@ -83,6 +84,7 @@ export function ImportFlow() {
     for (const [allergenId, status] of Object.entries(allergenStatuses)) {
       if (status !== "auto") {
         setOverride({
+          babyId: baby.id,
           allergenId: allergenId as (typeof ALLERGEN_IDS)[number],
           status,
           setOn: date,

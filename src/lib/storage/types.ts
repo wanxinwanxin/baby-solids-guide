@@ -74,6 +74,7 @@ export type BabyProfile = {
     earlyStartApproved?: boolean;
   };
   disclaimerAcknowledgedAt?: string;
+  updatedAt?: string; // ISO datetime — LWW sync ordering (Phase 6)
 };
 
 export type MealSlot = "breakfast" | "lunch" | "dinner" | "snack";
@@ -93,6 +94,7 @@ export type ExposureLog = {
   symptoms: SymptomId[];
   symptomOnset?: "immediate" | "within-2h" | "2-6h" | "next-day";
   notes?: string;
+  updatedAt?: string; // ISO datetime — LWW sync ordering (Phase 6)
 };
 
 export type AllergenStatus =
@@ -103,18 +105,57 @@ export type AllergenStatus =
   | "avoid-per-doctor";
 
 export type AllergenOverride = {
+  /** Present from schema v2 on; absent in legacy v1 data (stamped on migrate). */
+  babyId?: string;
   allergenId: AllergenId;
   status: AllergenStatus;
   note?: string;
   setOn: string; // ISO date
+  updatedAt?: string; // ISO datetime — LWW sync ordering (Phase 6)
 };
 
-export type ExportEnvelope = {
+/** Post-allergen "check for symptoms" reminder (Phase 8A). */
+export type CheckIn = {
+  id: string;
+  babyId: string;
+  foodSlug: string;
+  logId: string;
+  dueAt: string; // ISO datetime
+  status: "pending" | "done" | "dismissed";
+  updatedAt?: string;
+};
+
+export type CheckInPreset = "15m" | "1h" | "2h" | "2d" | "1w";
+
+/** 12-week introduction plan (Phase 11). */
+export type PlanEntry = { id: string; foodSlug: string; weekIndex: number };
+export type Plan = {
+  babyId: string;
+  anchorMonday: string; // ISO date of week 0's Monday
+  entries: PlanEntry[];
+  updatedAt?: string;
+};
+
+/** v1 envelope (single baby) — still accepted by the importer. */
+export type ExportEnvelopeV1 = {
   schemaVersion: 1;
   exportedAt: string;
   baby: BabyProfile | null;
   logs: ExposureLog[];
   overrides: AllergenOverride[];
+};
+
+/** v2 envelope — multi-baby, check-ins, plans, tombstones. */
+export type ExportEnvelope = {
+  schemaVersion: 2;
+  exportedAt: string;
+  babies: BabyProfile[];
+  activeBabyId: string | null;
+  logs: ExposureLog[];
+  overrides: AllergenOverride[];
+  checkIns: CheckIn[];
+  plans: Plan[];
+  deletedLogIds: string[];
 };
 
 export type ImportResult =
