@@ -79,6 +79,25 @@ const polenta: Food = {
     "Set polenta freezes well: cut sticks, freeze flat on a tray, and rewarm covered so they steam soft rather than dry out.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsWeaning, SOURCES.cdcFoodsAndDrinks],
+  nutrients: ["iron"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "A couple of spoonfuls of porridge, or one soft stick — practice, not portions, is the point.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of set cubes plus a spoonful or two of porridge — follow the pace the baby sets.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A quarter to half cup of creamy polenta under the family topping — free to finish or leave.",
+    },
+  ],
+  emoji: "🌽",
 };
 
 export default polenta;

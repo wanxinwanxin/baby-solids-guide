@@ -85,6 +85,29 @@ const edamame: Food = {
     "If skins keep peeling off into papery flakes, pinch them away — the flattened green centers are the useful part.",
   ],
   sources: [SOURCES.aaaaiFoodAllergy, SOURCES.cdcChokingHazards, SOURCES.wicGuide],
+  nutrients: ["iron", "protein", "fiber", "folate"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "A teaspoon or two of smooth mash to start — offer more only if the baby keeps leaning in.",
+      frequency: "About twice a week once soy is tolerated, to keep the exposure steady.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of flattened beans — refill the scatter while the reaching continues.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A tablespoon or two of flattened beans stirred through the meal — the toddler decides where to stop.",
+    },
+  ],
+  watchOuts: [
+    "Restaurant-style edamame pods are usually heavily salted — cook plain shelled beans for the baby's portion.",
+  ],
+  emoji: "🫘",
 };
 
 export default edamame;

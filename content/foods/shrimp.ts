@@ -84,6 +84,31 @@ const shrimp: Food = {
     "Mince a batch, moisten, and freeze in ice-cube portions so keeping shellfish in the routine after introduction takes no extra cooking.",
   ],
   sources: [SOURCES.aaaaiFoodAllergy, SOURCES.eatStudy, SOURCES.cdcChokingHazards],
+  nutrients: ["protein"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "A teaspoon or two of rice-grain mince folded into a familiar mash — a taste-size first serve that grows with tolerance.",
+      frequency: "About twice a week once tolerated, to keep the shellfish exposure steady.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "One or two shrimp's worth of soft pinky-nail pieces, offered a few at a time — the baby sets the count.",
+      frequency: "About twice a week once tolerated.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A few tablespoons of small lengthwise-cut pieces folded into a moist family dish.",
+      frequency: "Keep shellfish in the rotation about twice a week.",
+    },
+  ],
+  watchOuts: [
+    "Pre-cooked cocktail shrimp are often brined and noticeably salty — raw shrimp you cook yourself keeps sodium down.",
+  ],
+  emoji: "🦐",
 };
 
 export default shrimp;

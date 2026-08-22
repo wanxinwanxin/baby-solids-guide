@@ -86,6 +86,30 @@ const cheese: Food = {
     "String cheese is only safe cut lengthwise into thin strips; bitten off the log, it breaks into firm plugs.",
   ],
   sources: [SOURCES.aaaaiFoodAllergy, SOURCES.cdcChokingHazards, SOURCES.aapStartingSolids],
+  nutrients: ["calcium", "protein", "healthyFats"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "A teaspoon or two of ricotta stirred into puree, or one paper-thin strip — small tastes are the whole point at this stage.",
+      frequency: "A few times a week keeps the milk exposure steady once tolerated",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small pinch of fine shreds or one floppy strip — cheese is salty, so let it stay a supporting player.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A tablespoon of shreds melted into food, or a thin slice or two with fruit — offered, never pushed.",
+    },
+  ],
+  watchOuts: [
+    "Even mild cheeses are salty — keep portions modest and favor lower-sodium types like fresh mozzarella, Swiss, and ricotta.",
+    "Skip unpasteurized (raw-milk) cheeses throughout infancy and toddlerhood.",
+  ],
+  emoji: "🧀",
 };
 
 export default cheese;

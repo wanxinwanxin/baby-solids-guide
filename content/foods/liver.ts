@@ -81,6 +81,32 @@ const liver: Food = {
     "A squeeze of apple or a spoonful of sweet-potato puree mellows liver's mineral edge for a baby meeting it for the first time.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.cdcFoodsAndDrinks],
+  nutrients: ["iron", "zinc", "protein", "vitaminA"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "About one teaspoon of smooth pâté, alone or folded into a familiar puree.",
+      frequency: "No more than about once a week — the vitamin A adds up.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A teaspoon spread see-through-thin on one toast strip.",
+      frequency: "Roughly once a week at most.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A teaspoon or two blended into meatballs or a stew.",
+      frequency: "Still capped at about one small serving a week.",
+    },
+  ],
+  watchOuts: [
+    "Preformed vitamin A is stored in the body, not flushed — the small, roughly weekly serving is a ceiling, not a suggestion.",
+    "Store-bought pâté is typically heavily salted and seasoned for adults — homemade plain pâté is the baby version.",
+  ],
+  emoji: "🍗",
 };
 
 export default liver;

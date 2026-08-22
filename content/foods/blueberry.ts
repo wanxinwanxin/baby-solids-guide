@@ -83,6 +83,25 @@ const blueberry: Food = {
     "Stirred into oatmeal or yogurt, smashed berries stain less of the kitchen than loose ones rolling off the tray.",
   ],
   sources: [SOURCES.cdcChokingHazards, SOURCES.aapChoking, SOURCES.nhsFrom6Months],
+  nutrients: ["vitaminC", "fiber"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "A small handful of flattened berries, solo or stirred into oatmeal — offer a few at a time and follow the baby's lead.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "Three or four flattened berries or quarters at a time, refilled as the tray clears — the baby sets the total.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A small handful of squash-tested berries — some days they demolish it and ask for more, some days two is plenty.",
+    },
+  ],
+  emoji: "🫐",
 };
 
 export default blueberry;

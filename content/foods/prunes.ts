@@ -82,6 +82,30 @@ const prunes: Food = {
     "Dusting chopped prunes with ground oat cereal keeps the sticky pieces from clumping and makes them far easier for small fingers to pick up.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.aapStartingSolids, SOURCES.nhsFrom6Months],
+  nutrients: ["fiber", "potassium"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "A teaspoon or two of prune puree — about one to two prunes' worth a day is the usual ceiling to start.",
+      frequency: "As the diapers call for it, not daily by default.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A few sticky pinky-nail pieces — one to two prunes' worth — offered alongside less sticky foods.",
+      frequency: "Match the amount to how stools are trending.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "One or two stewed prunes, quartered or chopped, stirred into oatmeal or yogurt.",
+    },
+  ],
+  watchOuts: [
+    "Prunes work — more than a couple of prunes' worth can swing past relief into loose stools and a sore bottom.",
+  ],
+  emoji: "🍇",
 };
 
 export default prunes;

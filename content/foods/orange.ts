@@ -80,6 +80,29 @@ const orange: Food = {
     "Choose seedless navel oranges or seedless mandarins to eliminate the seed check on busy mornings.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.aapChoking],
+  nutrients: ["vitaminC", "folate"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "A few chopped supreme pieces, or a spoonful mashed into yogurt — a taste of tart is the goal, not a quota.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "One to three whole supremes, offered a piece at a time.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "Half a small orange's worth of segments with a meal — pairing it with iron-rich food puts the vitamin C to work.",
+    },
+  ],
+  watchOuts: [
+    "Citrus acid can redden the skin around the mouth and aggravate diaper rash — irritation, not allergy; a plain-water wipe helps.",
+    "Serve the fruit, not the juice — juice concentrates the sugars, drops the fiber, and isn't recommended in the first year.",
+  ],
+  emoji: "🍊",
 };
 
 export default orange;

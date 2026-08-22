@@ -84,6 +84,28 @@ const pear: Food = {
     "If ripe pear pieces keep slipping out of little fingers, a dusting of dry infant oat cereal adds grip without changing the flavor much.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.aapChoking],
+  nutrients: ["fiber", "vitaminC"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One ripe wedge at a time — a piece or two per meal is plenty of practice material.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of soft pieces — top up while interest lasts.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "Half a pear in slices or chunks with a meal — the toddler sets the amount.",
+    },
+  ],
+  watchOuts: [
+    "Pear's natural sorbitol gently loosens stools — handy during constipated stretches, worth easing off during loose ones.",
+  ],
+  emoji: "🍐",
 };
 
 export default pear;

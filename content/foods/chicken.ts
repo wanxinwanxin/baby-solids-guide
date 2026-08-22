@@ -84,6 +84,26 @@ const chicken: Food = {
     "If a drumstick is too heavy for little hands, a two-finger strip of thigh meat gives the same palmar-grasp handle at half the weight.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.aapStartingSolids, SOURCES.aapChoking],
+  nutrients: ["protein", "iron", "zinc"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One prepared drumstick to gnaw, or a tablespoon of moist shredded thigh folded into puree — exposure counts more than volume.",
+      frequency: "A regular player several times a week in the iron-rich rotation",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "One to two tablespoons of moist shreds, scattered a little at a time — refill at the baby's pace.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A few tablespoons of tender cross-grain pieces from the family meal — hunger swings day to day; follow it.",
+    },
+  ],
+  emoji: "🍗",
 };
 
 export default chicken;

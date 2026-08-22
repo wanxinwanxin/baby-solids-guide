@@ -83,6 +83,25 @@ const oatmeal: Food = {
     "Cool it fast by spreading a thin layer on a plate; stirring a scalding bowl hides hot pockets in the middle.",
   ],
   sources: [SOURCES.nhsFrom6Months, SOURCES.wicGuide, SOURCES.cdcFoodsAndDrinks],
+  nutrients: ["fiber", "protein"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "A couple of tablespoons of thick porridge on a preloaded spoon — plenty may end up worn rather than eaten, and that's normal.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "Two to four tablespoons with fruit stirred through — keep reloading the spoon while interest holds.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A small bowl — about half a cup cooked — at family breakfast; the toddler decides how much of it is breakfast.",
+    },
+  ],
+  emoji: "🥣",
 };
 
 export default oatmeal;

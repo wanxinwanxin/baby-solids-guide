@@ -78,6 +78,28 @@ const rice: Food = {
     "Press logs and balls with damp hands while the rice is still warm — cold rice loses its stick and crumbles.",
   ],
   sources: [SOURCES.fdaArsenic, SOURCES.wicGuide, SOURCES.nhsFrom6Months],
+  nutrients: ["iron", "folate"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One or two pressed sticky logs, or a tablespoon stirred into a thick puree — served one piece at a time at the baby's pace.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A couple of tablespoons pinched into small clumps, offered a few pieces at a time — more while the tray keeps clearing.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A quarter to half cup of soft rice with the family meal — a starting point the toddler resizes day by day.",
+    },
+  ],
+  watchOuts: [
+    "Vary grains across the week — rice carries more inorganic arsenic than oats or barley, so it shouldn't be the everyday default.",
+  ],
+  emoji: "🍚",
 };
 
 export default rice;

@@ -82,6 +82,27 @@ const egg: Food = {
     "Hard-cook a few eggs at the start of the week and refrigerate in the shell — a safe, fully cooked serving is then two minutes away.",
   ],
   sources: [SOURCES.eatStudy, SOURCES.aapStartingSolids, SOURCES.nhsFrom6Months],
+  nutrients: ["protein", "iron", "vitaminD", "folate"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "A teaspoon or two of yolk mash, or half an omelette strip — on introduction day a taste is a win.",
+      frequency: "About twice a week once tolerated, to keep egg familiar.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "From a small handful of curds up to a whole scrambled egg — some days it's two bites, some days the lot.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "Half to one egg in whatever form the meal takes — let appetite, not the plate, decide.",
+      frequency: "A couple of times a week keeps it in the rotation.",
+    },
+  ],
+  emoji: "🥚",
 };
 
 export default egg;

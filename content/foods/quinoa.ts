@@ -79,6 +79,25 @@ const quinoa: Food = {
     "Batch-cook, portion into an ice-cube tray, and freeze — a cube rewarms in seconds and stirs straight into any puree.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.whoComplementary, SOURCES.cdcFoodsAndDrinks],
+  nutrients: ["iron", "protein", "fiber"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "A tablespoon or two of quinoa-thickened mash on a preloaded spoon — the baby decides how many spoonfuls actually land.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A couple of tablespoons pressed into small clumps, offered a few pieces at a time — refill while interest holds.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A quarter cup or so stirred into the family dish — a starting point the toddler's appetite will resize daily.",
+    },
+  ],
+  emoji: "🌾",
 };
 
 export default quinoa;

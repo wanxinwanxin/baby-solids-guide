@@ -78,6 +78,28 @@ const barley: Food = {
     "Barley firms up dramatically in the fridge — always rewarm with a splash of water or broth to bring back the creamy texture.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.cdcFoodsAndDrinks],
+  nutrients: ["fiber"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One to two tablespoons of creamy barley mash stirred into a familiar puree — a starting point, never a quota.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A couple of tablespoons of soft grains offered a spoonful at a time — the baby's interest sets the portion.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A few tablespoons stirred through soup or a grain bowl — trust the toddler to stop when full.",
+    },
+  ],
+  watchOuts: [
+    "Barley contains gluten — if celiac disease runs in the family, discuss timing with your pediatrician before introducing it.",
+  ],
+  emoji: "🌾",
 };
 
 export default barley;

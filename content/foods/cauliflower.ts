@@ -79,6 +79,28 @@ const cauliflower: Food = {
     "A squeeze of lemon or a little grated cheese on top rounds off the bitterness without hiding the vegetable.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.cdcFoodsAndDrinks],
+  nutrients: ["vitaminC", "fiber"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One or two stem-handled florets — squeezing and gnawing count; swallowed pieces start tiny and that's expected.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A tablespoon or two of crumbly pieces, a few at a time on the tray — the baby paces the refills.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A small handful of roasted florets or a tablespoon folded into mash — offer without pressure; repetition does the persuading.",
+    },
+  ],
+  watchOuts: [
+    "Like its brassica cousins, cauliflower can bring a gassy day while the gut adjusts — start small and build up.",
+  ],
+  emoji: "💮",
 };
 
 export default cauliflower;

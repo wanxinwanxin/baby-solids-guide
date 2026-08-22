@@ -84,6 +84,30 @@ const chickpeas: Food = {
     "Rinsed no-salt-added canned chickpeas are a fine shortcut; a quick extra simmer in plain water softens them further.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.cdcChokingHazards, SOURCES.nhsFrom6Months],
+  nutrients: ["iron", "protein", "fiber", "folate"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One to two tablespoons of smooth unsalted mash on a spoon or the tray — a starting point, never a quota.",
+      note: "A squeeze of lemon in the mash adds vitamin C that helps the plant iron along.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "Four or five flattened chickpeas at a time plus a teaspoon or two of mash — refill at the baby's pace.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A few tablespoons of flattened or quartered chickpeas through a family dish — the toddler decides when it's enough.",
+    },
+  ],
+  watchOuts: [
+    "Legumes can mean a gassy day or two at first — small, regular servings help the gut adjust.",
+    "Store-bought hummus usually brings added salt plus tahini — that's sesame, a separate allergen to introduce deliberately.",
+  ],
+  emoji: "🧆",
 };
 
 export default chickpeas;

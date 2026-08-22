@@ -83,6 +83,31 @@ const salmon: Food = {
     "Freeze cooked, de-boned flakes flat in a zip bag and snap off a portion at a time to keep weekly fish servings effortless.",
   ],
   sources: [SOURCES.fdaFish, SOURCES.eatStudy, SOURCES.wicGuide],
+  nutrients: ["protein", "omega3", "vitaminD"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "A teaspoon or two of mashed flakes in a familiar puree, or one soft two-finger piece — first serves stay small, then grow with tolerance.",
+      frequency: "1–2 times a week once tolerated — salmon is a low-mercury choice.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of moist pinky-nail flakes, scattered a few pieces at a time.",
+      frequency: "1–2 times a week keeps the fish allergen comfortably in the diet.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A few tablespoons of soft chunks, or a couple of patty strips, at family meals.",
+      frequency: "1–2 low-mercury fish servings a week fits federal advice for young children.",
+    },
+  ],
+  watchOuts: [
+    "Smoked salmon and breaded fish products carry far more salt than plain cooked fillet — keep them occasional.",
+  ],
+  emoji: "🐟",
 };
 
 export default salmon;

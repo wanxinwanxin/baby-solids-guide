@@ -82,6 +82,30 @@ const cod: Food = {
     "Frozen cod fillets are as good as fresh for baby prep — thaw overnight in the fridge and cook straight through.",
   ],
   sources: [SOURCES.fdaFish, SOURCES.eatStudy, SOURCES.nhsFrom6Months],
+  nutrients: ["protein"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "A two-finger piece or a tablespoon of moist flakes mashed into puree — a taste-sized start; the baby leads.",
+      frequency: "Once or twice a week once tolerated keeps the fish exposure established",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "One to two tablespoons of moistened flakes, offered a few at a time — appetite sets the portion.",
+      frequency: "Keep fish on the menu once or twice a week",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A few tablespoons of flaked fish or a fish-cake strip or two with the family meal — let the toddler call it.",
+    },
+  ],
+  watchOuts: [
+    "Skip battered, breaded, and smoked fish products — they bring salt the plain fillet doesn't have.",
+  ],
+  emoji: "🐟",
 };
 
 export default cod;

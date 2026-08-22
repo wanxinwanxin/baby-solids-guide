@@ -66,6 +66,23 @@ const grapes: Food = {
     "Make 'nothing round goes on the tray' the house rule and apply it to grapes, cherry tomatoes, and large blueberries alike.",
   ],
   sources: [SOURCES.cdcChokingHazards, SOURCES.aapChoking, SOURCES.nhsFrom6Months],
+  nutrients: ["vitaminC"],
+  servingGuidance: [
+    {
+      band: "9-12m",
+      typicalAmount:
+        "Three or four grapes' worth of quarters — a light fruit, so let it ride alongside richer foods.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A small handful of quartered grapes with a meal or snack — the toddler sets the count.",
+    },
+  ],
+  watchOuts: [
+    "Sweet and hydrating but light on nutrients — better as the meal's sidekick than its centerpiece.",
+  ],
+  emoji: "🍇",
 };
 
 export default grapes;

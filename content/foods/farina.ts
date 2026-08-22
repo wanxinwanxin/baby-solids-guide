@@ -82,6 +82,29 @@ const farina: Food = {
     "After a successful introduction, keep wheat in the diet weekly — regular exposure, not a one-time test, is the goal.",
   ],
   sources: [SOURCES.eatStudy, SOURCES.wicGuide, SOURCES.cdcFoodsAndDrinks],
+  nutrients: ["iron"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One to two tablespoons mixed smooth and thin — treat early bowls as practice, not a quota.",
+      frequency: "A few times a week keeps both the iron and the wheat exposure steady.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "Two to four tablespoons cooked thicker — keep reloading the spoon while it keeps coming back.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A small bowl — roughly a quarter to half cup cooked — at breakfast; an offer, not a finish line.",
+    },
+  ],
+  watchOuts: [
+    "Check the box for 'iron-fortified' — plain hot wheat cereals without the fortification miss the main point here.",
+  ],
+  emoji: "🥣",
 };
 
 export default farina;

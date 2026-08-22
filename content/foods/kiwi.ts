@@ -80,6 +80,28 @@ const kiwi: Food = {
     "Halve and spoon-scoop for prep-free serving: one clean cut and the skin becomes the bowl.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.aapStartingSolids],
+  nutrients: ["vitaminC", "fiber"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One soft wedge — a quarter of a kiwi — at a time; sucking and tasting count as success.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A few pinky-nail pieces up to half a kiwi's worth — follow the reaching, not the clock.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "Half a kiwi in slices or chunks — keep offers low-pressure; tart fruits often need many meetings.",
+    },
+  ],
+  watchOuts: [
+    "Kiwi's acidity can leave a harmless red ring where it touched the skin — contact irritation, not an allergy.",
+  ],
+  emoji: "🥝",
 };
 
 export default kiwi;

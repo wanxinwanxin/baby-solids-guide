@@ -76,6 +76,25 @@ const raspberry: Food = {
     "Mash a punnet with a fork and freeze in ice-cube trays for instant stir-ins to oatmeal and yogurt.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.aapStartingSolids],
+  nutrients: ["vitaminC", "fiber"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "Two or three flattened berries, or a tablespoon of mash stirred into oatmeal — follow the baby's lead on seconds.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of whole ripe berries, put down a few at a time for pincer practice.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A small handful with meals or snacks, plain or stirred into yogurt — some days it vanishes, some days it doesn't, and both are fine.",
+    },
+  ],
+  emoji: "🫐",
 };
 
 export default raspberry;

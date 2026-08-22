@@ -83,6 +83,30 @@ const cashewButter: Food = {
     "Once introduced, offer cashew about twice a week to keep the exposure steady.",
   ],
   sources: [SOURCES.eatStudy, SOURCES.aaaaiFoodAllergy, SOURCES.aapChoking],
+  nutrients: ["healthyFats", "protein", "zinc"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "About 1 teaspoon whisked to a drizzle and folded into a familiar puree — the exposure matters, not the volume; the baby leads.",
+      frequency: "About twice a week once tolerated",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A see-through smear on a toast strip or a teaspoon whisked into yogurt — offer, don't push.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A thin spread on a strip of toast or a teaspoon stirred through porridge or a sauce — appetite is the guide, not the spoon.",
+    },
+  ],
+  watchOuts: [
+    "Read the jar: added salt, sugar, or honey is common — 100% cashews is the pick.",
+    "Almond going smoothly proves nothing about cashew — every tree nut gets its own watchful first serving.",
+  ],
+  emoji: "🫙",
 };
 
 export default cashewButter;

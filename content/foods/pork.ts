@@ -84,6 +84,29 @@ const pork: Food = {
     "Pork pairs naturally with fruit: a spoonful of unsweetened applesauce stirred into shreds adds both moisture and flavor.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.aapStartingSolids, SOURCES.nhsFrom6Months],
+  nutrients: ["iron", "zinc", "protein"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One soft braised strip, or a teaspoon or two of moistened shreds stirred into a puree — an introduction, not a target; the baby sets the pace.",
+      note: "Iron-rich foods like pork earn a regular slot from 6 months, in whatever amount the baby accepts.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of pea-size moist shreds, scattered a few pieces at a time — offer more while the reaching continues.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A few tablespoons of moist bite-size pieces with the family meal — appetite swings day to day, so let the toddler call it done.",
+    },
+  ],
+  watchOuts: [
+    "Cured pork — ham, bacon, sausage — carries a sodium load that stays too high for babies and toddlers; stick to fresh cuts.",
+  ],
+  emoji: "🍖",
 };
 
 export default pork;

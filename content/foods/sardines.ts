@@ -85,6 +85,31 @@ const sardines: Food = {
     "Mashed sardine disappears into tomato-based pasta sauce — a painless route for babies who balk at fish flavor on its own.",
   ],
   sources: [SOURCES.fdaFish, SOURCES.eatStudy, SOURCES.nhsFrom6Months],
+  nutrients: ["calcium", "omega3", "vitaminD", "iron"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "A teaspoon or two of sardine mash stirred into a familiar puree — a rich little fish, so small serves go a long way.",
+      frequency: "1–2 times a week once tolerated, counting toward the weekly fish servings.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "Half a sardine to one whole sardine, spread thin on a toast strip or flaked into small checked pieces.",
+      frequency: "1–2 times a week — sardines are among the lowest-mercury fish.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "One well-mashed sardine folded into pasta, potato, or a toast slice at a family meal.",
+      frequency: "1–2 times a week keeps low-mercury fish in the routine.",
+    },
+  ],
+  watchOuts: [
+    "Most cans are brined or packed in salted oil — 'in water, no salt added' is the label that keeps sodium in check.",
+  ],
+  emoji: "🥫",
 };
 
 export default sardines;

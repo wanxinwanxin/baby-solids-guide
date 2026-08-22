@@ -82,6 +82,25 @@ const peach: Food = {
     "A cold (not frozen) steamed peach wedge doubles as gum relief for a teething baby.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.aapStartingSolids],
+  nutrients: ["vitaminC", "vitaminA", "fiber"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One skin-on wedge at a time — a piece or two per meal; squeezing and sucking are legitimate eating at this age.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of soft pieces — refill while the reaching continues.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "Half a peach in wedges or chunks alongside the meal — an offer, not a target.",
+    },
+  ],
+  emoji: "🍑",
 };
 
 export default peach;

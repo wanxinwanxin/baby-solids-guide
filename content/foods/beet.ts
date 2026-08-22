@@ -79,6 +79,28 @@ const beet: Food = {
     "Vacuum-packed pre-cooked beets (choose no-vinegar versions) are a fine shortcut — check that the flesh still passes the squish test.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.cdcFoodsAndDrinks],
+  nutrients: ["folate", "potassium", "fiber"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One or two soft roasted sticks — an exploring portion; earthy flavors often take many relaxed tries to land.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A tablespoon of soft cubes, a few at a time — refill while the baby keeps reaching.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A small handful of soft chunks or a tablespoon of grated beet folded into yogurt — offer, then follow their appetite.",
+    },
+  ],
+  watchOuts: [
+    "Beets can turn urine pink and stools reddish for a day or two — startling, but it's harmless pigment, not blood.",
+  ],
+  emoji: "🫜",
 };
 
 export default beet;

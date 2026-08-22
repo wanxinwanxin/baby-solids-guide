@@ -84,6 +84,28 @@ const turkey: Food = {
     "Batch-cook one thigh braise, freeze flat in its liquid, and thaw portions overnight for near-instant iron-rich meals.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.aapStartingSolids, SOURCES.cdcFoodsAndDrinks],
+  nutrients: ["iron", "zinc", "protein"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One braised strip, or a teaspoon or two of glossy shreds folded into a puree — iron-rich, so offer it often; the amount stays the baby's call.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of moist pea-size pieces, scattered a few at a time.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A few tablespoons of moist cross-grain pieces with the family meal — some days most comes back, and that's normal.",
+    },
+  ],
+  watchOuts: [
+    "Deli and smoked turkey are salt-cured — home-cooked meat is the everyday form for babies and toddlers.",
+  ],
+  emoji: "🦃",
 };
 
 export default turkey;

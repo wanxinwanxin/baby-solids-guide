@@ -81,6 +81,28 @@ const cherries: Food = {
     "Batch-prep a pound at once and refrigerate the quarters in a covered container for 2–3 days of easy servings.",
   ],
   sources: [SOURCES.cdcChokingHazards, SOURCES.aapChoking, SOURCES.nhsFrom6Months],
+  nutrients: ["vitaminC", "fiber"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "Two or three pitted cherries in flattened quarters, solo or stirred into oatmeal — a taste is a fine first outing.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "Three or four quarters at a time, refilled as the tray clears — the baby sets the total.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A small handful of pitted quarters (or halves for a strong chewer) — appetite varies; let them stop when done.",
+    },
+  ],
+  watchOuts: [
+    "A cherry-heavy day can loosen stools — they're a sorbitol-rich fruit, so ease off if the diapers say so.",
+  ],
+  emoji: "🍒",
 };
 
 export default cherries;

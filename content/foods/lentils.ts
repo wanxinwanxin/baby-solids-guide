@@ -81,6 +81,28 @@ const lentils: Food = {
     "Freeze the mush flat in an ice-cube tray — each cube is one serving that rewarms in under a minute.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.aapStartingSolids],
+  nutrients: ["iron", "protein", "fiber", "folate"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One to two tablespoons of thick mash on a preloaded spoon — refill while the mouth keeps opening.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "Two to three tablespoons of soft clumps — a scatter the baby can work through at their own pace.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A quarter cup or so folded into the family dish — an opening offer, not a finish line.",
+    },
+  ],
+  watchOuts: [
+    "A sudden jump in fiber can mean a gassy day or two — build the portion up gradually.",
+  ],
+  emoji: "🫘",
 };
 
 export default lentils;

@@ -82,6 +82,28 @@ const apple: Food = {
     "Unsweetened applesauce counts too — swirl it into oatmeal or plain yogurt for a no-prep serving with zero added sugar.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.aapChoking, SOURCES.cdcChokingHazards],
+  nutrients: ["fiber", "vitaminC"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One or two steamed-soft wedges, or a small handful of finely grated apple — starting points, not targets; the baby sets the pace.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of pinky-nail pieces scattered a few at a time — refill while interest lasts, stop when they turn away.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A few tablespoons of cooked pieces or grated apple alongside the family meal — appetite swings day to day, and that's normal.",
+    },
+  ],
+  watchOuts: [
+    "Hold off on apple juice — it delivers the fruit's sugar without its fiber and can crowd out milk feeds.",
+  ],
+  emoji: "🍎",
 };
 
 export default apple;

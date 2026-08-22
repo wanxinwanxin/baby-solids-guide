@@ -83,6 +83,30 @@ const blackBeans: Food = {
     "Cook once, serve for days: mashed beans keep 3 days refrigerated and freeze well in ice-cube portions.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.cdcChokingHazards, SOURCES.aapMenu8to12],
+  nutrients: ["iron", "protein", "fiber", "folate"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One to two tablespoons of broken-skin mash on a spoon or the tray — a starting point; some days one lick is the meal.",
+      note: "Pair with a vitamin C food like tomato or pepper to help the plant iron absorb.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A tablespoon of flattened beans, four or five pieces at a time — keep pace with the baby's chewing.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A few tablespoons of soft whole beans in a family dish — trust the toddler to stop when full.",
+    },
+  ],
+  watchOuts: [
+    "Beans can bring a gassy day or two while a baby's gut adjusts — small, regular servings smooth the ride.",
+    "Standard canned beans are salty — choose no-salt-added and rinse well.",
+  ],
+  emoji: "🫘",
 };
 
 export default blackBeans;

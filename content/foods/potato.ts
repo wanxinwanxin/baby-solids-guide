@@ -80,6 +80,25 @@ const potato: Food = {
     "Rub wedges with a little olive oil before serving — it adds calories and stops the cut surface drying into a chalky skin.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.aapMenu8to12],
+  nutrients: ["potassium", "vitaminC"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One or two soft pieces, served one at a time — some meals a nibble, some meals the whole piece, and both are the baby self-regulating.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of soft pieces, or a tablespoon or two of loose mash — top up while interest lasts.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "Half a small potato in bite-size pieces at family meals is plenty for many toddlers — a starting point, never a quota.",
+    },
+  ],
+  emoji: "🥔",
 };
 
 export default potato;

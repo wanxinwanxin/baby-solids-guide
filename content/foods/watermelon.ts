@@ -80,6 +80,28 @@ const watermelon: Food = {
     "Cut the whole melon into rind-free slabs on day one and store them in a covered container; prep-once means easy servings all week.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.aapStartingSolids],
+  nutrients: ["potassium"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One thin rind-free strip at a time — early serves are more gnaw and juice than swallow, and that's the point.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of juicy cubes, put down a few at a time so the tray stays grippable.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A rind-free slice or a small handful of chunks — hydrating, so serve it beside something more substantial.",
+    },
+  ],
+  watchOuts: [
+    "Mostly water — refreshing but light, so pair it with a calorie-dense food rather than letting it stand in for the meal.",
+  ],
+  emoji: "🍉",
 };
 
 export default watermelon;

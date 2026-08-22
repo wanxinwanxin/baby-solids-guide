@@ -84,6 +84,25 @@ const lamb: Food = {
     "A dollop of plain whole-milk yogurt stirred into shredded lamb adds moisture and mellows the flavor for hesitant eaters.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.aapStartingSolids],
+  nutrients: ["iron", "zinc", "protein"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One braised strip, or a teaspoon or two of moist shreds folded into a puree — even a good gnaw on the strip delivers iron.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A tablespoon of small moist shreds — offer more while the interest lasts.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A tablespoon or two of bite-size pieces from the family braise — devoured some meals, ignored others; both are normal.",
+    },
+  ],
+  emoji: "🍖",
 };
 
 export default lamb;

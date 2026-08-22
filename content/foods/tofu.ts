@@ -82,6 +82,29 @@ const tofu: Food = {
     "Tofu takes on any flavor: warm batons briefly in the (unsalted) sauce or broth from the family meal for free flavor exposure.",
   ],
   sources: [SOURCES.aaaaiFoodAllergy, SOURCES.wicGuide, SOURCES.nhsFrom6Months],
+  nutrients: ["iron", "protein", "calcium"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One or two two-finger sticks of firm tofu, or a tablespoon of silken tofu stirred into a familiar puree.",
+      frequency: "About twice a week once tolerated keeps the soy exposure steady.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of coated cubes, offered a few at a time — refill while the pincer practice continues.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A few tablespoons of bite-size pieces in family soups or soft stir-fries — the toddler's appetite does the portioning.",
+    },
+  ],
+  watchOuts: [
+    "Pre-marinated, fried, or seasoned tofu products are sodium traps — start from a plain block and season the toddler's portion lightly.",
+  ],
+  emoji: "🍲",
 };
 
 export default tofu;

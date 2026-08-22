@@ -82,6 +82,25 @@ const avocado: Food = {
     "Mash extra into an ice-cube tray and freeze for smoothie-ready portions; the texture softens but the nutrition holds.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.aapStartingSolids, SOURCES.cdcFoodsAndDrinks],
+  nutrients: ["healthyFats", "folate", "potassium", "fiber"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One or two peel-handled wedges, or a couple of teaspoons mashed on a preloaded spoon — offer more only if the baby keeps reaching.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "Around a quarter of an avocado in coated cubes is a generous start — plenty of babies stop far short, and that's fine.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A few soft slices or a thin smash on half a piece of toast — let appetite, not the portion, decide when the meal is over.",
+    },
+  ],
+  emoji: "🥑",
 };
 
 export default avocado;

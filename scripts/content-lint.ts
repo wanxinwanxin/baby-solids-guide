@@ -89,6 +89,22 @@ async function main() {
       errors.push(`${label}: honey must have minAgeMonths >= 12`);
     }
 
+    // Phase 10 fields are required now that the backfill is complete.
+    if (!f.nutrients || f.nutrients.length === 0) {
+      errors.push(`${label}: missing nutrients tags (1-4 required)`);
+    }
+    if (!f.emoji) errors.push(`${label}: missing emoji`);
+    const MEASURE_WORD =
+      /(teaspoon|tablespoon|stick|strip|piece|cube|slice|handful|half|quarter|cup|spoonful|smear|drizzle|dollop|pinch|wedge|segment|spear|floret|ounce)/i;
+    for (const spec of f.prepSpecs) {
+      const sg = f.servingGuidance?.find((s) => s.band === spec.band);
+      if (!sg) {
+        errors.push(`${label}: missing servingGuidance for band ${spec.band}`);
+      } else if (!MEASURE_WORD.test(sg.typicalAmount)) {
+        errors.push(`${label}: servingGuidance[${spec.band}].typicalAmount lacks a measure word`);
+      }
+    }
+
     // Every allergen food needs a matching allergen program page
     if (f.commonAllergen && !allergenPrograms.some((a) => a.id === f.commonAllergen)) {
       errors.push(`${label}: no allergen program page for ${f.commonAllergen}`);
@@ -103,7 +119,34 @@ async function main() {
   if (ironRichCount < 12) errors.push(`corpus: only ${ironRichCount} iron-rich foods (need ≥12)`);
   if (allFoods.length < 60) errors.push(`corpus: only ${allFoods.length} foods (v1 target: 60)`);
 
-  console.log(`content-lint: ${allFoods.length} foods, ${allergensCovered.size}/9 allergens, ${ironRichCount} iron-rich.`);
+  // ——— Learn guides (Phase 9) ———
+  const { guideSchema } = await import("../src/content-schema/food");
+  const { allGuides } = await import("../content/guides");
+  const guideSlugs = new Set<string>();
+  for (const guide of allGuides) {
+    const glabel = `guide:${guide.slug ?? "?"}`;
+    const parsed = guideSchema.safeParse(guide);
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        errors.push(`${glabel}: ${issue.path.join(".")} — ${issue.message}`);
+      }
+      continue;
+    }
+    if (guideSlugs.has(guide.slug)) errors.push(`${glabel}: duplicate slug`);
+    guideSlugs.add(guide.slug);
+    const words = guide.sections
+      .flatMap((s) => s.paragraphs)
+      .join(" ")
+      .split(/\s+/).length;
+    if (words < 300 || words > 900) {
+      errors.push(`${glabel}: ${words} words (target 400-800, hard bounds 300-900)`);
+    }
+  }
+  if (allGuides.length < 6) errors.push(`corpus: only ${allGuides.length} Learn guides (need ≥6)`);
+
+  console.log(
+    `content-lint: ${allFoods.length} foods, ${allergensCovered.size}/9 allergens, ${ironRichCount} iron-rich, ${allGuides.length} guides.`,
+  );
   finish(errors);
 }
 

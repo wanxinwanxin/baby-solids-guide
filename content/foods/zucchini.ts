@@ -81,6 +81,25 @@ const zucchini: Food = {
     "Grate raw zucchini into fritters or muffins for an easy no-texture-battle serving on busy days.",
   ],
   sources: [SOURCES.nhsFrom6Months, SOURCES.wicGuide, SOURCES.cdcFoodsAndDrinks],
+  nutrients: ["vitaminC", "potassium"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One skin-on strip at a time — gnawed, squished, or eaten, all three count as practice.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of skin-on pieces, patted dry and put down a few at a time.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A few tender pieces with the family meal, or a loose pile of raw ribbon slices to explore — appetite sets the amount.",
+    },
+  ],
+  emoji: "🥒",
 };
 
 export default zucchini;

@@ -83,6 +83,28 @@ const strawberry: Food = {
     "Mash a batch into plain yogurt or oatmeal and freeze in cubes for instant fruit servings.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.aapChoking],
+  nutrients: ["vitaminC"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One large ripe berry, mashed flat or in thin floppy slices — more only if the baby keeps leaning in.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "Two or three berries in slim quarters or thin slices, put down a few pieces at a time.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A small handful of quartered or sliced berries with meals or snacks — appetite, not the bowl, decides the amount.",
+    },
+  ],
+  watchOuts: [
+    "Berry acid can leave a red, blotchy ring around the mouth — contact irritation, not allergy; a smear of barrier balm beforehand prevents it.",
+  ],
+  emoji: "🍓",
 };
 
 export default strawberry;

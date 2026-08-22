@@ -82,6 +82,28 @@ const tomato: Food = {
     "Batch the quartering: quarter a whole punnet of cherry tomatoes at once and store them cut in the fridge, so the safe shape is the convenient one.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.cdcChokingHazards, SOURCES.aapChoking],
+  nutrients: ["vitaminC"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One soft ripe piece about two fingers in size, served one at a time — early on, squeezing and tasting count as success.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of soft pieces and lengthwise-quartered strips, put down a few at a time.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A few quartered cherry tomatoes or a small handful of soft pieces at family meals — appetite sets the amount.",
+    },
+  ],
+  watchOuts: [
+    "Tomato acid can leave a harmless red ring of contact rash around the mouth — barrier balm before, a gentle water wipe after.",
+  ],
+  emoji: "🍅",
 };
 
 export default tomato;

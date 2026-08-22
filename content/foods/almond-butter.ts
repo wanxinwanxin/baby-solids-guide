@@ -85,6 +85,31 @@ const almondButter: Food = {
     "Finely ground almond flour stirred into a familiar puree delivers the same allergen protein with zero stickiness to manage.",
   ],
   sources: [SOURCES.eatStudy, SOURCES.aaaaiFoodAllergy, SOURCES.aapChoking],
+  nutrients: ["healthyFats", "protein"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "About 1 teaspoon, thinned to a drizzle and folded into a familiar puree — a taste-sized exposure is plenty; the baby decides how much goes in.",
+      frequency: "About twice a week once tolerated",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A see-through smear on one or two toast strips — offer without chasing; some days a lick is the whole serving.",
+      frequency: "Keep it appearing about twice a week",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A thin spread on a strip of toast or a teaspoon whisked into porridge — follow the toddler's appetite, not the jar.",
+    },
+  ],
+  watchOuts: [
+    "Many jars carry added salt, sugar, or honey — choose a 100% almond, unsalted variety.",
+    "Tolerating almond says nothing about other tree nuts — each one needs its own separate introduction.",
+  ],
+  emoji: "🌰",
 };
 
 export default almondButter;

@@ -89,6 +89,31 @@ const peanutButter: Food = {
     "Always serve new allergens early in the day so you can observe for the following 2 hours.",
   ],
   sources: [SOURCES.niaid2017, SOURCES.leapStudy, SOURCES.aapStartingSolids],
+  nutrients: ["protein", "healthyFats"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One teaspoon, fully thinned, stirred into a familiar puree.",
+      frequency: "About twice a week once tolerated — steady exposure is what maintains tolerance.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A teaspoon or so as a see-through smear on a toast strip.",
+      frequency: "Keep it at roughly twice a week.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "One to two teaspoons per sitting as thin spreads or mix-ins.",
+      frequency: "Roughly twice a week keeps peanut familiar.",
+    },
+  ],
+  watchOuts: [
+    "Many jars carry added salt and sugar — the ingredient list should read peanuts and nothing else.",
+  ],
+  emoji: "🥜",
 };
 
 export default peanutButter;

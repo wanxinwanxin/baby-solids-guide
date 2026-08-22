@@ -82,6 +82,28 @@ const spinach: Food = {
     "The mineral edge of spinach can take 8–15 exposures to win over — keep offering small amounts without pressure and let familiarity do the work.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.cdcFoodsAndDrinks],
+  nutrients: ["iron", "folate"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "A teaspoon or two of chopped flecks folded through a mash or omelette strip — a garnish-scale start is exactly right.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A tablespoon of confetti-chopped spinach stirred through eggs, pasta pieces, or a thick mash.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A couple of tablespoons as its own small side, or torn pieces through family dishes — offered without pressure, eaten or not.",
+    },
+  ],
+  watchOuts: [
+    "Spinach's oxalates bind much of its calcium (and some of its iron) — count it as an iron-with-vitamin-C food rather than a calcium source, and rotate it with other greens.",
+  ],
+  emoji: "🥬",
 };
 
 export default spinach;

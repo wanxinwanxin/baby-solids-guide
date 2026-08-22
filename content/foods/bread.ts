@@ -84,6 +84,30 @@ const bread: Food = {
     "If strips keep tearing in a tight fist, toast a shade darker — a slightly firmer surface survives the palmar grip better.",
   ],
   sources: [SOURCES.eatStudy, SOURCES.nhsFrom6Months, SOURCES.cdcFoodsAndDrinks],
+  nutrients: ["iron", "folate"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One lightly toasted strip is plenty to start — much of it is exploration; let the baby set the pace.",
+      frequency: "About twice a week once tolerated keeps the wheat exposure steady",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A few pinky-nail toast pieces at a time, up to about half a slice — appetite decides, not the slice.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "Half a slice to a whole slice as strips or small sandwich squares — follow the toddler's hunger, which swings day to day.",
+    },
+  ],
+  watchOuts: [
+    "Bread is one of the saltiest everyday staples — compare labels and pick the lowest sodium per slice.",
+    "Skip loaves with honey in the ingredients before 12 months.",
+  ],
+  emoji: "🍞",
 };
 
 export default bread;

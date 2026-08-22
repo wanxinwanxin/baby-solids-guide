@@ -81,6 +81,25 @@ const greenBeans: Food = {
     "The floppy test beats any timer: bean thickness varies, so always check the fattest bean by holding it up by one end.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.cdcFoodsAndDrinks],
+  nutrients: ["folate", "fiber", "vitaminC"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One or two whole floppy beans — each is its own soft stick; offer another when one disappears.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of chopped pieces, scattered a few at a time — refill on demand.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A tablespoon or two of halved beans beside the family meal — all gone some days, untouched others; both are normal.",
+    },
+  ],
+  emoji: "🫛",
 };
 
 export default greenBeans;

@@ -81,6 +81,25 @@ const bellPepper: Food = {
     "Green pepper's bitter edge can take 8–15 exposures to accept — keep offering without pressure, or simply lean on the sweeter colors meanwhile.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.cdcChokingHazards],
+  nutrients: ["vitaminC", "vitaminA", "fiber"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One or two roasted, skinned strips — an exploration portion; plenty may get squeezed rather than eaten, and that counts.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A tablespoon of soft skinned pieces, scattered a few at a time — the baby decides the refills.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A few roasted strips or a small pile of thin raw matchstick strips beside the meal — let interest lead.",
+    },
+  ],
+  emoji: "🫑",
 };
 
 export default bellPepper;

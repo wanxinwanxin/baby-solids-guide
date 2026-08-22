@@ -80,6 +80,25 @@ const broccoli: Food = {
     "Batch-steam a whole head, freeze florets flat on a tray, and rewarm with a brief steam so they soften instead of drying out.",
   ],
   sources: [SOURCES.nhsFrom6Months, SOURCES.wicGuide, SOURCES.cdcFoodsAndDrinks],
+  nutrients: ["vitaminC", "folate", "fiber"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One or two soft stem-handled florets — gnawed pieces and squeezed fistfuls all count as progress at this stage.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A tablespoon or two of pinky-nail pieces, scattered a few at a time — refill while interest holds.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A small handful of tender florets beside the family meal — offer without pressure and let appetite lead.",
+    },
+  ],
+  emoji: "🥦",
 };
 
 export default broccoli;

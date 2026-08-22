@@ -81,6 +81,29 @@ const cucumber: Food = {
     "Drag a fork's tines down a peeled spear before cutting: the ridges give slippery cucumber real grip in a small fist.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.cdcChokingHazards],
+  nutrients: ["vitaminC"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One chilled stick at a time — expect far more gnawing than swallowing; the exploring is the point.",
+      note: "Cold from the fridge, it doubles as gum relief on teething days.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of ribbons or thin pieces — scatter a few at a time and let the baby set the pace.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "One or two slim sticks alongside the meal — a starting point, not a target; appetite swings day to day.",
+    },
+  ],
+  watchOuts: [
+    "Mostly water and very low in calories — serve it beside richer foods rather than letting it crowd them out.",
+  ],
+  emoji: "🥒",
 };
 
 export default cucumber;

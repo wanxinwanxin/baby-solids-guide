@@ -80,6 +80,28 @@ const banana: Food = {
     "Too-ripe bananas aren't waste: mash into oatmeal or plain yogurt, or freeze peeled halves for smoothies and future banana bread.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.aapStartingSolids],
+  nutrients: ["potassium", "fiber"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "Half a banana in its peel handle — most babies gnaw off far less than the half, and that's exactly right.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A handful of segment pieces from about half a banana, scattered a few at a time — follow the baby's lead on refills.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "Half to a whole small banana held for bite practice — some days it all disappears, some days two bites do.",
+    },
+  ],
+  watchOuts: [
+    "If stools slow down, banana is a usual suspect — ease off for a few days and lean on pears or prunes instead.",
+  ],
+  emoji: "🍌",
 };
 
 export default banana;

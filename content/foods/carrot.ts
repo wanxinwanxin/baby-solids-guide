@@ -89,6 +89,28 @@ const carrot: Food = {
     "Batch-steam a bag of carrots, freeze the sticks flat, and rewarm in seconds for effortless repeat exposures.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.aapChoking],
+  nutrients: ["vitaminA", "fiber"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "Start with 1–2 soft-cooked sticks — let the baby set the pace; gnawing counts even when little visibly disappears.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A tablespoon or two of pinky-nail pieces, scattered a few at a time — refill while the reaching continues.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A small handful of soft chunks or raw ribbon pieces with the family meal — appetite swings day to day.",
+    },
+  ],
+  watchOuts: [
+    "Lots of carrot every day can leave skin slightly orange-tinged (carotenemia) — it's harmless and clears once the menu varies.",
+  ],
+  emoji: "🥕",
 };
 
 export default carrot;

@@ -80,6 +80,28 @@ const butternutSquash: Food = {
     "Batch-roast a whole squash, freeze wedges flat on a tray, and rewarm in the toaster oven for repeat servings all week.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.aapStartingSolids],
+  nutrients: ["vitaminA", "vitaminC", "fiber"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One or two soft roasted wedges, one piece at a time on the tray — a starting point; the baby's interest sets the real portion.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A tablespoon or two of soft cubes, a few at a time — refill as the tray clears.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A few soft chunks or a tablespoon mashed into the family dish — let the toddler decide when enough is enough.",
+    },
+  ],
+  watchOuts: [
+    "A menu heavy in orange vegetables can tint little noses and palms orange (carotenemia) — harmless, and it fades with variety.",
+  ],
+  emoji: "🎃",
 };
 
 export default butternutSquash;

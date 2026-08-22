@@ -77,6 +77,26 @@ const oliveOil: Food = {
     "Store the bottle in a dark cupboard away from the stove — heat and light turn oil stale and bitter, and babies notice bitter.",
   ],
   sources: [SOURCES.nhsFrom6Months, SOURCES.wicGuide, SOURCES.aapStartingSolids],
+  nutrients: ["healthyFats"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "Half to one teaspoon stirred into a serving of puree — enough for a sheen, never a slick.",
+      note: "A booster for other foods, not a food on its own.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "About one teaspoon tossed through finger foods over the course of the day.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "One to two teaspoons across the day as the cooking fat and a finishing drizzle.",
+    },
+  ],
+  emoji: "🫒",
 };
 
 export default oliveOil;

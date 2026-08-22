@@ -82,6 +82,28 @@ const mango: Food = {
     "Rolling slippery mango in ground oat cereal or crushed dry infant cereal adds grip without changing the taste much.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.aapStartingSolids],
+  nutrients: ["vitaminC", "vitaminA", "fiber"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One skin-handled wedge at a time — a piece or two per meal; squeezing, smearing, and sucking all count.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of soft cubes — refill while the reaching continues.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A few slices or chunks — a quarter to half a mango — served with the meal rather than before it.",
+    },
+  ],
+  watchOuts: [
+    "Mango peel (the built-in handle) can irritate sensitive skin on contact — wipe cheeks and hands after the meal.",
+  ],
+  emoji: "🥭",
 };
 
 export default mango;

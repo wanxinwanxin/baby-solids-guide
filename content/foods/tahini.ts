@@ -83,6 +83,31 @@ const tahini: Food = {
     "Tahini whisked into plain yogurt with mashed banana makes a fast, familiar base for repeat sesame exposures.",
   ],
   sources: [SOURCES.eatStudy, SOURCES.aaaaiFoodAllergy, SOURCES.aapChoking],
+  nutrients: ["healthyFats", "calcium", "protein"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One teaspoon, whisked thin with warm liquid into a familiar puree — small, fully thinned, and traceable.",
+      frequency: "About twice a week once tolerated, to maintain sesame tolerance.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A see-through smear on a toast strip, or a tablespoon of smooth hummus as a dip.",
+      frequency: "About twice a week once tolerated.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A teaspoon or two as drizzles, sauces, and hummus across family meals.",
+      frequency: "Keep sesame appearing about twice a week.",
+    },
+  ],
+  watchOuts: [
+    "Store-bought hummus can be surprisingly salty — a smooth homemade batch keeps the sesame serve low-sodium.",
+  ],
+  emoji: "🥣",
 };
 
 export default tahini;

@@ -83,6 +83,28 @@ const sunflowerSeedButter: Food = {
     "Warm the mixing liquid first; cold liquid leaves lumps that take three times the whisking.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.aapChoking, SOURCES.cdcChokingHazards],
+  nutrients: ["healthyFats", "protein"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One teaspoon, whisked thin with warm liquid and stirred into a familiar puree — a little delivers a lot.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A paper-thin smear on one or two toast strips, or a teaspoon whisked thin into yogurt or oatmeal.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A teaspoon or two across the day as thin spreads, drizzles, and stir-ins — never by the spoonful.",
+    },
+  ],
+  watchOuts: [
+    "Many jars carry added sugar or salt — the ingredient list should read sunflower seeds and little else.",
+  ],
+  emoji: "🌻",
 };
 
 export default sunflowerSeedButter;

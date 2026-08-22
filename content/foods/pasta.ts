@@ -81,6 +81,29 @@ const pasta: Food = {
     "Batch-cook soft pasta, freeze it flat in a bag, and revive portions in a splash of boiling water for near-instant meals.",
   ],
   sources: [SOURCES.aaaaiFoodAllergy, SOURCES.wicGuide, SOURCES.nhsWeaning],
+  nutrients: ["iron"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One or two big soft pieces — a rigatoni or spiral each — gnawing practice first, eating second.",
+      frequency: "Wheat on the menu a couple of times a week keeps the exposure steady.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of pinky-nail pieces, scattered a few at a time and topped up on demand.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A quarter to half cup of soft-cooked pasta from the family pot — appetite sets the finish line.",
+    },
+  ],
+  watchOuts: [
+    "Jarred sauces and restaurant pasta run salty — a plain or lightly sauced portion suits a baby's tiny sodium budget.",
+  ],
+  emoji: "🍝",
 };
 
 export default pasta;

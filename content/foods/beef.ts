@@ -85,6 +85,26 @@ const beef: Food = {
     "If shredded beef slips out of a slippery fist, serve the 6–8 month strip slightly cooler — the surface gets tackier and easier to grip.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.aapStartingSolids, SOURCES.cdcChokingHazards],
+  nutrients: ["iron", "zinc", "protein"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One braised strip or a tablespoon of moist shredded mince folded into puree — even a few gnaws deliver meaningful iron.",
+      frequency: "Several times a week works well as part of a daily iron-rich rotation",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "One to two tablespoons of soft shredded pieces, offered a scatter at a time — let the baby set the pace.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A few tablespoons of tender pieces from the family braise — appetite swings day to day, and that's normal.",
+    },
+  ],
+  emoji: "🥩",
 };
 
 export default beef;

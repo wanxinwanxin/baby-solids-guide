@@ -79,6 +79,25 @@ const peas: Food = {
     "Peas' skins can shrug off a first meeting — offer them calmly again and again; repeated low-pressure exposure is what builds acceptance.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.cdcChokingHazards],
+  nutrients: ["protein", "fiber", "vitaminC"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "A tablespoon of mash, or a scatter of flattened peas — spread thin and let little hands do the raking.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of flattened peas at a time — refill the scatter as it clears.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A spoonful or two of whole soft peas, scattered a few at a time — picking them up one by one is half the fun.",
+    },
+  ],
+  emoji: "🫛",
 };
 
 export default peas;

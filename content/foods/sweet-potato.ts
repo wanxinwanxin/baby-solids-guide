@@ -81,6 +81,28 @@ const sweetPotato: Food = {
     "Batch-roast several at once, cut, and freeze wedges flat on a tray — they rewarm in the microwave in under a minute.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.nhsFrom6Months, SOURCES.aapStartingSolids],
+  nutrients: ["vitaminA", "fiber"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "One soft two-finger piece at a time — one nibble some meals, three pieces others; both are the baby self-regulating.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A small handful of soft cubes, scattered a few at a time and topped up on demand.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A few soft chunks or a couple of tablespoons of mash with the family meal — a starting point, not a quota.",
+    },
+  ],
+  watchOuts: [
+    "A heavy daily beta-carotene habit can tint the nose and palms orange (carotenemia) — harmless, and it fades with a more varied rotation.",
+  ],
+  emoji: "🍠",
 };
 
 export default sweetPotato;

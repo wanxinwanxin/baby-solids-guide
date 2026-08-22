@@ -81,6 +81,29 @@ const yogurt: Food = {
     "Tame the tang gradually by stirring in mashed banana or fruit puree, then step the fruit down as the baby acclimates.",
   ],
   sources: [SOURCES.eatStudy, SOURCES.aapStartingSolids, SOURCES.cdcFoodsAndDrinks],
+  nutrients: ["calcium", "protein"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "A teaspoon or two on a preloaded spoon or stirred into a familiar puree to start — build up as the milk introduction goes smoothly.",
+      frequency: "Once tolerated, fine as an everyday food — steady exposure also maintains dairy tolerance.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A few tablespoons in a small cup for spoon-and-dip practice — refill if the scraping continues.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "Half a cup or so with soft fruit pieces stirred in, at meals or snacks — the toddler's appetite does the portioning.",
+    },
+  ],
+  watchOuts: [
+    "Flavored, drinkable, and 'toddler' yogurts are usually the most sugared items in the dairy aisle — plain whole-milk is the habit to keep.",
+  ],
+  emoji: "🥛",
 };
 
 export default yogurt;

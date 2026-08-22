@@ -79,6 +79,28 @@ const walnut: Food = {
     "If your grinder takes the powder all the way to paste, treat it as walnut butter and thin 1 teaspoon with 2–3 teaspoons of warm liquid.",
   ],
   sources: [SOURCES.eatStudy, SOURCES.aaaaiFoodAllergy, SOURCES.aapChoking],
+  nutrients: ["omega3", "healthyFats", "protein"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "About half a teaspoon of flour-fine powder stirred completely into a familiar puree.",
+      frequency: "About twice a week once tolerated.",
+      note: "Each tree nut is its own allergen — walnut gets its own watched first serving.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "One to two teaspoons of ground walnut blended through oatmeal, yogurt, or fruit mash.",
+      frequency: "About twice a week once tolerated.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A teaspoon or two folded into porridge, yogurt, or soft baking — still flour-fine only, never pieces.",
+    },
+  ],
+  emoji: "🌰",
 };
 
 export default walnut;

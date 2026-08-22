@@ -83,6 +83,26 @@ const oatCereal: Food = {
     "The dry cereal doubles as a grip aid: roll slippery fruit pieces in a pinch of it for traction.",
   ],
   sources: [SOURCES.wicGuide, SOURCES.cdcFoodsAndDrinks, SOURCES.aapStartingSolids],
+  nutrients: ["iron"],
+  servingGuidance: [
+    {
+      band: "6-8m",
+      typicalAmount:
+        "Start with 1 tablespoon of dry cereal mixed thin — a few practice spoonfuls may be the whole meal, and that's fine.",
+      frequency: "Many families offer it daily while it's a main iron source.",
+    },
+    {
+      band: "9-12m",
+      typicalAmount:
+        "A bowl made from 1–2 tablespoons of dry cereal, mixed thick — let the baby's spoon-grabs set the pace.",
+    },
+    {
+      band: "12-24m",
+      typicalAmount:
+        "A small bowl — 2–3 tablespoons dry — at breakfast; an offer, never a quota.",
+    },
+  ],
+  emoji: "🥣",
 };
 
 export default oatCereal;
