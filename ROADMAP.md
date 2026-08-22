@@ -456,11 +456,207 @@ Tasks: SEO metadata + OG images for food pages; PWA manifest + offline caching o
 
 ## 12. Out of scope for v1 (explicit cutline)
 
-Recipes/meal plans, photos of real prepared food (diagrams suffice), native apps, push notifications, multi-baby switching UI (model supports it; UI later), localization, community/comments, growth tracking, formula/milk-feed tracking.
+Recipes/meal plans, photos of real prepared food (diagrams suffice), native apps, push notifications, multi-baby switching UI (model supports it; UI later), localization, community/comments, growth tracking, formula/milk-feed tracking. **Most of these are now specced in Part II below.**
 
-## 13. Open questions for the product owner (non-blocking; defaults chosen)
+## 13. Open questions for the product owner (status as of 2026-08-22)
 
-1. Final product name (default: keep codename until Phase 7).
-2. Ship Phase 6 (accounts) before or after public launch? (default: after — local-first + export covers v1).
-3. Allergen default order — accept peanut-first default? (default: yes, editable per user.)
-4. Age range ceiling 24 months? (default: yes.)
+1. Final product name — **still open**; process and rename mechanics specced in Phase 13.
+2. Accounts before/after launch — **resolved: after** (shipped v1 local-first; full sync spec in Phase 6).
+3. Peanut-first allergen order — **shipped as default**, user-editable.
+4. Age ceiling 24 months — **shipped as default.**
+
+---
+
+# Part II — Post-v1 roadmap
+
+Written 2026-08-22, immediately after v1 shipped. Same contract as Part I: an implementation agent works phase by phase, runs every check in a phase's **Verification** block before moving on, and commits once per completed phase (or per sub-phase where marked). Phases here are independent unless the dependency column says otherwise.
+
+## How persistence works today (context for Phase 6.0/6)
+
+v1 is local-first: the Zustand store persists to `localStorage` (key `opensolids-v1`), so **data already survives across sessions automatically in the same browser — no export/import needed day-to-day.** Export/import exists for backups and device moves. The real gaps:
+
+1. **Device-bound** — a new phone/laptop/browser starts empty until a JSON import.
+2. **Safari/iOS eviction** — WebKit may purge script-writable storage after ~7 days without a visit (installing to the home screen largely exempts it). A daily-use feeding app is usually safe, but a family that lapses two weeks can lose data.
+3. **Site-data clearing** wipes everything with no recovery.
+
+Phase 6.0 mitigates with backup nudges; Phase 6 solves it properly with opt-in accounts + sync. Guest mode remains the default forever.
+
+## Sequencing & sizing
+
+| Phase | What | Depends on | Size |
+|---|---|---|---|
+| 6.0 | Persistence quick wins (backup nudges, iOS guidance) | — | ½ day |
+| 6 | Accounts & cross-device sync | 6.0 recommended | ~4 days |
+| 8 | Allergen maintenance reminders (calendar + web push) | 6 (push path only) | 2–3 days |
+| 9 | Content 63 → 150 foods + media enrichment | — | 4–5 days |
+| 10 | Multi-baby support | — | 1–2 days |
+| 11 | Insights dashboard | — | ~2 days |
+| 12 | Localization (Spanish first) | 9 recommended first | 3–4 days (stretch) |
+| 13 | Final name, custom domain, launch hardening | before any marketing push | ~2 days |
+
+---
+
+### Phase 6.0 — Persistence quick wins (~½ day)
+
+**Goal:** until accounts exist, make data loss unlikely and understood.
+
+Tasks:
+1. **Backup nudge banner** on `/today`: show when `logs.length ≥ 10` AND (never exported OR `lastExportAt` > 14 days ago). Add `lastExportAt?: string` and `backupNudgeSnoozedUntil?: string` to the store (persist-version bump 1→2 with a `migrate` that backfills nothing — new optional fields only). Banner links to the History export button; dismissing snoozes 7 days.
+2. Set `lastExportAt` inside `exportJson()`.
+3. Copy updates: `/about` privacy section and the onboarding disclaimer gain one sentence each on device-bound storage and Safari's ~7-day eviction; recommend **Add to Home Screen** on iOS.
+4. Pure predicate `shouldNudgeBackup({logCount, lastExportAt, snoozedUntil, today})` in `src/lib/backup-nudge.ts` — no date logic in components.
+
+**Verification:** table-driven unit tests for the predicate (fresh user / 9 vs 10 logs / recent export / stale export / active snooze / expired snooze); e2e: seed 10 logs → banner visible → export → banner gone; store migration test (v1 persisted blob loads under v2).
+
+---
+
+### Phase 6 — Accounts & cross-device sync (~4 days)
+
+**Goal:** opt-in account that syncs a family's data across devices. Guest mode stays the default; nothing about v1 flows changes for signed-out users.
+
+**Locked decisions:**
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| Database | Railway Postgres (`railway add --database postgres`; `DATABASE_URL` referenced into the app service) | Same platform, one bill |
+| ORM / migrations | Drizzle + drizzle-kit, migrations committed under `drizzle/` | Typed, CI-checkable |
+| Auth | better-auth: email+password (verification & reset via Resend) + Google OAuth | Self-hosted, no per-MAU pricing, works on Railway |
+| Sync model | Snapshot merge with entity-level last-write-wins (LWW) on `updatedAt`; tombstones for deleted logs | Data volume is tiny (<5k rows/family); simplest correct model |
+| Server validation | The SAME Zod schemas from `src/lib/storage/schema.ts` validate every payload server-side | One source of truth |
+| Integration tests | pglite (in-process Postgres) in Vitest — no service containers needed for unit/integration CI | Fast, hermetic |
+
+**Schema (drizzle):**
+
+```
+user / session / account / verification   — better-auth generated tables
+babies             (id uuid pk, user_id fk → user.id ON DELETE CASCADE, payload jsonb, updated_at timestamptz)
+exposure_logs      (id uuid pk, baby_id fk CASCADE, payload jsonb, updated_at timestamptz, deleted_at timestamptz)
+allergen_overrides (baby_id fk CASCADE, allergen_id text, payload jsonb, updated_at timestamptz, PK (baby_id, allergen_id))
+push_subscriptions (user_id fk CASCADE, endpoint text pk, keys jsonb, created_at)   — used by Phase 8
+```
+
+`payload` is the exact client shape. No server-side querying beyond fetch-per-user, so jsonb beats columns.
+
+**Client changes:**
+1. Add `updatedAt: string` to `BabyProfile`, `ExposureLog`, `AllergenOverride`; persist-version bump (backfill `updatedAt = now` in `migrate`). Export envelope becomes `schemaVersion: 2`; importer accepts v1 and v2.
+2. `deleteLog` also records the id in a `deletedLogIds: string[]` ledger (tombstones must sync).
+3. `SyncedStore` layered on the existing store: when signed in, every mutation schedules a debounced (2s) `POST /api/sync`; login and window-focus trigger `GET /api/sync`; merge rule = per entity id, newer `updatedAt` wins, tombstone beats older update.
+4. **First-login migration:** server empty → push local snapshot. Server already has a different baby → conflict screen with exactly three choices: *keep this device's data* / *keep account data* / *merge (union logs by id, LWW on conflicts)*.
+5. UI: `/account` page (email, linked provider, "download my data from the server", delete account), sign-in entry on `/history` and the footer, subtle "synced ✓ / syncing…" indicator on `/today`.
+
+**API (route handlers, all behind the better-auth session, all Zod-validated):**
+- `GET /api/sync` → full snapshot for the user.
+- `POST /api/sync` `{baby?, logs[], overrides[], deletedLogIds[]}` → server merges LWW, returns merged snapshot.
+- `DELETE /api/account` → cascade delete + sign-out.
+
+**Env & ops:** `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID/SECRET`, `RESEND_API_KEY` — set via `railway variables`; document in README. Drizzle migrations run in the Railway build command (`drizzle-kit migrate && next build`).
+
+**Privacy (binding):** server stores email + the envelope, nothing else; no analytics added; delete is a hard cascade; `/about` updated to say exactly this.
+
+**Verification:**
+- Unit: LWW merge matrix (local newer / server newer / tombstone vs older update / tombstone vs newer update / unknown ids), Zod rejects malformed payloads, envelope v1 import still works.
+- Integration (Vitest + pglite): migrations apply cleanly; push→pull roundtrip; account delete cascades all four tables.
+- Authorization tests: unauthenticated `/api/sync` → 401; user A can never read/write user B's rows (explicit test with two seeded users).
+- e2e (local Postgres via `docker run postgres` or a Railway dev DB, behind `ENABLE_SYNC_E2E=1` so default CI stays hermetic): guest builds history → signs up → second browser context signs in and sees identical history → edits there → first context pulls on focus → delete-account empties the server and leaves local guest data intact.
+- Manual gate: sign-up email actually delivered via Resend on the production deploy (documented in the phase PR).
+
+---
+
+### Phase 8 — Allergen maintenance reminders (~2–3 days; push path needs Phase 6)
+
+**Goal:** the engine already computes "peanut is overdue" (R3) — deliver that insight when the app is closed. Two delivery paths so guests get value too.
+
+**Path A — calendar file (works for everyone, no server):**
+1. `icsForMaintenance(allergenStates, now)` pure function → VCALENDAR with one weekly-recurring event per *maintaining* allergen ("Serve peanut — keeping it in rotation maintains tolerance", RRULE `FREQ=WEEKLY;INTERVAL=1`, two per week for the first month via a second BYDAY).
+2. "Add reminders to my calendar" button on `/allergens` → client-side Blob download.
+
+**Path B — web push (account users):**
+1. `web-push` (VAPID) — env `VAPID_PUBLIC_KEY/PRIVATE_KEY/SUBJECT`; subscriptions in the Phase 6 `push_subscriptions` table; opt-in card on `/today` (never prompt unasked).
+2. Service-worker `push` + `notificationclick` handlers (open `/today`).
+3. `POST /api/notify/run` guarded by `CRON_SECRET` header: for each user with subscriptions, load snapshot → run the engine with injected `today` → send at most ONE push/day/user, only for `urgent` maintenance lapses (>14 days) or a newly-eligible next allergen. Schedule: Railway cron service (or a GitHub Actions `schedule` hitting the endpoint) daily 16:00 UTC.
+
+**Verification:** unit — ICS output snapshot (valid RRULEs, escaping) and notify-selection logic (reuses R3; cases: no lapse → no push, lapse → one push, two lapses → still one push, already pushed today → none); integration — `/api/notify/run` with a mocked `web-push` asserts exact payloads and the CRON_SECRET gate (401 without); e2e — opt-in flow persists a subscription row; manual gate — one real push received on a phone, screenshot in the PR.
+
+---
+
+### Phase 9 — Content expansion: 63 → 150 foods + media enrichment (~4–5 days)
+
+**Goal:** cover a family's real grocery run, add the herbs/spices program, and put a verified video on the top foods — same lint-enforced quality bar as v1.
+
+**Schema additions (with lint rules):**
+1. `cuisineTags?: string[]` on Food (free-form, lowercase).
+2. New category `herb-spice` (enum extension + `CATEGORY_LABELS` + import-flow grouping).
+3. New lint rules: every `chokingRisk: "high"` food must carry a `cutDiagram` in **every** band; per-category minimums at completion (vegetable ≥ 30, fruit ≥ 30, protein ≥ 25, grain ≥ 20, legume ≥ 12, dairy ≥ 8, herb-spice ≥ 10, fat-other ≥ 4); corpus minimum parameterized (`FOODS_MIN` env, default 60, flipped to 150 in the phase's final commit so intermediate merges stay green).
+
+**Target list (+87; equivalents may be swapped if sourcing is weak, count may not drop):**
+- *Proteins (12):* trout, tilapia, halibut, canned light tuna (mercury-tier note), crab [shellfish], scallops [shellfish] ⚠(rubbery), mussels [shellfish], duck, bison, venison, sole, tempeh [soy]
+- *Dairy (6):* kefir, cottage cheese, ricotta, paneer, goat cheese, butter/ghee
+- *Legumes (6):* white beans, kidney beans, pinto beans, split peas, mung beans, lima beans
+- *Nuts & seeds (7):* ground pecan [tree-nut], ground pistachio [tree-nut], hazelnut butter [tree-nut] ⚠, pumpkin-seed butter ⚠, hemp seeds, chia (gelled, hydration note), ground flaxseed
+- *Grains (9):* buckwheat, millet, couscous [wheat], tortilla [wheat], pita [wheat] ⚠(gummy), amaranth, teff, spelt [wheat], soba [wheat]
+- *Vegetables (17):* asparagus, mushrooms, cabbage, kale, brussels sprouts, eggplant, celery ⚠(strings), corn on the cob, snap peas ⚠, radish ⚠(hard raw), leek, onion, parsnip, turnip, pumpkin, okra, swiss chard
+- *Fruits (17):* plum, apricot, nectarine, cantaloupe, honeydew, pineapple, pomegranate arils ⚠⚠, fig, dates ⚠(sticky), papaya, lychee ⚠⚠(the classic aspiration fruit — say so), persimmon, clementine, blackberry, cranberry (cooked), coconut, guava
+- *Herbs & spices (10):* cinnamon, cumin, ginger, turmeric, paprika, dill, basil, oregano, mint, cilantro — prep specs describe amounts (a pinch stirred into a familiar food), the "flavor variety without salt/sugar" rationale, and any staining/irritation notes
+- *Fats/other (3):* avocado oil, nutritional yeast, nori/seaweed ⚠(sodium + clinging-film note)
+
+**Authoring process:** identical to v1 — carrot/peanut-butter as canonical templates, parallel agent batches of ~12 with per-food flag tables in the prompt, `gen:food-index` + content-lint after each batch, no solidstarts.com contact ever.
+
+**Media enrichment:** top 30 foods (by first-food relevance) each get one `MediaLink` video from an official health-org channel (NHS, children's hospitals, WIC programs), license + `verifiedOn` recorded; extend `check-links` to validate YouTube links via the oEmbed endpoint (`https://www.youtube.com/oembed?url=…` → 200 = live, no API key). Diagrams-first rule stands: no filler links.
+
+**Verification:** content-lint green at 150 with the new rules; every one of the 9 allergens now has ≥ 2 delivery foods; oEmbed checks pass in CI; every new ⚠⚠ food (pomegranate, lychee) names its hazard in the first sentence of `chokingNotes`; 10% random sample re-checked against cited sources, documented in the phase PR; e2e browse still passes (categories filter includes herb-spice).
+
+---
+
+### Phase 10 — Multi-baby support (~1–2 days)
+
+**Goal:** twins and second kids without re-onboarding. The data model was built for this (logs already carry `babyId`); this phase is storage shape + UI.
+
+Tasks:
+1. Store migration v2→v3: `{baby: BabyProfile|null}` → `{babies: BabyProfile[], activeBabyId: string|null}`; `AllergenOverride` gains `babyId` (migration stamps existing overrides with the existing baby's id). Export envelope v3 carries all babies; importer accepts v1/v2/v3.
+2. Selectors: `activeBaby()`, logs/overrides filtered by `activeBabyId` everywhere the engine or UI reads them (grep gate: no direct `state.babies[0]`).
+3. UI: baby switcher in `AppNav` (rendered only when `babies.length > 1`), "Add another baby" on `/history` reusing the onboarding wizard with a `?add=1` flag, per-baby delete.
+4. Phase 6 interaction (if shipped): `babies` is already multi-row server-side; `allergen_overrides` PK gains the baby dimension via migration.
+
+**Verification:** migration unit tests (v1→v3, v2→v3, override stamping); e2e: onboard baby A → add baby B → log different foods for each → `/today` and `/history` switch cleanly and never leak across; export/import roundtrip with two babies; engine tests untouched (it always receives one baby).
+
+---
+
+### Phase 11 — Insights dashboard (~2 days)
+
+**Goal:** answer "how are we actually doing?" from data already logged — descriptive only, zero diagnostic claims.
+
+Tasks:
+1. `src/lib/insights/` pure selectors, each with fixtures: `categoryVariety(logs, foods, 14d)` (distinct foods per category), `ironExposuresPerWeek(logs, foods)`, `allergenCoverage(states)` (introduced/maintaining/paused counts), `textureTimeline(logs)` (band used over time), `persistentRefusals(logs)` (attempt counts on refused foods, with the 8–15-tries reframing).
+2. `/insights` page (client): stat tiles + zero-dependency inline-SVG spark bars (`components/charts/Spark.tsx`, `currentColor`-aware); every stat links to the filtered history behind it; accessible table alternative for each chart.
+3. Copy guardrail (binding): no percentiles, no comparisons to "normal", no deficiency language — celebrate variety, surface gaps as suggestions ("nothing from legumes in 2 weeks — lentils reheat well").
+
+**Verification:** unit tests per selector incl. empty-state and single-log fixtures; e2e: seeded 3-week history renders expected counts, `/insights` renders meaningfully at 0 logs (pointing to `/log`); axe 0 critical; no new npm dependencies (chart lib ban enforced by review).
+
+---
+
+### Phase 12 — Localization: Spanish first (~3–4 days, stretch)
+
+**Goal:** the WIC-adjacent audience is heavily Spanish-speaking; ship `/es` without forking content quality.
+
+Tasks (sub-phased; commit each):
+1. **12.0 UI strings:** next-intl with app-router locale segment; extract all UI strings to `messages/en.json`; machine-translate to `messages/es.json` then flag a native-speaker review task (blocking for launch of `/es`, not for merge); locale switcher in the footer; `hreflang` metadata.
+2. **12.1 content overlay:** `content/foods-es/<slug>.ts` partial overrides (name, form, passFailTest, tips first — the safety-critical strings); loader falls back per-field to English with a visible "EN" badge; lint report lists translation coverage per food (informational, not blocking).
+3. **12.2 units:** authoring rule going forward — dual units inline ("1 teaspoon (5 ml)"); applied to all `-es` content and new English content.
+
+**Verification:** build renders both locales; message-key parity check (en/es same key set) as a lint script; e2e smoke: onboarding happy path in `/es`; safety pages (`/safety`, emergency interrupt) fully translated before `/es` is linked publicly — explicit checklist in the PR; native-review sign-off recorded before announcement.
+
+---
+
+### Phase 13 — Final name, custom domain, launch hardening (~2 days)
+
+**Goal:** shed the codename and make the deployment boring.
+
+Tasks:
+1. **Name:** shortlist 5 candidates → knockout search each (USPTO TESS live-mark search for classes 9/41/44, .com/.app domain availability, App Store/Play, top social handles) → owner picks → mechanical rename: introduce `src/lib/brand.ts` exporting `BRAND` consumed by layout, nav, manifest, README, and about; grep gate: zero "OpenSolids" occurrences outside `brand.ts` and git history.
+2. **Domain:** buy + `railway domain add`; update `NEXT_PUBLIC_SITE_URL`; permanent redirect from the railway.app subdomain (host check in `next.config` redirects).
+3. **Per-food OG images:** `opengraph-image.tsx` under `foods/[slug]` via `next/og` — food name, the 6–8m form sentence, brand mark; verify with a card validator.
+4. **a11y as a CI gate:** `@axe-core/playwright` scan of `/`, `/foods`, `/foods/carrot`, `/today`, `/log`, `/safety` — 0 critical violations, wired into the e2e job.
+5. **Ops:** `/api/health` (returns build sha) + Railway healthcheck path; weekly workflow already re-checks links — add a production ping step; error visibility stays zero-third-party (Railway logs; a `window.onerror` console breadcrumb only) — documented in `/about`.
+6. **Licensing (owner decision, defaults):** code MIT; content CC BY 4.0 with attribution requirements in README; `LICENSE` + `SECURITY.md` added.
+
+**Verification:** custom domain serves 200 with valid TLS and the old subdomain 301s; OG image renders for 3 spot-checked foods; axe job green in CI; healthcheck shows in Railway; rename grep gate passes; `npm run check` + e2e + Lighthouse ≥ 90 re-run on the renamed production deploy.
