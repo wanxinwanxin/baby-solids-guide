@@ -84,6 +84,9 @@ async function main() {
     if ((f.chokingRisk === "moderate" || f.chokingRisk === "high") && !f.chokingNotes?.trim()) {
       errors.push(`${label}: chokingRisk=${f.chokingRisk} requires chokingNotes`);
     }
+    if (f.chokingRisk === "high" && !f.prepSpecs[0].cutDiagram) {
+      errors.push(`${label}: chokingRisk=high requires a cutDiagram in the first band`);
+    }
 
     if (f.slug === "honey" && f.minAgeMonths < 12) {
       errors.push(`${label}: honey must have minAgeMonths >= 12`);
@@ -117,7 +120,17 @@ async function main() {
     if (!allergensCovered.has(a)) errors.push(`corpus: no food covers allergen "${a}"`);
   }
   if (ironRichCount < 12) errors.push(`corpus: only ${ironRichCount} iron-rich foods (need ≥12)`);
-  if (allFoods.length < 60) errors.push(`corpus: only ${allFoods.length} foods (v1 target: 60)`);
+  const FOODS_MIN = Number(process.env.FOODS_MIN ?? 150);
+  if (allFoods.length < FOODS_MIN) errors.push(`corpus: only ${allFoods.length} foods (target: ${FOODS_MIN})`);
+  const CATEGORY_MINIMUMS: Record<string, number> = {
+    vegetable: 30, fruit: 30, protein: 25, grain: 20, legume: 12, dairy: 8, "herb-spice": 10, "fat-other": 4,
+  };
+  const categoryCounts = new Map<string, number>();
+  for (const f of allFoods) categoryCounts.set(f.category, (categoryCounts.get(f.category) ?? 0) + 1);
+  for (const [cat, min] of Object.entries(CATEGORY_MINIMUMS)) {
+    const n = categoryCounts.get(cat) ?? 0;
+    if (n < min) errors.push(`corpus: category ${cat} has ${n} foods (minimum ${min})`);
+  }
 
   // ——— Learn guides (Phase 9) ———
   const { guideSchema } = await import("../src/content-schema/food");

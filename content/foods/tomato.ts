@@ -34,6 +34,7 @@ const tomato: Food = {
         "Serving an underripe, firm tomato whose flesh can break into resilient chunks.",
         "Mistaking the harmless red rash tomato acid can leave around the mouth for an allergic reaction — it's contact irritation from acidity, not an allergy, and it fades on its own.",
       ],
+      cutDiagram: "wedge-handle",
       media: [],
     },
     {

@@ -34,6 +34,7 @@ const walnut: Food = {
         "Grinding so long the powder turns to oily paste; if that happens, thin it like a nut butter (1 teaspoon to 2–3 teaspoons warm liquid) before serving.",
         "Dusting the powder dry on top of food instead of stirring it in — loose dry powder can be inhaled or clump in the mouth.",
       ],
+      cutDiagram: "mash",
       media: [],
     },
     {

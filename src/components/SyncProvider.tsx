@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { create } from "zustand";
 import { useSession } from "@/lib/auth-client";
+import { snapshotFingerprint } from "@/lib/sync/merge";
 import { snapshotOf, useGuideStore } from "@/lib/storage/store";
 
 /** Tiny status store so any page can render a sync indicator. */
@@ -32,10 +33,15 @@ export function useAuthEnabled(): boolean {
 
 /**
  * Phase 6 — background sync loop. Mounted once in the root layout.
- * Signed out: does nothing. Signed in: pushes the local snapshot (debounced
- * 2.5s after any change), pulls/merges on login and window focus. The server
- * merges LWW and returns the authoritative snapshot, which replaces local
- * state without re-triggering a push.
+ *
+ * Safety properties:
+ * - never pushes before the persisted store has hydrated (a pre-hydration
+ *   push would upload an empty snapshot);
+ * - the server response is MERGED into local state (store.applySnapshot is
+ *   LWW + tombstones), never blind-applied — a raced response can't destroy
+ *   local data;
+ * - if local state still differs after applying (we had newer rows the push
+ *   didn't carry), one reconciliation push is scheduled.
  */
 export function SyncProvider() {
   const enabled = useAuthEnabled();
@@ -45,13 +51,26 @@ export function SyncProvider() {
   const setStatus = useSyncStatus((s) => s.set);
   const userId = session?.user?.id;
 
+  const storeHydrated = useSyncExternalStore(
+    (cb) => useGuideStore.persist.onFinishHydration(cb),
+    () => useGuideStore.persist.hasHydrated(),
+    () => false,
+  );
+
+  const pushRef = useRef<(() => Promise<void>) | null>(null);
+  const schedulePush = useCallback((delayMs: number) => {
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => void pushRef.current?.(), delayMs);
+  }, []);
+
   const push = useCallback(async () => {
     try {
       setStatus("syncing");
+      const local = snapshotOf(useGuideStore.getState());
       const res = await fetch("/api/sync", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(snapshotOf(useGuideStore.getState())),
+        body: JSON.stringify(local),
       });
       if (!res.ok) {
         setStatus("error");
@@ -59,24 +78,35 @@ export function SyncProvider() {
       }
       const { snapshot } = await res.json();
       applying.current = true;
-      useGuideStore.getState().applySnapshot(snapshot);
-      applying.current = false;
+      try {
+        useGuideStore.getState().applySnapshot(snapshot);
+      } finally {
+        applying.current = false;
+      }
+      // Reconcile: if local still has rows the server hasn't seen, push again.
+      const after = snapshotOf(useGuideStore.getState());
+      if (snapshotFingerprint(after) !== snapshotFingerprint(snapshot)) {
+        schedulePush(1500);
+      }
       setStatus("synced");
     } catch {
       setStatus("error");
     }
-  }, [setStatus]);
+  }, [setStatus, schedulePush]);
 
   useEffect(() => {
-    if (!enabled || !userId) {
+    pushRef.current = push;
+  }, [push]);
+
+  useEffect(() => {
+    if (!enabled || !userId || !storeHydrated) {
       setStatus(enabled ? "idle" : "off");
       return;
     }
     void push();
     const unsubscribe = useGuideStore.subscribe(() => {
       if (applying.current) return;
-      clearTimeout(timer.current);
-      timer.current = setTimeout(() => void push(), 2500);
+      schedulePush(2500);
     });
     const onFocus = () => void push();
     window.addEventListener("focus", onFocus);
@@ -85,7 +115,7 @@ export function SyncProvider() {
       window.removeEventListener("focus", onFocus);
       clearTimeout(timer.current);
     };
-  }, [enabled, userId, push, setStatus]);
+  }, [enabled, userId, storeHydrated, push, schedulePush, setStatus]);
 
   return null;
 }

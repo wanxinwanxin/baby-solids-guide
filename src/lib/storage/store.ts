@@ -19,6 +19,7 @@ import {
   exposureLogSchema,
   planSchema,
 } from "./schema";
+import { mergeSnapshots } from "@/lib/sync/merge";
 
 /**
  * GuideStore (ROADMAP §5.6, Part II) — the only module allowed to touch
@@ -169,12 +170,16 @@ export const useGuideStore = create<GuideState>()(
         });
       },
 
-      applySnapshot: (snap) => {
+      applySnapshot: (serverSnap) => {
+        // SAFETY: never blind-replace — merge the server snapshot into local
+        // state (LWW + tombstones). A raced/stale/empty server response can
+        // then never destroy local data; a follow-up push reconciles instead.
+        const merged = mergeSnapshots(serverSnap, snapshotOf(get()));
         const activeBabyId =
-          get().activeBabyId && snap.babies.some((b) => b.id === get().activeBabyId)
+          get().activeBabyId && merged.babies.some((b) => b.id === get().activeBabyId)
             ? get().activeBabyId
-            : (snap.babies[0]?.id ?? null);
-        set({ ...snap, activeBabyId });
+            : (merged.babies[0]?.id ?? null);
+        set({ ...merged, activeBabyId });
       },
 
       addLog: (log) => set({ logs: [...get().logs, { ...log, updatedAt: now() }] }),

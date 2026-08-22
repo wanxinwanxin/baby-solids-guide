@@ -81,6 +81,24 @@ export function mergeSnapshots(server: SyncSnapshot, client: SyncSnapshot): Sync
   return { babies, logs, overrides, checkIns, plans, deletedLogIds, deletedBabyIds };
 }
 
+/**
+ * Order-insensitive identity of a snapshot (ids + updatedAt), used to decide
+ * whether a reconciliation push is needed. Deliberately ignores payload key
+ * order, which differs between local objects and jsonb roundtrips.
+ */
+export function snapshotFingerprint(s: SyncSnapshot): string {
+  const sorted = (rows: string[]) => [...rows].sort().join("|");
+  return [
+    sorted(s.babies.map((b) => `${b.id}@${b.updatedAt ?? ""}`)),
+    sorted(s.logs.map((l) => `${l.id}@${l.updatedAt ?? ""}`)),
+    sorted(s.overrides.map((o) => `${o.babyId}:${o.allergenId}@${o.status}`)),
+    sorted(s.checkIns.map((c) => `${c.id}@${c.status}`)),
+    sorted(s.plans.map((p) => `${p.babyId}@${p.updatedAt ?? ""}:${p.entries.length}`)),
+    sorted(s.deletedLogIds),
+    sorted(s.deletedBabyIds),
+  ].join("||");
+}
+
 export const EMPTY_SNAPSHOT: SyncSnapshot = {
   babies: [],
   logs: [],

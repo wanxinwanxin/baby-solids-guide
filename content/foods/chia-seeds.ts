@@ -96,7 +96,7 @@ const chiaSeeds: Food = {
     {
       band: "12-24m",
       typicalAmount:
-        "A small bowl of pudding or a chia-jam toast — appetite, not the recipe, sets the portion.",
+        "A small bowl of pudding or a chia-jam toast strip — appetite, not the recipe, sets the portion.",
     },
   ],
   watchOuts: [
