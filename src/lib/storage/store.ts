@@ -34,6 +34,7 @@ export type GuideState = {
   checkIns: CheckIn[];
   plans: Plan[];
   deletedLogIds: string[];
+  deletedBabyIds: string[];
   lastExportAt?: string;
   backupNudgeSnoozedUntil?: string;
 
@@ -50,10 +51,28 @@ export type GuideState = {
   setPlan: (plan: Plan) => void;
   clearPlan: (babyId: string) => void;
   snoozeBackupNudge: (untilIso: string) => void;
+  /** Replace local state with a server-merged snapshot (Phase 6 sync). */
+  applySnapshot: (s: SyncSnapshot) => void;
   reset: () => void;
   exportJson: () => string;
   importJson: (json: string) => ImportResult;
 };
+
+/** The entity payload exchanged with /api/sync. */
+export type SyncSnapshot = {
+  babies: BabyProfile[];
+  logs: ExposureLog[];
+  overrides: AllergenOverride[];
+  checkIns: CheckIn[];
+  plans: Plan[];
+  deletedLogIds: string[];
+  deletedBabyIds: string[];
+};
+
+export function snapshotOf(s: GuideState): SyncSnapshot {
+  const { babies, logs, overrides, checkIns, plans, deletedLogIds, deletedBabyIds } = s;
+  return { babies, logs, overrides, checkIns, plans, deletedLogIds, deletedBabyIds };
+}
 
 // ——— Selectors (pure; usable with useGuideStore(selector)) ———
 export const selectActiveBaby = (s: GuideState): BabyProfile | null =>
@@ -97,6 +116,7 @@ const EMPTY = {
   checkIns: [] as CheckIn[],
   plans: [] as Plan[],
   deletedLogIds: [] as string[],
+  deletedBabyIds: [] as string[],
   lastExportAt: undefined as string | undefined,
   backupNudgeSnoozedUntil: undefined as string | undefined,
 };
@@ -145,7 +165,16 @@ export const useGuideStore = create<GuideState>()(
           overrides: get().overrides.filter((o) => o.babyId !== id),
           checkIns: get().checkIns.filter((c) => c.babyId !== id),
           plans: get().plans.filter((p) => p.babyId !== id),
+          deletedBabyIds: [...new Set([...get().deletedBabyIds, id])],
         });
+      },
+
+      applySnapshot: (snap) => {
+        const activeBabyId =
+          get().activeBabyId && snap.babies.some((b) => b.id === get().activeBabyId)
+            ? get().activeBabyId
+            : (snap.babies[0]?.id ?? null);
+        set({ ...snap, activeBabyId });
       },
 
       addLog: (log) => set({ logs: [...get().logs, { ...log, updatedAt: now() }] }),
@@ -293,6 +322,7 @@ export const useGuideStore = create<GuideState>()(
         checkIns,
         plans,
         deletedLogIds,
+        deletedBabyIds,
         lastExportAt,
         backupNudgeSnoozedUntil,
       }) => ({
@@ -303,6 +333,7 @@ export const useGuideStore = create<GuideState>()(
         checkIns,
         plans,
         deletedLogIds,
+        deletedBabyIds,
         lastExportAt,
         backupNudgeSnoozedUntil,
       }),

@@ -8,6 +8,7 @@ import {
   googleCalendarUrl,
   icsForCheckIns,
 } from "@/lib/checkins";
+import { useSession } from "@/lib/auth-client";
 import { newId, useGuideStore } from "@/lib/storage/store";
 import type { BabyProfile, CheckInPreset } from "@/lib/storage/types";
 import { allergenPrograms } from "../../../content/allergens";
@@ -21,6 +22,7 @@ import { cn } from "@/lib/utils";
  */
 export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProfile; logId: string }) {
   const addCheckIns = useGuideStore((s) => s.addCheckIns);
+  const { data: session } = useSession();
   const [selected, setSelected] = useState<Set<CheckInPreset>>(new Set(["2h"]));
   const [scheduled, setScheduled] = useState<{ dueAts: string[] } | null>(null);
 
@@ -51,6 +53,22 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
         status: "pending" as const,
       })),
     );
+    // Signed-in users also get these as server-delivered push notifications.
+    if (session?.user) {
+      void fetch("/api/reminders", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          reminders: dueAts.map((dueAt) => ({
+            kind: "check-in",
+            title: `Check ${baby.nickname} — ${food.name}`,
+            body: `Watch for: ${reactionSigns.slice(0, 3).join("; ")}. Tap to log what you see.`,
+            url: "/today",
+            dueAt,
+          })),
+        }),
+      }).catch(() => {});
+    }
     setScheduled({ dueAts });
   }
 

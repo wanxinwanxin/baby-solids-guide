@@ -4,7 +4,7 @@
     "buildCommand": "rm -rf .next/cache/turbopack && npm run build"
   },
   "deploy": {
-    "startCommand": "npm run start",
+    "startCommand": "node scripts/migrate.mjs && npm run start",
     "restartPolicyType": "ON_FAILURE"
   }
 }

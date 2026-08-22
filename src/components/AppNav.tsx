@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useHydrated } from "@/lib/hooks";
 import { useGuideStore } from "@/lib/storage/store";
+import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
@@ -46,7 +47,7 @@ export function AppNav() {
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-4xl items-center gap-1 overflow-x-auto px-3">
         <Link href="/" className="mr-2 shrink-0 text-base font-bold text-emerald-700 dark:text-emerald-400">
-          OpenSolids
+          {BRAND}
         </Link>
         <nav className="flex items-center gap-1" aria-label="Main">
           {LINKS.map((l) => (

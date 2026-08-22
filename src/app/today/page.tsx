@@ -17,6 +17,9 @@ import { recommend } from "@/lib/engine";
 import { shouldNudgeBackup, snoozeUntil } from "@/lib/backup-nudge";
 import { pendingCheckIns } from "@/lib/checkins";
 import { foodBySlug } from "../../../content/foods";
+import { PushOptIn } from "@/components/PushOptIn";
+import { useAuthEnabled, useSyncStatus } from "@/components/SyncProvider";
+import { useSession } from "@/lib/auth-client";
 import { useGuideStore } from "@/lib/storage/store";
 import { TEXTURE_STAGES } from "@/lib/storage/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -39,6 +42,9 @@ export default function TodayPage() {
   const lastExportAt = useGuideStore((s) => s.lastExportAt);
   const backupNudgeSnoozedUntil = useGuideStore((s) => s.backupNudgeSnoozedUntil);
 
+  const authEnabled = useAuthEnabled();
+  const { data: session } = useSession();
+  const syncState = useSyncStatus((s) => s.state);
   const now = useMemo(() => new Date(), []);
   const rec = useMemo(() => {
     if (!baby) return null;
@@ -48,12 +54,16 @@ export default function TodayPage() {
     () => pendingCheckIns(checkIns, now),
     [checkIns, now],
   );
-  const showBackupNudge = shouldNudgeBackup({
-    logCount: logs.length,
-    lastExportAt,
-    snoozedUntil: backupNudgeSnoozedUntil,
-    today: now,
-  });
+  const showAccountCard = authEnabled && !session && logs.length >= 5;
+  const showBackupNudge =
+    !showAccountCard &&
+    !session &&
+    shouldNudgeBackup({
+      logCount: logs.length,
+      lastExportAt,
+      snoozedUntil: backupNudgeSnoozedUntil,
+      today: now,
+    });
 
   if (!hydrated) return null;
 
@@ -119,8 +129,26 @@ export default function TodayPage() {
         <h1 className="text-2xl font-bold">Today for {baby.nickname}</h1>
         <span className="text-sm text-muted-foreground">
           {age.toFixed(1)} months{baby.dueDate ? " (corrected)" : ""} · stage {rec.textureStage.current}
+          {session && (
+            <span className="ml-2 text-xs text-emerald-700 dark:text-emerald-400">
+              {syncState === "syncing" ? "syncing…" : syncState === "error" ? "sync retrying" : "synced ✓"}
+            </span>
+          )}
         </span>
       </div>
+
+      {showAccountCard && (
+        <Alert className="border-emerald-300">
+          <AlertTitle>Save {baby.nickname}&apos;s data</AlertTitle>
+          <AlertDescription>
+            {logs.length} logs live only on this device. Sign in once and everything follows you
+            to any phone or laptop — free, no tracking.{" "}
+            <Link href="/account" className="font-medium underline underline-offset-2">
+              Sign in with Google or email →
+            </Link>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {showBackupNudge && (
         <Alert className="border-amber-400">
@@ -175,6 +203,7 @@ export default function TodayPage() {
                 </span>
               </div>
             ))}
+            <PushOptIn />
             {upcomingCheckIns.slice(0, 3).map((c) => (
               <p key={c.id} className="text-xs text-muted-foreground">
                 Upcoming: {foodBySlug.get(c.foodSlug)?.name ?? c.foodSlug} check at{" "}
