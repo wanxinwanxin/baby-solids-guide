@@ -498,10 +498,12 @@ export function recommend(input: EngineInput): Recommendation {
       suggestedBand: bandForAge(food, age),
     });
   }
+  const isFirstPick = new Map(foods.map((f) => [f.slug, f.firstFoodPick]));
   scored.sort(
     (a, b) =>
       b.score - a.score ||
       (stats.get(a.slug)?.exposures ?? 0) - (stats.get(b.slug)?.exposures ?? 0) ||
+      Number(isFirstPick.get(b.slug) ?? false) - Number(isFirstPick.get(a.slug) ?? false) ||
       a.slug.localeCompare(b.slug),
   );
   const todaysPicks = scored.slice(0, 3);

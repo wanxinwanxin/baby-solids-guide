@@ -29,6 +29,22 @@ function ageAtWeek(baby: BabyProfile, today: Date, weekIndex: number): number {
   return correctedAgeMonths(baby, today) + weekIndex / WEEKS_PER_MONTH;
 }
 
+/**
+ * The classic, most-protein-relevant first vehicle per allergen — the
+ * suggested plan should introduce milk via yogurt, not butter.
+ */
+export const PREFERRED_VEHICLES: Record<AllergenId, string> = {
+  peanut: "peanut-butter",
+  egg: "egg",
+  milk: "yogurt",
+  wheat: "farina",
+  soy: "tofu",
+  sesame: "tahini",
+  "tree-nut": "almond-butter",
+  fish: "salmon",
+  shellfish: "shrimp",
+};
+
 export type GeneratePlanInput = {
   baby: BabyProfile;
   foods: Food[];
@@ -87,9 +103,14 @@ export function generatePlan(input: GeneratePlanInput): Plan {
     // One new allergen per week from week 1 on.
     if (w >= 1 && allergenIdx < allergenQueue.length) {
       const allergen = allergenQueue[allergenIdx];
+      const preferred = PREFERRED_VEHICLES[allergen];
       const vehicle = foods
         .filter((f) => f.commonAllergen === allergen && !excluded(f) && !used.has(f.slug))
-        .sort((a, b) => a.slug.localeCompare(b.slug))
+        .sort(
+          (a, b) =>
+            Number(b.slug === preferred) - Number(a.slug === preferred) ||
+            a.slug.localeCompare(b.slug),
+        )
         .find((f) => ageAtWeek(baby, today, w) >= f.minAgeMonths);
       if (vehicle) {
         push(vehicle.slug, w);
@@ -210,7 +231,11 @@ export function validatePlan(input: {
         });
       }
     }
-    if (food.chokingRisk === "high" && ageAtWeek(baby, today, entry.weekIndex) < 9) {
+    // Foods served as thin spreads or mashes are geometry-safe by preparation
+    // (nut butters, ground nuts) — the stage caution would be pure noise there.
+    const safeByPrep =
+      food.prepSpecs[0]?.cutDiagram === "thin-spread" || food.prepSpecs[0]?.cutDiagram === "mash";
+    if (food.chokingRisk === "high" && !safeByPrep && ageAtWeek(baby, today, entry.weekIndex) < 9) {
       warnings.push({
         entryId: entry.id,
         foodSlug: entry.foodSlug,
