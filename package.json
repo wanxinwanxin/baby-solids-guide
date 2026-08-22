@@ -12,7 +12,8 @@
     "e2e": "playwright test",
     "content-lint": "tsx scripts/content-lint.ts",
     "check-links": "tsx scripts/check-links.ts",
-    "check": "npm run typecheck && npm run lint && npm run test && npm run content-lint"
+    "check": "npm run typecheck && npm run lint && npm run test && npm run content-lint",
+    "gen:food-index": "tsx scripts/gen-food-index.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
