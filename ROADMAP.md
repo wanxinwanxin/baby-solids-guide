@@ -1,5 +1,12 @@
 # OpenSolids — Free, Science-Based Baby Solids Guide
 
+> **Status (2026-08-22): v1 SHIPPED.** Phases 0–5 and 7 are complete and verified — live at
+> https://baby-solids-guide-production.up.railway.app, source at https://github.com/wanxinwanxin/baby-solids-guide
+> (public; every push to `main` runs CI and deploys to Railway). Phase 6 (accounts + Postgres sync)
+> is deferred post-launch per the v1 definition of done. Gates at ship time: 44 unit tests, 8 e2e
+> journeys, content-lint (63 foods, 9/9 allergens, 18 iron-rich), link check, Lighthouse 95–100
+> across performance/accessibility/best-practices/SEO on /, /foods/carrot, and /today.
+
 **Product roadmap + implementation spec.** This document is written so an implementation agent can build v1 nearly end-to-end without further product decisions. Read the whole document before writing code. Work phase by phase (§10), run every check in a phase's **Verification** block before moving on, and commit once per completed phase.
 
 > **Working name:** "OpenSolids" is a codename. Before public launch, run a trademark knockout search (USPTO TESS + app stores + domains) and pick a final name. Hard requirement: the name, logo, and branding must not be confusable with "Solid Starts" or any other existing baby-feeding brand. The descriptive phrase "starting solids" may appear in body copy (it's generic), never in branding.
