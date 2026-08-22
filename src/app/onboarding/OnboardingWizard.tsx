@@ -284,9 +284,9 @@ export function OnboardingWizard() {
           disabled={!disclaimer}
           onClick={() => finish("today")}
         >
-          {editing ? "Save profile" : "Start fresh → see today's plan"}
+          {editing || adding ? "Save profile" : "Start fresh → see today's plan"}
         </Button>
-        {!editing && (
+        {!editing && !adding && (
           <Button variant="outline" disabled={!disclaimer} onClick={() => finish("import")}>
             We&apos;ve already started → import
           </Button>

@@ -7,8 +7,10 @@ import { allFoods, foodBySlug } from "../../../content/foods";
 import type { AgeBand } from "@/content-schema/food";
 import { BAND_LABELS, bandForAgeMonths, todayIso } from "@/lib/food-utils";
 import { correctedAgeMonths } from "@/lib/age";
-import { useActiveBaby, useHydrated } from "@/lib/hooks";
+import { onsetForElapsed } from "@/lib/checkins";
+import { useActiveBaby, useActiveCheckIns, useHydrated } from "@/lib/hooks";
 import { newId, useGuideStore } from "@/lib/storage/store";
+import { CheckInOffer } from "./CheckInOffer";
 import type { AmountEaten, Enjoyment, SymptomId } from "@/lib/storage/types";
 import { SYMPTOM_IDS, SYMPTOM_LABELS } from "@/lib/storage/types";
 import { triage, type TriageResult } from "@/lib/triage";
@@ -60,6 +62,12 @@ export function LogForm() {
   const params = useSearchParams();
   const baby = useActiveBaby();
   const addLog = useGuideStore((s) => s.addLog);
+  const resolveCheckIn = useGuideStore((s) => s.resolveCheckIn);
+  const checkIns = useActiveCheckIns();
+  const checkinId = params.get("checkin");
+  const activeCheckIn = checkinId
+    ? (checkIns.find((c) => c.id === checkinId && c.status === "pending") ?? null)
+    : null;
 
   const [foodSlug, setFoodSlug] = useState(params.get("food") ?? "");
   const [foodQuery, setFoodQuery] = useState("");
@@ -72,8 +80,9 @@ export function LogForm() {
   const [symptoms, setSymptoms] = useState<SymptomId[]>([]);
   const [emergency, setEmergency] = useState<TriageResult | null>(null);
   const [saved, setSaved] = useState<TriageResult | null>(null);
+  const [savedClean, setSavedClean] = useState<{ logId: string } | null>(null);
 
-  const food = foodBySlug.get(foodSlug);
+  const food = foodBySlug.get(activeCheckIn?.foodSlug ?? foodSlug);
   const ageMonths = baby ? correctedAgeMonths(baby, new Date()) : 7;
   const defaultBand = food
     ? (food.prepSpecs.find((p) => p.band === bandForAgeMonths(ageMonths))?.band ??
@@ -117,8 +126,9 @@ export function LogForm() {
 
   function save() {
     if (!food || !baby) return;
+    const id = newId();
     addLog({
-      id: newId(),
+      id,
       babyId: baby.id,
       foodSlug: food.slug,
       date,
@@ -127,13 +137,49 @@ export function LogForm() {
       enjoyment,
       gagging,
       symptoms,
+      symptomOnset:
+        symptoms.length > 0 && activeCheckIn?.createdAt
+          ? onsetForElapsed(new Date(activeCheckIn.createdAt), new Date())
+          : undefined,
     });
+    if (activeCheckIn) resolveCheckIn(activeCheckIn.id, "done");
     const t = triage(symptoms);
     if (t.severity === "none") {
-      router.push("/today?logged=1");
+      setSavedClean({ logId: id });
     } else {
       setSaved(t);
     }
+  }
+
+  if (savedClean && food && baby) {
+    return (
+      <div className="mx-auto max-w-lg space-y-4">
+        <Alert className="border-emerald-300">
+          <AlertTitle className="text-base">Logged — nice work. 🎉</AlertTitle>
+          <AlertDescription>
+            {food.name} is in the book for {baby.nickname}.
+          </AlertDescription>
+        </Alert>
+        {!activeCheckIn && <CheckInOffer food={food} baby={baby} logId={savedClean.logId} />}
+        <div className="flex gap-3">
+          <Button onClick={() => router.push("/today")} className="bg-emerald-700 text-white hover:bg-emerald-800">
+            Back to Today
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setSavedClean(null);
+              setFoodSlug("");
+              setFoodQuery("");
+              setSymptoms([]);
+              setGagging(false);
+            }}
+          >
+            Log another food
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   if (saved) {
@@ -176,11 +222,30 @@ export function LogForm() {
       {emergency && <EmergencyDialog result={emergency} onAcknowledge={() => setEmergency(null)} />}
 
       <div className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-bold">Log a food</h1>
+        <h1 className="text-2xl font-bold">{activeCheckIn ? "Check-in" : "Log a food"}</h1>
         <Link href="/safety" className="text-xs text-red-700 underline underline-offset-2 dark:text-red-400">
           Worried right now? Emergency guide
         </Link>
       </div>
+
+      {activeCheckIn && food && (
+        <Alert className="border-amber-400">
+          <AlertTitle>How does {baby.nickname} look after {food.name}?</AlertTitle>
+          <AlertDescription className="flex flex-wrap items-center gap-3">
+            <span>Tick anything you&apos;re seeing below, or give the all-clear.</span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                resolveCheckIn(activeCheckIn.id, "done");
+                router.push("/today");
+              }}
+            >
+              All clear — no symptoms ✓
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* 1. Food */}
       <section className="space-y-2">
@@ -190,16 +255,18 @@ export function LogForm() {
             <span className="rounded-lg border border-emerald-700 bg-emerald-50 px-4 py-2 font-medium dark:bg-emerald-950">
               {food.name}
             </span>
-            <button
-              type="button"
-              className="text-sm text-muted-foreground underline underline-offset-2"
-              onClick={() => {
-                setFoodSlug("");
-                setBand(null);
-              }}
-            >
-              change
-            </button>
+            {!activeCheckIn && (
+              <button
+                type="button"
+                className="text-sm text-muted-foreground underline underline-offset-2"
+                onClick={() => {
+                  setFoodSlug("");
+                  setBand(null);
+                }}
+              >
+                change
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-2">
@@ -282,11 +349,11 @@ export function LogForm() {
               type="button"
               onClick={() => setShowSymptoms((s) => !s)}
               className="text-sm font-semibold underline-offset-2 hover:underline"
-              aria-expanded={showSymptoms}
+              aria-expanded={showSymptoms || !!activeCheckIn}
             >
-              {showSymptoms ? "▾" : "▸"} Any symptoms? (rash, hives, vomiting…)
+              {showSymptoms || activeCheckIn ? "▾" : "▸"} Any symptoms? (rash, hives, vomiting…)
             </button>
-            {showSymptoms && (
+            {(showSymptoms || !!activeCheckIn) && (
               <div className="space-y-1.5 rounded-lg border p-3">
                 {SYMPTOM_IDS.map((id) => (
                   <label key={id} className="flex min-h-9 items-center gap-2 text-sm">

@@ -58,6 +58,8 @@ export type SlimFood = {
   commonAllergen: AllergenId | null;
   chokingRisk: Food["chokingRisk"];
   firstFoodPick: boolean;
+  nutrients?: import("@/content-schema/food").NutrientTag[];
+  emoji?: string;
 };
 
 export function slimFood(f: Food): SlimFood {
@@ -70,6 +72,8 @@ export function slimFood(f: Food): SlimFood {
     commonAllergen: f.commonAllergen,
     chokingRisk: f.chokingRisk,
     firstFoodPick: f.firstFoodPick,
+    nutrients: f.nutrients,
+    emoji: f.emoji,
   };
 }
 

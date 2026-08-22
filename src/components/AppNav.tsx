@@ -2,16 +2,43 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useHydrated } from "@/lib/hooks";
+import { useGuideStore } from "@/lib/storage/store";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/today", label: "Today" },
+  { href: "/plan", label: "Plan" },
   { href: "/foods", label: "Foods" },
+  { href: "/learn", label: "Learn" },
   { href: "/allergens", label: "Allergens" },
   { href: "/log", label: "Log" },
   { href: "/history", label: "History" },
+  { href: "/insights", label: "Insights" },
   { href: "/safety", label: "Safety" },
 ];
+
+function BabySwitcher() {
+  const hydrated = useHydrated();
+  const babies = useGuideStore((s) => s.babies);
+  const activeBabyId = useGuideStore((s) => s.activeBabyId);
+  const setActiveBaby = useGuideStore((s) => s.setActiveBaby);
+  if (!hydrated || babies.length < 2) return null;
+  return (
+    <select
+      value={activeBabyId ?? babies[0].id}
+      onChange={(e) => setActiveBaby(e.target.value)}
+      aria-label="Switch baby"
+      className="ml-auto shrink-0 rounded-md border bg-background px-2 py-1.5 text-sm"
+    >
+      {babies.map((b) => (
+        <option key={b.id} value={b.id}>
+          {b.nickname}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 export function AppNav() {
   const pathname = usePathname();
@@ -36,6 +63,7 @@ export function AppNav() {
             </Link>
           ))}
         </nav>
+        <BabySwitcher />
       </div>
     </header>
   );

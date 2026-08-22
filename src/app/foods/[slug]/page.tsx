@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { allFoods, foodBySlug } from "../../../../content/foods";
-import { ALLERGEN_LABELS, BAND_LABELS, CATEGORY_LABELS } from "@/lib/food-utils";
+import { ALLERGEN_LABELS, BAND_LABELS, CATEGORY_LABELS, NUTRIENT_LABELS } from "@/lib/food-utils";
 import { CutDiagram, isDiagramVariant } from "@/components/diagrams/CutDiagram";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -153,6 +153,69 @@ export default async function FoodPage({ params }: { params: Promise<{ slug: str
           </ul>
         </CardContent>
       </Card>
+
+      {(food.nutrients || food.servingGuidance) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Nutrition &amp; serving</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm">
+            {food.nutrients && (
+              <div className="flex flex-wrap gap-1.5">
+                {food.nutrients.map((n) => (
+                  <Badge key={n} variant="outline" className="border-emerald-400 text-emerald-700 dark:text-emerald-400">
+                    {NUTRIENT_LABELS[n]}
+                  </Badge>
+                ))}
+              </div>
+            )}
+            {food.servingGuidance && (
+              <ul className="space-y-2">
+                {food.servingGuidance.map((sg) => (
+                  <li key={sg.band}>
+                    <span className="font-medium">{BAND_LABELS[sg.band]}: </span>
+                    {sg.typicalAmount}
+                    {sg.frequency && <span className="text-muted-foreground"> · {sg.frequency}</span>}
+                    {sg.note && <span className="block text-xs text-muted-foreground">{sg.note}</span>}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {food.watchOuts && food.watchOuts.length > 0 && (
+              <ul className="space-y-1">
+                {food.watchOuts.map((w) => (
+                  <li key={w} className="text-muted-foreground">
+                    ⚠️ {w}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {food.nutrients?.includes("iron") && (
+              <p>
+                <span className="font-medium">Iron tip: </span>
+                vitamin C boosts iron absorption — pair with{" "}
+                {allFoods
+                  .filter((f) => f.nutrients?.includes("vitaminC") && f.slug !== food.slug)
+                  .sort((a, b) => a.slug.localeCompare(b.slug))
+                  .slice(0, 3)
+                  .map((f, i) => (
+                    <span key={f.slug}>
+                      {i > 0 && ", "}
+                      <Link href={`/foods/${f.slug}`} className="underline underline-offset-2">
+                        {f.name.toLowerCase()}
+                      </Link>
+                    </span>
+                  ))}
+                .
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Amounts are starting points, not targets — babies self-regulate. Watch the baby, not
+              the numbers.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <Link

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { allFoods } from "../../content/foods";
+import { allGuides } from "../../content/guides";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,6 +38,28 @@ export default function LandingPage() {
           >
             We&apos;ve already started
           </Link>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-xl font-semibold">New to solids? Start here</h2>
+          <Link href="/learn" className="text-sm text-emerald-700 underline underline-offset-2 dark:text-emerald-400">
+            All chapters →
+          </Link>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {allGuides.slice(0, 3).map((g) => (
+            <Link
+              key={g.slug}
+              href={`/learn/${g.slug}`}
+              className="rounded-lg border p-4 transition-colors hover:border-emerald-400"
+            >
+              <div className="font-medium">{g.title}</div>
+              <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">{g.summary}</div>
+              <div className="mt-2 text-xs text-emerald-700 dark:text-emerald-400">{g.minRead} min read</div>
+            </Link>
+          ))}
         </div>
       </section>
 

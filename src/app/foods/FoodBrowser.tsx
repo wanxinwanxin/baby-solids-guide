@@ -8,13 +8,15 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-type Filter = "all" | "iron" | "allergen" | "first-picks" | FoodCategory;
+type Filter = "all" | "iron" | "allergen" | "first-picks" | "omega3" | "vitaminC" | FoodCategory;
 
 const FILTERS: { id: Filter; label: string }[] = [
   { id: "all", label: "All" },
   { id: "first-picks", label: "Great first foods" },
   { id: "iron", label: "Iron-rich" },
   { id: "allergen", label: "Common allergens" },
+  { id: "omega3", label: "Omega-3" },
+  { id: "vitaminC", label: "Vitamin C" },
   ...(Object.entries(CATEGORY_LABELS) as [FoodCategory, string][]).map(([id, label]) => ({
     id: id as Filter,
     label,
@@ -34,6 +36,8 @@ export function FoodBrowser({ foods }: { foods: SlimFood[] }) {
         if (filter === "iron") return f.ironRich;
         if (filter === "allergen") return f.commonAllergen !== null;
         if (filter === "first-picks") return f.firstFoodPick;
+        if (filter === "omega3") return f.nutrients?.includes("omega3") ?? false;
+        if (filter === "vitaminC") return f.nutrients?.includes("vitaminC") ?? false;
         return f.category === filter;
       })
       .sort((a, b) => a.name.localeCompare(b.name));
@@ -75,7 +79,10 @@ export function FoodBrowser({ foods }: { foods: SlimFood[] }) {
               className="flex h-full flex-col gap-2 rounded-lg border p-4 transition-colors hover:border-emerald-400"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="font-medium">{f.name}</span>
+                <span className="font-medium">
+                  {f.emoji && <span aria-hidden className="mr-1">{f.emoji}</span>}
+                  {f.name}
+                </span>
                 <span className="text-xs text-muted-foreground">{f.minAgeMonths}m+</span>
               </div>
               <div className="flex flex-wrap gap-1.5">

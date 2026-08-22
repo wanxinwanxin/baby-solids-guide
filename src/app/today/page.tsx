@@ -5,8 +5,18 @@ import { useMemo } from "react";
 import { allFoods } from "../../../content/foods";
 import { correctedAgeMonths } from "@/lib/age";
 import { ALLERGEN_LABELS, BAND_LABELS } from "@/lib/food-utils";
-import { useActiveBaby, useActiveLogs, useActiveOverrides, useHydrated } from "@/lib/hooks";
+import {
+  useActiveBaby,
+  useActiveCheckIns,
+  useActiveLogs,
+  useActiveOverrides,
+  useActivePlan,
+  useHydrated,
+} from "@/lib/hooks";
 import { recommend } from "@/lib/engine";
+import { shouldNudgeBackup, snoozeUntil } from "@/lib/backup-nudge";
+import { pendingCheckIns } from "@/lib/checkins";
+import { foodBySlug } from "../../../content/foods";
 import { useGuideStore } from "@/lib/storage/store";
 import { TEXTURE_STAGES } from "@/lib/storage/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -21,12 +31,29 @@ export default function TodayPage() {
   const baby = useActiveBaby();
   const logs = useActiveLogs();
   const overrides = useActiveOverrides();
+  const plan = useActivePlan();
+  const checkIns = useActiveCheckIns();
   const setTextureStage = useGuideStore((s) => s.setTextureStage);
+  const resolveCheckIn = useGuideStore((s) => s.resolveCheckIn);
+  const snoozeBackupNudge = useGuideStore((s) => s.snoozeBackupNudge);
+  const lastExportAt = useGuideStore((s) => s.lastExportAt);
+  const backupNudgeSnoozedUntil = useGuideStore((s) => s.backupNudgeSnoozedUntil);
 
+  const now = useMemo(() => new Date(), []);
   const rec = useMemo(() => {
     if (!baby) return null;
-    return recommend({ baby, logs, overrides, foods: allFoods, today: new Date() });
-  }, [baby, logs, overrides]);
+    return recommend({ baby, logs, overrides, foods: allFoods, today: now, plan });
+  }, [baby, logs, overrides, plan, now]);
+  const { due: dueCheckIns, upcoming: upcomingCheckIns } = useMemo(
+    () => pendingCheckIns(checkIns, now),
+    [checkIns, now],
+  );
+  const showBackupNudge = shouldNudgeBackup({
+    logCount: logs.length,
+    lastExportAt,
+    snoozedUntil: backupNudgeSnoozedUntil,
+    today: now,
+  });
 
   if (!hydrated) return null;
 
@@ -94,6 +121,76 @@ export default function TodayPage() {
           {age.toFixed(1)} months{baby.dueDate ? " (corrected)" : ""} · stage {rec.textureStage.current}
         </span>
       </div>
+
+      {showBackupNudge && (
+        <Alert className="border-amber-400">
+          <AlertTitle>Back up {baby.nickname}&apos;s history</AlertTitle>
+          <AlertDescription className="flex flex-wrap items-center gap-3">
+            <span>
+              {logs.length} logs live only on this device. A one-tap export keeps them safe if the
+              browser clears its storage.
+            </span>
+            <Link href="/history" className="font-medium underline underline-offset-2">
+              Export now →
+            </Link>
+            <button
+              type="button"
+              className="text-xs text-muted-foreground underline underline-offset-2"
+              onClick={() => snoozeBackupNudge(snoozeUntil(new Date()))}
+            >
+              remind me next week
+            </button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {(dueCheckIns.length > 0 || upcomingCheckIns.length > 0) && (
+        <Card className={dueCheckIns.length > 0 ? "border-amber-400" : undefined}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Check-ins</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {dueCheckIns.map((c) => (
+              <div key={c.id} className="flex flex-wrap items-center gap-2 rounded-md border border-amber-300 p-2">
+                <span className="font-medium">
+                  Check for a reaction to {foodBySlug.get(c.foodSlug)?.name ?? c.foodSlug}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  due {new Date(c.dueAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                </span>
+                <span className="ml-auto flex gap-2">
+                  <Link
+                    href={`/log?checkin=${c.id}`}
+                    className="rounded-md bg-emerald-700 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-800"
+                  >
+                    Log what you see
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => resolveCheckIn(c.id, "done")}
+                    className="rounded-md border px-2.5 py-1 text-xs hover:border-emerald-400"
+                  >
+                    All clear ✓
+                  </button>
+                </span>
+              </div>
+            ))}
+            {upcomingCheckIns.slice(0, 3).map((c) => (
+              <p key={c.id} className="text-xs text-muted-foreground">
+                Upcoming: {foodBySlug.get(c.foodSlug)?.name ?? c.foodSlug} check at{" "}
+                {new Date(c.dueAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                <button
+                  type="button"
+                  onClick={() => resolveCheckIn(c.id, "dismissed")}
+                  className="ml-2 underline underline-offset-2"
+                >
+                  dismiss
+                </button>
+              </p>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {rec.warnings.length > 0 && (
         <div className="space-y-2">

@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { allFoods } from "../../../content/foods";
 import { allergenPrograms } from "../../../content/allergens";
-import { deriveAllergenStates, riskTier } from "@/lib/engine";
+import { DEFAULT_ALLERGEN_ORDER, deriveAllergenStates, riskTier } from "@/lib/engine";
+import { icsForMaintenance } from "@/lib/checkins";
+import { useActivePlan } from "@/lib/hooks";
+import type { AllergenId } from "@/content-schema/food";
 import { ALLERGEN_LABELS, todayIso } from "@/lib/food-utils";
 import { useActiveBaby, useActiveLogs, useActiveOverrides, useHydrated } from "@/lib/hooks";
 import { useGuideStore } from "@/lib/storage/store";
@@ -35,6 +38,8 @@ export default function AllergensPage() {
   const baby = useActiveBaby();
   const logs = useActiveLogs();
   const overrides = useActiveOverrides();
+  const plan = useActivePlan();
+  const hasPlan = !!plan && plan.entries.length > 0;
   const { setOverride, clearOverride, saveBaby } = useGuideStore();
 
   const states = useMemo(() => {
@@ -154,6 +159,116 @@ export default function AllergensPage() {
         Use &quot;set status&quot; when your reality differs from the logs — e.g. your allergist
         said to avoid a food, or a reaction was later ruled out. Overrides always win.
       </p>
+
+      {baby && states && (
+        <OrderAndReminders
+          babyOrder={baby.allergenOrder}
+          hasPlan={hasPlan}
+          onReorder={(order) => saveBaby({ ...baby, allergenOrder: order })}
+          states={[...states.values()]}
+        />
+      )}
+    </div>
+  );
+}
+
+function OrderAndReminders({
+  babyOrder,
+  hasPlan,
+  onReorder,
+  states,
+}: {
+  babyOrder?: AllergenId[];
+  hasPlan: boolean;
+  onReorder: (order: AllergenId[]) => void;
+  states: { allergenId: AllergenId; status: string; exposureCount: number }[];
+}) {
+  const order = babyOrder ?? DEFAULT_ALLERGEN_ORDER;
+  const anyMaintaining = states.some((s) => s.status === "maintaining");
+
+  function move(index: number, delta: -1 | 1) {
+    const next = [...order];
+    const target = index + delta;
+    if (target < 0 || target >= next.length) return;
+    [next[index], next[target]] = [next[target], next[index]];
+    onReorder(next);
+  }
+
+  function downloadMaintenanceIcs() {
+    const ics = icsForMaintenance(
+      states.map((s) => ({ ...s, status: s.status as never })),
+      new Date(),
+    );
+    const blob = new Blob([ics], { type: "text/calendar" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "allergen-maintenance-reminders.ics";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Introduction order</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          {hasPlan && (
+            <p className="rounded-md border border-emerald-300 p-2 text-xs text-muted-foreground">
+              Your plan currently sets the order (first appearance on the board wins). This list
+              applies when no plan is active.
+            </p>
+          )}
+          <ol className="space-y-1">
+            {order.map((id, i) => (
+              <li key={id} className="flex items-center gap-2 rounded-md border px-2 py-1.5">
+                <span className="w-5 text-xs text-muted-foreground">{i + 1}.</span>
+                <span className="flex-1">{ALLERGEN_LABELS[id]}</span>
+                <button
+                  type="button"
+                  onClick={() => move(i, -1)}
+                  disabled={i === 0}
+                  aria-label={`Move ${ALLERGEN_LABELS[id]} earlier`}
+                  className="rounded border px-2 py-0.5 text-xs disabled:opacity-30"
+                >
+                  ▲
+                </button>
+                <button
+                  type="button"
+                  onClick={() => move(i, 1)}
+                  disabled={i === order.length - 1}
+                  aria-label={`Move ${ALLERGEN_LABELS[id]} later`}
+                  className="rounded border px-2 py-0.5 text-xs disabled:opacity-30"
+                >
+                  ▼
+                </button>
+              </li>
+            ))}
+          </ol>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Maintenance reminders</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <p className="text-muted-foreground">
+            Once an allergen is tolerated, serving it about twice a week is what maintains
+            tolerance. Put a weekly nudge in your own calendar — it works even when this app is
+            closed.
+          </p>
+          <Button variant="outline" size="sm" onClick={downloadMaintenanceIcs} disabled={!anyMaintaining}>
+            ⬇ Add weekly reminders to my calendar (.ics)
+          </Button>
+          {!anyMaintaining && (
+            <p className="text-xs text-muted-foreground">
+              Available once at least one allergen reaches &quot;maintaining&quot; (3+ exposures).
+            </p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

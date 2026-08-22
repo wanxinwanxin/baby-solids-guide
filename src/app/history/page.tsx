@@ -94,6 +94,10 @@ export default function HistoryPage() {
           {baby.nickname} · {logs.length} logs ·{" "}
           <Link href="/onboarding?edit=1" className="underline underline-offset-2">
             edit profile
+          </Link>{" "}
+          ·{" "}
+          <Link href="/onboarding?add=1" className="underline underline-offset-2">
+            add another baby
           </Link>
         </p>
       )}

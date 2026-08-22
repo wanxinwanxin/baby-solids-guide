@@ -75,6 +75,8 @@ test.describe("logging journey", () => {
     await page.getByRole("button", { name: "Lots!" }).click();
     await page.getByRole("button", { name: "😍 Loved" }).click();
     await page.getByRole("button", { name: "Save log" }).click();
+    await expect(page.getByText("Logged — nice work. 🎉")).toBeVisible();
+    await page.getByRole("button", { name: "Back to Today" }).click();
     await page.waitForURL("**/today**");
 
     // Persists across reload
