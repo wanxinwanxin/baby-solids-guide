@@ -75,11 +75,11 @@ Every food entry and engine rule cites at least one of these. The content lint (
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Framework | Next.js (latest, App Router, TypeScript, `src/` dir) on Vercel | SSG for ~60–150 food pages (SEO), server components, single deploy target |
+| Framework | Next.js (latest, App Router, TypeScript, `src/` dir) on **Railway** | SSG for ~60–150 food pages (SEO), server components, single deploy target |
 | Styling/UI | Tailwind CSS + shadcn/ui | Fast, accessible primitives |
 | Content | **Content-as-code**: typed TS objects in `content/`, validated by Zod at build time | Reviewable in PRs, no CMS to run, CI-lintable |
 | State/storage v1 | Local-first: repository interface backed by `localStorage` (Zustand + persist), plus JSON export/import | Zero-friction start; §5.6 interface makes Phase 6 sync a drop-in |
-| Auth + DB (Phase 6, optional for launch) | Provision via the Vercel Marketplace (**use the `vercel:marketplace` skill to discover/provision — do not hardcode a provider SDK in advance**); Postgres + Drizzle ORM expected shape | Platform-native, swappable |
+| Auth + DB (Phase 6, optional for launch) | Railway Postgres + Drizzle ORM, provisioned via the Railway CLI | Platform-native, swappable |
 | Engine | Pure TypeScript functions in `src/lib/engine/`, no I/O, clock injected | Deterministic, table-testable |
 | Tests | Vitest (unit), Playwright (e2e), custom content-lint script | §11 |
 | Illustrations | Original parametric SVG cut diagrams (§6.4) | No licensing risk; the differentiator |
@@ -386,9 +386,9 @@ Symptom vocabulary (`SymptomId`) maps 1:1 onto this table so triage is a pure lo
 
 ### Phase 0 — Scaffold & CI (~½ day)
 
-Tasks: `create-next-app` (TS, App Router, Tailwind, src dir, `--yes`); add shadcn/ui, Vitest, Playwright, ESLint/Prettier; `scripts/content-lint.ts` + `check-links.ts` stubs wired into `npm run check`; GitHub Actions running typecheck+lint+unit+content-lint+build; Vercel preview deploy.
+Tasks: `create-next-app` (TS, App Router, Tailwind, src dir, `--yes`); add shadcn/ui, Vitest, Playwright, ESLint/Prettier; `scripts/content-lint.ts` + `check-links.ts` stubs wired into `npm run check`; GitHub Actions running typecheck+lint+unit+content-lint+build; Railway deploy.
 
-**Verification:** `npm run build` ✅; `npm run check` ✅ (green on stubs); preview URL renders placeholder landing.
+**Verification:** `npm run build` ✅; `npm run check` ✅ (green on stubs); deployed URL renders placeholder landing.
 
 ### Phase 1 — Content schema + seed database + library UI (~3 days)
 
@@ -422,13 +422,13 @@ Tasks: fresh-start wizard (profile → risk quiz → readiness quiz → first-fo
 
 ### Phase 6 — Accounts & sync (optional for launch, ~3 days)
 
-Tasks: **invoke the `vercel:marketplace` skill** to provision auth + Postgres; Drizzle schema mirroring §5; `SyncedStore` behind `GuideStore`; local→account migration on first login; last-write-wins per entity; delete-account flow.
+Tasks: provision Railway Postgres + an auth library (e.g. better-auth); Drizzle schema mirroring §5; `SyncedStore` behind `GuideStore`; local→account migration on first login; last-write-wins per entity; delete-account flow.
 
 **Verification:** integration tests against a branch DB; e2e: build local history → sign up → data appears server-side → second browser sees it; export + delete-account both work.
 
 ### Phase 7 — Polish & launch (~2 days)
 
-Tasks: SEO metadata + OG images for food pages; PWA manifest + offline caching of content routes; axe/a11y pass; privacy + about/methodology pages; final trademark-name decision applied; production deploy + domain.
+Tasks: SEO metadata + OG images for food pages; PWA manifest + offline caching of content routes; axe/a11y pass; privacy + about/methodology pages; final trademark-name decision applied; production deploy on Railway + domain; GitHub push-to-deploy wired up.
 
 **Verification:** Lighthouse ≥90 across categories on `/`, `/foods/carrot`, `/today`; axe: 0 critical; all §11 gates green in CI on `main`; production URL live.
 
