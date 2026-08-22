@@ -466,64 +466,70 @@ Recipes/meal plans, photos of real prepared food (diagrams suffice), native apps
 4. Age ceiling 24 months — **shipped as default.**
 
 ---
+# Part II — Post-v1 roadmap (rev. 2, 2026-08-22)
 
-# Part II — Post-v1 roadmap
+Revised after owner feedback on rev. 1. Changes: **Spanish localization is cut** (owner call — revisit post-launch); **sign-in persistence is priority #1** (Google chosen as the primary provider); new phases for **reaction check-in reminders**, a **"why solids at all" education layer**, **nutrition & serving guidance**, and an **evidence-honest ordering + drag-and-drop planner**; preference (thumbs) surfacing folded into Insights — note that v1 already *records* enjoyment per log (loved / neutral / disliked / refused, a superset of thumbs up/down); what's missing is surfacing it.
 
-Written 2026-08-22, immediately after v1 shipped. Same contract as Part I: an implementation agent works phase by phase, runs every check in a phase's **Verification** block before moving on, and commits once per completed phase (or per sub-phase where marked). Phases here are independent unless the dependency column says otherwise.
+Same contract as Part I: an implementation agent works phase by phase, passes every check in a phase's **Verification** block before moving on, and commits per phase (or per lettered sub-phase).
 
-## How persistence works today (context for Phase 6.0/6)
+**Store/envelope versioning rule (applies to every phase below):** any phase that changes the persisted shape bumps the zustand persist version and the export `schemaVersion` by one, ships a `migrate` step, and keeps the importer accepting every prior version. Assign concrete numbers at implementation time in phase order — never reuse or skip.
+
+## How persistence works today (context for 6.0/6)
 
 v1 is local-first: the Zustand store persists to `localStorage` (key `opensolids-v1`), so **data already survives across sessions automatically in the same browser — no export/import needed day-to-day.** Export/import exists for backups and device moves. The real gaps:
 
 1. **Device-bound** — a new phone/laptop/browser starts empty until a JSON import.
-2. **Safari/iOS eviction** — WebKit may purge script-writable storage after ~7 days without a visit (installing to the home screen largely exempts it). A daily-use feeding app is usually safe, but a family that lapses two weeks can lose data.
+2. **Safari/iOS eviction** — WebKit may purge script-writable storage after ~7 days without a visit (installing to the home screen largely exempts it).
 3. **Site-data clearing** wipes everything with no recovery.
 
-Phase 6.0 mitigates with backup nudges; Phase 6 solves it properly with opt-in accounts + sync. Guest mode remains the default forever.
+Phase 6.0 mitigates with backup nudges; Phase 6 solves it with opt-in sign-in + sync. Guest mode remains the default forever.
 
 ## Sequencing & sizing
 
 | Phase | What | Depends on | Size |
 |---|---|---|---|
 | 6.0 | Persistence quick wins (backup nudges, iOS guidance) | — | ½ day |
-| 6 | Accounts & cross-device sync | 6.0 recommended | ~4 days |
-| 8 | Allergen maintenance reminders (calendar + web push) | 6 (push path only) | 2–3 days |
-| 9 | Content 63 → 150 foods + media enrichment | — | 4–5 days |
-| 10 | Multi-baby support | — | 1–2 days |
-| 11 | Insights dashboard | — | ~2 days |
-| 12 | Localization (Spanish first) | 9 recommended first | 3–4 days (stretch) |
-| 13 | Final name, custom domain, launch hardening | before any marketing push | ~2 days |
+| 6 | Sign-in (Google primary) & cross-device sync | 6.0 recommended | ~4 days |
+| 8 | Reaction check-ins & reminders (calendar path has no deps; push/email needs 6) | 8A: none · 8B: 6 | 3–4 days |
+| 9 | Learn — first-visit education & IA rework | — | 2–3 days |
+| 10 | Nutrition & serving guidance (schema + backfill all 63 foods) | ships **before** 12 | 2–3 days |
+| 11 | Planner — ordering science + drag-and-drop timeline | 10 nice-to-have | 3–4 days |
+| 12 | Content 63 → 150 foods + media enrichment | 10 (new foods authored with the new fields once) | 4–5 days |
+| 13 | Multi-baby support | — | 1–2 days |
+| 14 | Insights & preference surfacing | 10 (nutrient coverage view) | ~2 days |
+| 15 | Final name, custom domain, launch hardening | before any marketing push | ~2 days |
+
+Parallelization notes: 8A, 9, and 10 have no dependency on 6 and can run alongside it. 10 must land before 12 so the 87 new foods are authored with nutrition fields once instead of backfilled twice. **Cut:** Spanish localization (owner decision 2026-08-22; the rev. 1 spec is preserved in git history at tag-worthy commit `01ebd6e` if revisited).
 
 ---
 
 ### Phase 6.0 — Persistence quick wins (~½ day)
 
-**Goal:** until accounts exist, make data loss unlikely and understood.
+**Goal:** until sign-in exists, make data loss unlikely and understood.
 
 Tasks:
-1. **Backup nudge banner** on `/today`: show when `logs.length ≥ 10` AND (never exported OR `lastExportAt` > 14 days ago). Add `lastExportAt?: string` and `backupNudgeSnoozedUntil?: string` to the store (persist-version bump 1→2 with a `migrate` that backfills nothing — new optional fields only). Banner links to the History export button; dismissing snoozes 7 days.
+1. **Backup nudge banner** on `/today`: show when `logs.length ≥ 10` AND (never exported OR `lastExportAt` > 14 days ago). Add `lastExportAt?: string` and `backupNudgeSnoozedUntil?: string` to the store (persist-version bump per the versioning rule). Banner links to the History export; dismissing snoozes 7 days.
 2. Set `lastExportAt` inside `exportJson()`.
 3. Copy updates: `/about` privacy section and the onboarding disclaimer gain one sentence each on device-bound storage and Safari's ~7-day eviction; recommend **Add to Home Screen** on iOS.
 4. Pure predicate `shouldNudgeBackup({logCount, lastExportAt, snoozedUntil, today})` in `src/lib/backup-nudge.ts` — no date logic in components.
 
-**Verification:** table-driven unit tests for the predicate (fresh user / 9 vs 10 logs / recent export / stale export / active snooze / expired snooze); e2e: seed 10 logs → banner visible → export → banner gone; store migration test (v1 persisted blob loads under v2).
+**Verification:** table-driven predicate tests (fresh user / 9 vs 10 logs / recent export / stale export / active snooze / expired snooze); e2e: seed 10 logs → banner → export → gone; migration test (v1 persisted blob loads cleanly).
 
 ---
 
-### Phase 6 — Accounts & cross-device sync (~4 days)
+### Phase 6 — Sign-in & cross-device sync (~4 days) — PRIORITY #1
 
-**Goal:** opt-in account that syncs a family's data across devices. Guest mode stays the default; nothing about v1 flows changes for signed-out users.
+**Goal:** the owner-requested persistence story: log in with a common identity so data survives cleared caches, long absences, and new devices. Guest mode stays the default; nothing changes for signed-out users.
 
-**Locked decisions:**
+**Provider decision (owner asked to pick at least one of Google / iOS / email):**
 
-| Decision | Choice | Rationale |
+| Provider | Status | Rationale |
 |---|---|---|
-| Database | Railway Postgres (`railway add --database postgres`; `DATABASE_URL` referenced into the app service) | Same platform, one bill |
-| ORM / migrations | Drizzle + drizzle-kit, migrations committed under `drizzle/` | Typed, CI-checkable |
-| Auth | better-auth: email+password (verification & reset via Resend) + Google OAuth | Self-hosted, no per-MAU pricing, works on Railway |
-| Sync model | Snapshot merge with entity-level last-write-wins (LWW) on `updatedAt`; tombstones for deleted logs | Data volume is tiny (<5k rows/family); simplest correct model |
-| Server validation | The SAME Zod schemas from `src/lib/storage/schema.ts` validate every payload server-side | One source of truth |
-| Integration tests | pglite (in-process Postgres) in Vitest — no service containers needed for unit/integration CI | Fast, hermetic |
+| **Google OAuth** | ✅ primary, ships in this phase | Most common identity for the target demographic; zero email-deliverability work; free |
+| **Email + password** (verification & reset via Resend) | ✅ secondary, ships in this phase | Covers the no-Google minority; Resend free tier suffices |
+| **Sign in with Apple** | ⏸ optional Phase 6.1 | Requires Apple Developer Program enrollment ($99/yr) — one config task in better-auth once enrolled; do it if/when iOS installs matter |
+
+**Locked stack:** Railway Postgres (`railway add --database postgres`, `DATABASE_URL` referenced into the service); Drizzle + drizzle-kit (migrations committed under `drizzle/`, run via `drizzle-kit migrate && next build` in the Railway build command); **better-auth** for both providers; snapshot sync with entity-level last-write-wins (LWW) on `updatedAt` + tombstones for deletes; the SAME Zod schemas from `src/lib/storage/schema.ts` validate every payload server-side.
 
 **Schema (drizzle):**
 
@@ -532,131 +538,180 @@ user / session / account / verification   — better-auth generated tables
 babies             (id uuid pk, user_id fk → user.id ON DELETE CASCADE, payload jsonb, updated_at timestamptz)
 exposure_logs      (id uuid pk, baby_id fk CASCADE, payload jsonb, updated_at timestamptz, deleted_at timestamptz)
 allergen_overrides (baby_id fk CASCADE, allergen_id text, payload jsonb, updated_at timestamptz, PK (baby_id, allergen_id))
-push_subscriptions (user_id fk CASCADE, endpoint text pk, keys jsonb, created_at)   — used by Phase 8
+push_subscriptions (user_id fk CASCADE, endpoint text pk, keys jsonb, created_at)      — used by Phase 8B
+reminders          (id uuid pk, user_id fk CASCADE, kind text, payload jsonb, due_at timestamptz, sent_at timestamptz) — used by Phase 8B
 ```
 
-`payload` is the exact client shape. No server-side querying beyond fetch-per-user, so jsonb beats columns.
+`payload` is the exact client shape (no server-side querying beyond fetch-per-user, so jsonb beats columns).
 
 **Client changes:**
-1. Add `updatedAt: string` to `BabyProfile`, `ExposureLog`, `AllergenOverride`; persist-version bump (backfill `updatedAt = now` in `migrate`). Export envelope becomes `schemaVersion: 2`; importer accepts v1 and v2.
-2. `deleteLog` also records the id in a `deletedLogIds: string[]` ledger (tombstones must sync).
-3. `SyncedStore` layered on the existing store: when signed in, every mutation schedules a debounced (2s) `POST /api/sync`; login and window-focus trigger `GET /api/sync`; merge rule = per entity id, newer `updatedAt` wins, tombstone beats older update.
+1. Add `updatedAt: string` to `BabyProfile`, `ExposureLog`, `AllergenOverride` (persist + envelope version bump; importer accepts all prior versions).
+2. `deleteLog` records the id in a `deletedLogIds: string[]` ledger (tombstones must sync).
+3. `SyncedStore` layered on the existing store: signed in ⇒ every mutation schedules a debounced (2s) `POST /api/sync`; login and window-focus trigger `GET /api/sync`; merge = per entity id, newer `updatedAt` wins, tombstone beats older update.
 4. **First-login migration:** server empty → push local snapshot. Server already has a different baby → conflict screen with exactly three choices: *keep this device's data* / *keep account data* / *merge (union logs by id, LWW on conflicts)*.
-5. UI: `/account` page (email, linked provider, "download my data from the server", delete account), sign-in entry on `/history` and the footer, subtle "synced ✓ / syncing…" indicator on `/today`.
+5. UI: prominent but skippable "Save your data — sign in with Google" card on `/today` once `logs ≥ 5` (replaces the 6.0 backup nudge when shown); `/account` page (identity, download-my-data-from-server, delete account); "synced ✓ / syncing…" indicator.
 
-**API (route handlers, all behind the better-auth session, all Zod-validated):**
-- `GET /api/sync` → full snapshot for the user.
-- `POST /api/sync` `{baby?, logs[], overrides[], deletedLogIds[]}` → server merges LWW, returns merged snapshot.
-- `DELETE /api/account` → cascade delete + sign-out.
+**API (route handlers, all session-gated, all Zod-validated):** `GET /api/sync` (snapshot), `POST /api/sync` `{baby?, logs[], overrides[], deletedLogIds[]}` (LWW merge, returns merged snapshot), `DELETE /api/account` (hard cascade + sign-out).
 
-**Env & ops:** `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID/SECRET`, `RESEND_API_KEY` — set via `railway variables`; document in README. Drizzle migrations run in the Railway build command (`drizzle-kit migrate && next build`).
+**Env:** `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID/SECRET`, `RESEND_API_KEY` — via `railway variables`, documented in README. Google OAuth consent screen setup steps documented (external, testing → production).
 
-**Privacy (binding):** server stores email + the envelope, nothing else; no analytics added; delete is a hard cascade; `/about` updated to say exactly this.
+**Privacy (binding):** server stores identity + the envelope, nothing else; no analytics; delete is a hard cascade; `/about` updated to say exactly this.
 
 **Verification:**
-- Unit: LWW merge matrix (local newer / server newer / tombstone vs older update / tombstone vs newer update / unknown ids), Zod rejects malformed payloads, envelope v1 import still works.
-- Integration (Vitest + pglite): migrations apply cleanly; push→pull roundtrip; account delete cascades all four tables.
-- Authorization tests: unauthenticated `/api/sync` → 401; user A can never read/write user B's rows (explicit test with two seeded users).
-- e2e (local Postgres via `docker run postgres` or a Railway dev DB, behind `ENABLE_SYNC_E2E=1` so default CI stays hermetic): guest builds history → signs up → second browser context signs in and sees identical history → edits there → first context pulls on focus → delete-account empties the server and leaves local guest data intact.
-- Manual gate: sign-up email actually delivered via Resend on the production deploy (documented in the phase PR).
+- Unit: LWW merge matrix (local newer / server newer / tombstone vs older / tombstone vs newer / unknown ids); Zod rejects malformed payloads; old envelopes still import.
+- Integration (Vitest + pglite): migrations apply; push→pull roundtrip; account delete cascades all tables.
+- Authorization: unauthenticated `/api/sync` → 401; two seeded users can never read/write each other's rows.
+- e2e (local Postgres behind `ENABLE_SYNC_E2E=1`): guest history → sign in with email flow → second browser context sees identical history → edits flow back on focus → delete-account empties server, local guest data intact.
+- Manual gates in the phase PR: real Google sign-in on production; Resend verification email delivered.
 
 ---
 
-### Phase 8 — Allergen maintenance reminders (~2–3 days; push path needs Phase 6)
+### Phase 8 — Reaction check-ins & reminders (~3–4 days)
 
-**Goal:** the engine already computes "peanut is overdue" (R3) — deliver that insight when the app is closed. Two delivery paths so guests get value too.
+**Goal:** the owner-requested killer feature: "I just fed a potential allergen — remind me to check for symptoms in 15 minutes / an hour / 2 days / a week." Plus the allergen-maintenance reminders from rev. 1. Two delivery tiers so guests get value before Phase 6 exists.
 
-**Path A — calendar file (works for everyone, no server):**
-1. `icsForMaintenance(allergenStates, now)` pure function → VCALENDAR with one weekly-recurring event per *maintaining* allergen ("Serve peanut — keeping it in rotation maintains tolerance", RRULE `FREQ=WEEKLY;INTERVAL=1`, two per week for the first month via a second BYDAY).
-2. "Add reminders to my calendar" button on `/allergens` → client-side Blob download.
+**Delivery-channel decision:** calendar (Google Calendar link + .ics) for everyone with zero server; web push + email for signed-in users. **SMS is explicitly out**: US A2P 10DLC registration, per-message cost, and carrier filtering make it unreasonable for a free product — calendar/push/email cover the need.
 
-**Path B — web push (account users):**
-1. `web-push` (VAPID) — env `VAPID_PUBLIC_KEY/PRIVATE_KEY/SUBJECT`; subscriptions in the Phase 6 `push_subscriptions` table; opt-in card on `/today` (never prompt unasked).
-2. Service-worker `push` + `notificationclick` handlers (open `/today`).
-3. `POST /api/notify/run` guarded by `CRON_SECRET` header: for each user with subscriptions, load snapshot → run the engine with injected `today` → send at most ONE push/day/user, only for `urgent` maintenance lapses (>14 days) or a newly-eligible next allergen. Schedule: Railway cron service (or a GitHub Actions `schedule` hitting the endpoint) daily 16:00 UTC.
+#### 8A — Check-ins, no account needed (ship first; no dependency on Phase 6)
 
-**Verification:** unit — ICS output snapshot (valid RRULEs, escaping) and notify-selection logic (reuses R3; cases: no lapse → no push, lapse → one push, two lapses → still one push, already pushed today → none); integration — `/api/notify/run` with a mocked `web-push` asserts exact payloads and the CRON_SECRET gate (401 without); e2e — opt-in flow persists a subscription row; manual gate — one real push received on a phone, screenshot in the PR.
+1. **Offer on save:** after saving a log for a common-allergen food (or any food, via a "watch this one" toggle), the confirmation screen offers "Remind me to check for symptoms" with preset chips: **15 min · 1 h · 2 h (default, matches the watch-for-2-hours guidance) · 2 days · 1 week** — multi-select.
+2. **Data:** `checkIns: {id, foodSlug, logId, dueAt, status: "pending"|"done"|"dismissed"}[]` in the store (version bump). Pure helpers in `src/lib/checkins.ts`: `dueAtForPreset(preset, now)`, `pendingCheckIns(checkIns, now)`, `onsetForElapsed(loggedAt, now)` → maps elapsed time to the log vocabulary (`<15m → immediate`, `<2h → within-2h`, `<6h → 2-6h`, else `next-day`).
+3. **Delivery without a server:**
+   - **Google Calendar link** per selected time — the `calendar.google.com/calendar/render?action=TEMPLATE&text=…&dates=…&details=…` URL template, prefilled: "Check {baby} for a reaction — {food} served {time}", details list the allergen's `reactionSigns` and deep-link back to the check-in.
+   - **.ics download** (one VEVENT per check-in with a `VALARM` at T-0) for Apple/Outlook calendars.
+   - **In-app:** a "Check-ins" card on `/today` listing due/overdue items (works with zero permissions); plus, if the tab is open and Notification permission was granted, a timer fires the notification at `dueAt`.
+4. **Completing a check-in:** tapping it opens the symptom picker pre-bound to the original food; selected symptoms create a follow-up log with `symptomOnset` auto-set via `onsetForElapsed`; the emergency interrupt and triage behave exactly as in `/log`. "All clear" marks it done and (if it was the allergen's first exposure) surfaces the "next exposure" guidance from the allergen program.
 
----
+#### 8B — Server-delivered reminders for signed-in users (needs Phase 6)
 
-### Phase 9 — Content expansion: 63 → 150 foods + media enrichment (~4–5 days)
+1. `web-push` (VAPID: `VAPID_PUBLIC_KEY/PRIVATE_KEY/SUBJECT`); subscriptions in `push_subscriptions`; opt-in card on `/today` — never prompt unasked. Service-worker `push` + `notificationclick` (opens the check-in).
+2. Creating a check-in while signed in also writes a `reminders` row (kind `check-in`, `due_at`). **Email fallback** via Resend when the user has no push subscription (plain, single-purpose email: what was served, when, what to look for, link).
+3. `POST /api/reminders/run` guarded by a `CRON_SECRET` header, scheduled every 5 minutes (Railway cron service, or a GitHub Actions `schedule` as fallback): send all `due_at ≤ now AND sent_at IS NULL`, set `sent_at` (idempotent), push first, email fallback.
 
-**Goal:** cover a family's real grocery run, add the herbs/spices program, and put a verified video on the top foods — same lint-enforced quality bar as v1.
+#### 8C — Allergen-maintenance reminders (carried from rev. 1)
 
-**Schema additions (with lint rules):**
-1. `cuisineTags?: string[]` on Food (free-form, lowercase).
-2. New category `herb-spice` (enum extension + `CATEGORY_LABELS` + import-flow grouping).
-3. New lint rules: every `chokingRisk: "high"` food must carry a `cutDiagram` in **every** band; per-category minimums at completion (vegetable ≥ 30, fruit ≥ 30, protein ≥ 25, grain ≥ 20, legume ≥ 12, dairy ≥ 8, herb-spice ≥ 10, fat-other ≥ 4); corpus minimum parameterized (`FOODS_MIN` env, default 60, flipped to 150 in the phase's final commit so intermediate merges stay green).
+- Guests: "Add reminders to my calendar" on `/allergens` → client-generated .ics with a weekly-recurring event per *maintaining* allergen (`RRULE FREQ=WEEKLY`, twice-weekly via BYDAY for the first month).
+- Signed-in: the daily pass of `/api/reminders/run` also evaluates engine rule R3 per user and enqueues at most ONE maintenance push/email per user per day, urgent lapses (>14 days) first.
 
-**Target list (+87; equivalents may be swapped if sourcing is weak, count may not drop):**
-- *Proteins (12):* trout, tilapia, halibut, canned light tuna (mercury-tier note), crab [shellfish], scallops [shellfish] ⚠(rubbery), mussels [shellfish], duck, bison, venison, sole, tempeh [soy]
-- *Dairy (6):* kefir, cottage cheese, ricotta, paneer, goat cheese, butter/ghee
-- *Legumes (6):* white beans, kidney beans, pinto beans, split peas, mung beans, lima beans
-- *Nuts & seeds (7):* ground pecan [tree-nut], ground pistachio [tree-nut], hazelnut butter [tree-nut] ⚠, pumpkin-seed butter ⚠, hemp seeds, chia (gelled, hydration note), ground flaxseed
-- *Grains (9):* buckwheat, millet, couscous [wheat], tortilla [wheat], pita [wheat] ⚠(gummy), amaranth, teff, spelt [wheat], soba [wheat]
-- *Vegetables (17):* asparagus, mushrooms, cabbage, kale, brussels sprouts, eggplant, celery ⚠(strings), corn on the cob, snap peas ⚠, radish ⚠(hard raw), leek, onion, parsnip, turnip, pumpkin, okra, swiss chard
-- *Fruits (17):* plum, apricot, nectarine, cantaloupe, honeydew, pineapple, pomegranate arils ⚠⚠, fig, dates ⚠(sticky), papaya, lychee ⚠⚠(the classic aspiration fruit — say so), persimmon, clementine, blackberry, cranberry (cooked), coconut, guava
-- *Herbs & spices (10):* cinnamon, cumin, ginger, turmeric, paprika, dill, basil, oregano, mint, cilantro — prep specs describe amounts (a pinch stirred into a familiar food), the "flavor variety without salt/sugar" rationale, and any staining/irritation notes
-- *Fats/other (3):* avocado oil, nutritional yeast, nori/seaweed ⚠(sodium + clinging-film note)
-
-**Authoring process:** identical to v1 — carrot/peanut-butter as canonical templates, parallel agent batches of ~12 with per-food flag tables in the prompt, `gen:food-index` + content-lint after each batch, no solidstarts.com contact ever.
-
-**Media enrichment:** top 30 foods (by first-food relevance) each get one `MediaLink` video from an official health-org channel (NHS, children's hospitals, WIC programs), license + `verifiedOn` recorded; extend `check-links` to validate YouTube links via the oEmbed endpoint (`https://www.youtube.com/oembed?url=…` → 200 = live, no API key). Diagrams-first rule stands: no filler links.
-
-**Verification:** content-lint green at 150 with the new rules; every one of the 9 allergens now has ≥ 2 delivery foods; oEmbed checks pass in CI; every new ⚠⚠ food (pomegranate, lychee) names its hazard in the first sentence of `chokingNotes`; 10% random sample re-checked against cited sources, documented in the phase PR; e2e browse still passes (categories filter includes herb-spice).
+**Verification:**
+- Unit: `dueAtForPreset` for all 5 presets (DST-safe: computed in UTC from injected `now`); `onsetForElapsed` boundary table; Google Calendar URL encoding (spaces, ampersands, unicode food names); ICS validity snapshots (VALARM, RRULE); reminder selection (due-only, once-only, push-else-email).
+- Integration: `/api/reminders/run` with mocked web-push/Resend asserts exact payloads, idempotency on double-run, and 401 without `CRON_SECRET`.
+- e2e: log peanut → pick 2 h → `/today` shows the pending check-in → complete it with "a few hives" → follow-up log exists with `within-2h` onset and the milk— *(correction: peanut)* group pauses per triage; overdue badge renders; .ics downloads.
+- Manual gate in the PR: one real push and one real email received.
 
 ---
 
-### Phase 10 — Multi-baby support (~1–2 days)
+### Phase 9 — Learn: first-visit education & IA rework (~2–3 days)
 
-**Goal:** twins and second kids without re-onboarding. The data model was built for this (logs already carry `babyId`); this phase is storage shape + UI.
+**Goal:** stop assuming visitors already understand why solids matter. A parent who lands cold gets the big picture in five minutes: why we do this at all (it is NOT mainly about calories), how fast to go, and why allergens are introduced deliberately.
+
+**Content system:** new content type in `content/guides/*.ts`, Zod-validated like foods: `{slug, title, summary, minRead, sections: {heading, paragraphs[]}[], sources[]}`. Same rules: 100% original text, ≥2 sources per chapter, 400–800 words each, banned-source scan applies.
+
+**Chapters (six, each with the key claims it must make):**
+1. `why-solids` — milk (breast/formula) stays the main nutrition source until ~12 months; solids exist to (a) teach the *skills* of eating — chewing, moving food, swallowing textures, (b) protect iron and zinc stores that dip around 6 months, (c) build flavor/texture acceptance through repeated exposure, and (d) use the early window where introducing allergens *prevents* allergies (LEAP/EAT). Calories are a side effect at first, not the goal.
+2. `when-to-start` — the readiness signs, why ~6 months (corrected age for preemies), the risks of much earlier/later.
+3. `how-fast` — a realistic pace: first weeks are one "meal" a day and tastes count as wins; non-allergen foods can move quickly; common allergens go one at a time with ~3 days between new ones; by 9 months most babies take 2–3 meals/day; refusals are normal (8–15 relaxed offers).
+4. `allergens-101` — the 9 allergens, the early-introduction evidence, risk tiers, why *keeping* an allergen in the diet matters as much as starting it.
+5. `milk-and-solids` — how milk feeds change across 6–12 months, no cow's-milk drink before 12 months, water in an open cup, responsive feeding ("the parent decides what and when; the baby decides whether and how much").
+6. `ordering` — what the evidence actually supports about food order (see Phase 11; this chapter is written there and linked here).
+
+**IA changes:**
+- New nav item **Learn** (`/learn` hub + `/learn/[slug]` chapters, SSG).
+- Landing page: a "New to solids? Start here" strip (3 chapter cards) ABOVE the food teaser; hero subtext links `why-solids`.
+- Onboarding step 0 gains a one-line collapsible: "What's the point of solids? → 2-minute read" (links, doesn't block).
+- The `/today` not-ready gate links `when-to-start`; the allergen tracker links `allergens-101`; food-page footers link `how-fast`.
+
+**Verification:** guides pass content-lint (extended: sources ≥2, word-count bounds, banned-source scan); SSG builds all chapters; e2e: landing → Learn strip → chapter renders with sources → back to onboarding CTA; not-ready gate links `when-to-start`; axe 0 critical on hub + one chapter; every claim in `why-solids` traceable to a Part I §3 source (reviewer checklist in the PR).
+
+---
+
+### Phase 10 — Nutrition & serving guidance (~2–3 days; MUST precede Phase 12)
+
+**Goal:** owner request: highlight the nutrition/health side — "this food has this benefit, this is the watch-out, this is a sensible amount." **Explicit non-goal (binding):** no calorie or macro *tracking*. Infant feeding guidance is responsive — appetite varies wildly and the baby self-regulates; a counting UI would contradict the sources we cite. The copy says so, in those words: "watch the baby, not the numbers."
+
+**Schema additions to `Food` (with lint rules):**
+1. `nutrients: NutrientTag[]` — enum: `iron, zinc, protein, omega3, vitaminA, vitaminC, vitaminD, calcium, folate, fiber, healthyFats, potassium`. Lint: 1–4 tags per food.
+2. `servingGuidance: {band, typicalAmount, frequency?, note?}[]` — e.g. carrot 6–8m: "Start with 1–2 soft sticks; let the baby set the pace — some days they'll gum one bite, some days three sticks." Lint: an entry for every band that has a PrepSpec; `typicalAmount` ≥ 4 words and contains a measure word (`teaspoon|tablespoon|stick|strip|piece|cube|slice|handful|ounce|half|quarter`).
+3. `watchOuts?: string[]` (max 3) — non-choking cautions: sodium (cheese, bread, nori), vitamin A cap (liver), oxalates (spinach + calcium note), fruit-acid contact rash, mercury tiers, constipation/loosening effects (rice vs prunes).
+4. `emoji?: string` — optional single emoji per food (used by Phase 11 planner chips and list views; cheap to backfill).
+
+**UI:**
+- Food page gains a **"Nutrition & serving"** card: nutrient chips, the active band's `typicalAmount` + `frequency`, watch-outs; iron-tagged foods auto-suggest vitamin-C-tagged pairings ("pair with strawberry — vitamin C boosts iron absorption") computed from tags, not hand-authored.
+- `/today` pick cards show nutrient chips; the R1 iron reason already exists — now it's visually legible.
+- Library filter row gains "Iron", "Omega-3", "Vitamin C" quick filters (driven by tags).
+
+**Backfill:** all 63 foods get `nutrients`, `servingGuidance`, `emoji`, and `watchOuts` where warranted — parallel agent batches with a per-food nutrient table in the prompt (from the WIC guide / USDA knowledge), same authoring rules as Part I.
+
+**Verification:** content-lint green with the new rules across 63; e2e: carrot page shows serving guidance + tags, iron→vitamin-C pairing chip renders on beef; engine behavior unchanged (recommendation snapshot test before/after); 10-food sample audited against sources in the PR; the "no counting" stance stated on `/about` and in the card's footer copy.
+
+---
+
+### Phase 11 — Planner: ordering science + drag-and-drop timeline (~3–4 days)
+
+**Goal:** owner request, two halves. (1) Be honest about ordering science: iron-rich early and allergens early-one-at-a-time are evidence-backed; beyond that there is NO medically "correct" sequence — so (2) give parents a visual, configurable plan: drag food chips onto a week timeline, with the engine validating rather than dictating.
+
+**Science content:** write the `ordering` chapter (`content/guides/ordering.ts`, linked from Phase 9's hub): what's supported (iron first; allergens early, one at a time, maintained), what's myth-adjacent (strict veg-before-fruit ordering — repeated exposure matters far more than sequence), and where parents have genuine freedom. ≥3 sources.
+
+**Data model:** `plan: { anchorMonday: string; entries: {id, foodSlug, weekIndex}[] } | null` in the store (version bump; envelope carries it; importer accepts prior versions). 12-week horizon, week 0 = the week containing `anchorMonday`.
+
+**Pure logic (`src/lib/planner/`):**
+1. `generatePlan(baby, foods, weeks=12, today)` — deterministic suggested plan: weeks 0–1 seed iron-rich + `firstFoodPick` foods; allergens slotted per the baby's risk gates and R2 cadence (default one new allergen per week, peanut withheld for high-risk until cleared); variety spread across categories; choking-caution foods placed only in stage-appropriate weeks (uses corrected age per week).
+2. `validatePlan(plan, baby, foods, today)` → per-entry warnings, never hard blocks except `knownAllergies` (blocked): `min-age` (food's minAge vs baby's corrected age *in that week*), `allergen-crowding` (>1 new allergen first-appearing in the same week), `allergen-paused`, `doctor-avoid`, `stage-mismatch` (high-choking-risk food before its geometry-safe stage).
+3. `allergenOrderFromPlan(plan, foods)` → `AllergenId[]` by first-appearance week; the engine's R2 uses this order when a plan exists (falling back to `DEFAULT_ALLERGEN_ORDER` for unplanned allergens).
+4. New engine rule **R10:** foods planned for the current week get **+1.25** score with reason "On your plan for this week"; `todaysPicks` therefore follow the plan without ignoring safety rules (all exclusions still apply).
+
+**UI `/plan`:**
+- Week lanes ("This week", "Week of Sep 7", … 12 weeks) — horizontal scroll on desktop, vertical stack on mobile; food chips = `emoji + name` (+ amber warning badge with the validation reason on tap).
+- **Drag and drop via `@dnd-kit/core`** (the one new dependency; touch + keyboard sensors — keyboard operability is an a11y gate). A searchable/filterable tray of unplanned foods (reuses the library filters); drag to a week, drag between weeks, tap-remove.
+- Buttons: **"Suggest a plan"** (`generatePlan`; confirm-overwrite if entries exist) and **"Clear plan"** (confirm).
+- Empty state teaches the ordering science in two sentences + links the `ordering` chapter.
+- `/allergens` additionally gets a simple **drag-to-reorder allergen list** (same dnd-kit, one dimension) writing `baby.allergenOrder` — the non-calendar way to configure order, kept in sync with `allergenOrderFromPlan` precedence (plan wins when present; the UI says which is in effect).
+
+**Verification:**
+- Unit: `generatePlan` determinism (same input ⇒ same plan) and gate matrix (high-risk peanut never auto-planned pre-clearance; no >1 new allergen/week; min-age respected using corrected age at week N); `validatePlan` warning matrix incl. the knownAllergies hard block; `allergenOrderFromPlan` extraction; R10 scoring + reason string; engine determinism suite still green.
+- e2e: suggest a plan → ≥8 populated weeks; drag carrot from tray to week 2 via keyboard sensor (a11y path); drop egg and milk into the same week → crowding warning renders with reason; `/today` shows the "On your plan" reason for a planned food; clear-plan restores default allergen order.
+- axe 0 critical on `/plan`; plan roundtrips through export/import.
+
+---
+
+### Phase 12 — Content expansion: 63 → 150 foods + media enrichment (~4–5 days)
+
+As specced in rev. 1, with one change: **all 87 new foods are authored with the Phase 10 fields** (`nutrients`, `servingGuidance`, `emoji`, `watchOuts`) from the start.
+
+- **Target list (+87, equivalents swappable, count may not drop):** proteins (12): trout, tilapia, halibut, canned light tuna (mercury note), crab [shellfish], scallops [shellfish] ⚠, mussels [shellfish], duck, bison, venison, sole, tempeh [soy] · dairy (6): kefir, cottage cheese, ricotta, paneer, goat cheese, butter/ghee · legumes (6): white/kidney/pinto beans, split peas, mung beans, lima beans · nuts & seeds (7): ground pecan, ground pistachio, hazelnut butter ⚠ [all tree-nut], pumpkin-seed butter ⚠, hemp seeds, gelled chia, ground flaxseed · grains (9): buckwheat, millet, couscous [wheat], tortilla [wheat], pita [wheat] ⚠, amaranth, teff, spelt [wheat], soba [wheat] · vegetables (17): asparagus, mushrooms, cabbage, kale, brussels sprouts, eggplant, celery ⚠, corn on the cob, snap peas ⚠, radish ⚠, leek, onion, parsnip, turnip, pumpkin, okra, swiss chard · fruits (17): plum, apricot, nectarine, cantaloupe, honeydew, pineapple, pomegranate arils ⚠⚠, fig, dates ⚠, papaya, lychee ⚠⚠ (the classic aspiration fruit — say so), persimmon, clementine, blackberry, cooked cranberry, coconut, guava · herbs & spices (10, new category `herb-spice`): cinnamon, cumin, ginger, turmeric, paprika, dill, basil, oregano, mint, cilantro · fats/other (3): avocado oil, nutritional yeast, nori ⚠.
+- Schema: `cuisineTags?: string[]`; category enum + labels + import-flow grouping gain `herb-spice`.
+- New lint rules: every `chokingRisk: "high"` food carries a `cutDiagram` in every band; per-category minimums (veg ≥ 30, fruit ≥ 30, protein ≥ 25, grain ≥ 20, legume ≥ 12, dairy ≥ 8, herb-spice ≥ 10, fat-other ≥ 4); corpus minimum via `FOODS_MIN` env (default 60, flipped to 150 in the final commit).
+- Media: top 30 foods get one verified health-org video (`MediaLink` with license + `verifiedOn`); `check-links` gains YouTube oEmbed validation (`youtube.com/oembed?url=…` → 200, no API key). Diagrams-first stands — no filler links.
+- Authoring: same canonical templates and parallel agent batches (~12/batch) with per-food flag + nutrient tables in prompts; `gen:food-index` + lint per batch.
+
+**Verification:** content-lint green at 150 with all rules (incl. Phase 10 fields on every food); each of the 9 allergens has ≥2 delivery foods; oEmbed checks pass; ⚠⚠ foods name their hazard in `chokingNotes`' first sentence; 10% random sample re-checked against sources in the PR; e2e browse passes with the herb-spice filter.
+
+---
+
+### Phase 13 — Multi-baby support (~1–2 days)
+
+As rev. 1: store migration to `{babies: BabyProfile[], activeBabyId}` (logs already carry `babyId`; `AllergenOverride` and the Phase 11 `plan` gain per-baby scoping in the same migration); nav switcher rendered only with 2+ babies; "Add another baby" reuses the onboarding wizard (`?add=1`); export envelope carries all babies; importer accepts every prior version; if Phase 6 shipped, `allergen_overrides` PK gains the baby dimension via drizzle migration.
+
+**Verification:** migration unit tests from each prior persisted version incl. override/plan stamping; e2e twins scenario (separate logs/plans, `/today`, `/plan`, `/history` never leak across); 2-baby export/import roundtrip; engine tests untouched.
+
+---
+
+### Phase 14 — Insights & preference surfacing (~2 days)
+
+**Goal:** rev. 1's insights plus the owner's thumbs request — surface what the baby loves. (Recording already exists: every log carries loved/neutral/disliked/refused; quick-log keeps the 4 options since they're a strict superset of 👍/👎 and the retry engine needs the distinction between "disliked" and "refused".)
 
 Tasks:
-1. Store migration v2→v3: `{baby: BabyProfile|null}` → `{babies: BabyProfile[], activeBabyId: string|null}`; `AllergenOverride` gains `babyId` (migration stamps existing overrides with the existing baby's id). Export envelope v3 carries all babies; importer accepts v1/v2/v3.
-2. Selectors: `activeBaby()`, logs/overrides filtered by `activeBabyId` everywhere the engine or UI reads them (grep gate: no direct `state.babies[0]`).
-3. UI: baby switcher in `AppNav` (rendered only when `babies.length > 1`), "Add another baby" on `/history` reusing the onboarding wizard with a `?add=1` flag, per-baby delete.
-4. Phase 6 interaction (if shipped): `babies` is already multi-row server-side; `allergen_overrides` PK gains the baby dimension via migration.
+1. `src/lib/insights/` pure selectors with fixtures: `categoryVariety(14d)`, `ironExposuresPerWeek`, `allergenCoverage`, `textureTimeline`, `persistentRefusals` (attempt counts + the 8–15-tries reframing), **`acceptance(foodSlug)`** → `loved | warming-up | needs-retries | not-tried` derived from enjoyment history (latest-weighted), and `nutrientCoverage(7d)` from Phase 10 tags.
+2. `/insights` page: stat tiles + zero-dependency inline-SVG spark bars (`components/charts/Spark.tsx`, currentColor-aware), each stat linking to the filtered history behind it; accessible table alternative per chart.
+3. **Preference surfacing:** library gains "❤️ Loved" and "🔁 Needs retries" quick filters; food pages show an acceptance strip (attempt dots colored by enjoyment); `/today` gets a small "Greatest hits" row (top-3 loved foods not served this week — comfort anchors when introducing something new, which is also evidence-aligned: pair new with familiar).
+4. Copy guardrail (binding): descriptive only — no percentiles, no "normal", no deficiency language; gaps phrased as suggestions.
 
-**Verification:** migration unit tests (v1→v3, v2→v3, override stamping); e2e: onboard baby A → add baby B → log different foods for each → `/today` and `/history` switch cleanly and never leak across; export/import roundtrip with two babies; engine tests untouched (it always receives one baby).
-
----
-
-### Phase 11 — Insights dashboard (~2 days)
-
-**Goal:** answer "how are we actually doing?" from data already logged — descriptive only, zero diagnostic claims.
-
-Tasks:
-1. `src/lib/insights/` pure selectors, each with fixtures: `categoryVariety(logs, foods, 14d)` (distinct foods per category), `ironExposuresPerWeek(logs, foods)`, `allergenCoverage(states)` (introduced/maintaining/paused counts), `textureTimeline(logs)` (band used over time), `persistentRefusals(logs)` (attempt counts on refused foods, with the 8–15-tries reframing).
-2. `/insights` page (client): stat tiles + zero-dependency inline-SVG spark bars (`components/charts/Spark.tsx`, `currentColor`-aware); every stat links to the filtered history behind it; accessible table alternative for each chart.
-3. Copy guardrail (binding): no percentiles, no comparisons to "normal", no deficiency language — celebrate variety, surface gaps as suggestions ("nothing from legumes in 2 weeks — lentils reheat well").
-
-**Verification:** unit tests per selector incl. empty-state and single-log fixtures; e2e: seeded 3-week history renders expected counts, `/insights` renders meaningfully at 0 logs (pointing to `/log`); axe 0 critical; no new npm dependencies (chart lib ban enforced by review).
+**Verification:** unit tests per selector incl. empty/single-log fixtures and the acceptance state machine table; e2e: seeded 3-week history renders counts, loved-filter shows the loved food, greatest-hits row renders and links to `/log`; meaningful at 0 logs; axe 0 critical; no new chart dependencies.
 
 ---
 
-### Phase 12 — Localization: Spanish first (~3–4 days, stretch)
+### Phase 15 — Final name, custom domain, launch hardening (~2 days)
 
-**Goal:** the WIC-adjacent audience is heavily Spanish-speaking; ship `/es` without forking content quality.
+As rev. 1: name shortlist → knockout search (USPTO TESS classes 9/41/44, domains, app stores, handles) → owner picks → single-point rename via `src/lib/brand.ts` with a grep gate (zero "OpenSolids" outside brand.ts and git history); custom domain (`railway domain add`, `NEXT_PUBLIC_SITE_URL` update, 301 from the railway.app subdomain); per-food OG images via `next/og`; `@axe-core/playwright` scan of `/`, `/foods`, `/foods/carrot`, `/today`, `/log`, `/safety`, `/plan`, `/learn` as a CI gate (0 critical); `/api/health` + Railway healthcheck + weekly production ping; zero-third-party error stance documented; licensing defaults for owner sign-off (code MIT, content CC BY 4.0).
 
-Tasks (sub-phased; commit each):
-1. **12.0 UI strings:** next-intl with app-router locale segment; extract all UI strings to `messages/en.json`; machine-translate to `messages/es.json` then flag a native-speaker review task (blocking for launch of `/es`, not for merge); locale switcher in the footer; `hreflang` metadata.
-2. **12.1 content overlay:** `content/foods-es/<slug>.ts` partial overrides (name, form, passFailTest, tips first — the safety-critical strings); loader falls back per-field to English with a visible "EN" badge; lint report lists translation coverage per food (informational, not blocking).
-3. **12.2 units:** authoring rule going forward — dual units inline ("1 teaspoon (5 ml)"); applied to all `-es` content and new English content.
-
-**Verification:** build renders both locales; message-key parity check (en/es same key set) as a lint script; e2e smoke: onboarding happy path in `/es`; safety pages (`/safety`, emergency interrupt) fully translated before `/es` is linked publicly — explicit checklist in the PR; native-review sign-off recorded before announcement.
-
----
-
-### Phase 13 — Final name, custom domain, launch hardening (~2 days)
-
-**Goal:** shed the codename and make the deployment boring.
-
-Tasks:
-1. **Name:** shortlist 5 candidates → knockout search each (USPTO TESS live-mark search for classes 9/41/44, .com/.app domain availability, App Store/Play, top social handles) → owner picks → mechanical rename: introduce `src/lib/brand.ts` exporting `BRAND` consumed by layout, nav, manifest, README, and about; grep gate: zero "OpenSolids" occurrences outside `brand.ts` and git history.
-2. **Domain:** buy + `railway domain add`; update `NEXT_PUBLIC_SITE_URL`; permanent redirect from the railway.app subdomain (host check in `next.config` redirects).
-3. **Per-food OG images:** `opengraph-image.tsx` under `foods/[slug]` via `next/og` — food name, the 6–8m form sentence, brand mark; verify with a card validator.
-4. **a11y as a CI gate:** `@axe-core/playwright` scan of `/`, `/foods`, `/foods/carrot`, `/today`, `/log`, `/safety` — 0 critical violations, wired into the e2e job.
-5. **Ops:** `/api/health` (returns build sha) + Railway healthcheck path; weekly workflow already re-checks links — add a production ping step; error visibility stays zero-third-party (Railway logs; a `window.onerror` console breadcrumb only) — documented in `/about`.
-6. **Licensing (owner decision, defaults):** code MIT; content CC BY 4.0 with attribution requirements in README; `LICENSE` + `SECURITY.md` added.
-
-**Verification:** custom domain serves 200 with valid TLS and the old subdomain 301s; OG image renders for 3 spot-checked foods; axe job green in CI; healthcheck shows in Railway; rename grep gate passes; `npm run check` + e2e + Lighthouse ≥ 90 re-run on the renamed production deploy.
+**Verification:** domain 200 + TLS, old subdomain 301s; OG cards validate on 3 spot-checked foods; axe CI job green; healthcheck wired; rename grep gate passes; full `npm run check` + e2e + Lighthouse ≥ 90 re-run on the renamed production deploy.
