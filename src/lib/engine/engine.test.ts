@@ -260,3 +260,57 @@ describe("recommendation engine — the 10 mandatory cases (ROADMAP §7.3)", () 
     }
   });
 });
+
+describe("R0 — pediatrician-guided early start", () => {
+  const earlyBaby = (months: number, extra?: Partial<BabyProfile>) =>
+    makeBaby({
+      birthDate: birthDateForAgeMonths(months),
+      readiness: { earlyStartApproved: true },
+      ...extra,
+    });
+
+  it("4.5m + pediatrician approval, no readiness signs → ready, gets 6-month foods, early-start warning", () => {
+    const rec = run({ baby: earlyBaby(4.5) });
+    expect(rec.gate).toBe("ready");
+    expect(rec.todaysPicks.length).toBeGreaterThan(0);
+    expect(rec.warnings.some((w) => w.kind === "early-start")).toBe(true);
+  });
+
+  it("4.5m without approval → still gated, and the gate reason points at the pediatrician path", () => {
+    const rec = run({
+      baby: makeBaby({ birthDate: birthDateForAgeMonths(4.5), readiness: {} }),
+    });
+    expect(rec.gate).toBe("not-ready");
+    expect(rec.gateReasons.join(" ")).toMatch(/pediatrician/i);
+  });
+
+  it("3.5m stays gated even with approval — 4 months is a hard floor", () => {
+    const rec = run({ baby: earlyBaby(3.5) });
+    expect(rec.gate).toBe("not-ready");
+  });
+
+  it("6.5m with approval but signs unconfirmed → ready with early-start warning", () => {
+    const rec = run({ baby: earlyBaby(6.5) });
+    expect(rec.gate).toBe("ready");
+    expect(rec.warnings.some((w) => w.kind === "early-start")).toBe(true);
+  });
+
+  it("6.5m, signs unconfirmed, no approval → gated (unchanged behavior)", () => {
+    const rec = run({
+      baby: makeBaby({ birthDate: birthDateForAgeMonths(6.5), readiness: {} }),
+    });
+    expect(rec.gate).toBe("not-ready");
+  });
+
+  it("6.5m, signs confirmed → ready with no early-start warning", () => {
+    const rec = run({ baby: makeBaby() });
+    expect(rec.gate).toBe("ready");
+    expect(rec.warnings.some((w) => w.kind === "early-start")).toBe(false);
+  });
+
+  it("12-month-plus foods stay excluded for an early starter (clamp is to 6 months, not beyond)", () => {
+    const honey = makeFood({ slug: "honey", name: "Honey", minAgeMonths: 12 });
+    const rec = run({ baby: earlyBaby(4.5), foods: [...FOODS, honey] });
+    expect(rec.todaysPicks.map((p) => p.slug)).not.toContain("honey");
+  });
+});

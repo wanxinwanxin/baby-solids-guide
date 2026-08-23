@@ -1,8 +1,8 @@
 import type { AllergenId, Food } from "@/content-schema/food";
-import { correctedAgeMonths } from "@/lib/age";
 import {
   DEFAULT_ALLERGEN_ORDER,
   deriveAllergenStates,
+  eligibilityAgeMonths,
   riskTier,
 } from "@/lib/engine";
 import type { AllergenOverride, BabyProfile, ExposureLog, Plan, PlanEntry } from "@/lib/storage/types";
@@ -25,8 +25,10 @@ export function mondayOf(date: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+// Eligibility age (not raw corrected age): a pediatrician-guided early
+// starter plans against the 6-month starter foods, same as the engine.
 function ageAtWeek(baby: BabyProfile, today: Date, weekIndex: number): number {
-  return correctedAgeMonths(baby, today) + weekIndex / WEEKS_PER_MONTH;
+  return eligibilityAgeMonths(baby, today) + weekIndex / WEEKS_PER_MONTH;
 }
 
 /**

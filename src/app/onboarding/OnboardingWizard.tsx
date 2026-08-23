@@ -241,17 +241,24 @@ export function OnboardingWizard() {
       {!allSigns && (
         <p className="text-sm text-muted-foreground">
           Not all there yet? Totally normal — save the profile anyway and we&apos;ll show you what
-          to watch for instead of food picks.
+          to watch for instead of food picks. Or, if your pediatrician told you to start, check the
+          box below and the program unlocks today.
         </p>
       )}
-      <label className="flex items-center gap-2 text-sm">
+      <label className="flex items-start gap-3 rounded-lg border p-3 text-sm">
         <input
           type="checkbox"
           checked={earlyStartApproved}
           onChange={(e) => setEarlyStartApproved(e.target.checked)}
-          className="size-4 accent-emerald-700"
+          className="mt-0.5 size-4 accent-emerald-700"
         />
-        Our pediatrician specifically advised starting between 4 and 6 months
+        <span>
+          <span className="font-medium">We&apos;re starting on our pediatrician&apos;s specific advice.</span>{" "}
+          <span className="text-muted-foreground">
+            This unlocks the program from 4 months, even before every readiness sign appears —
+            pediatrician-guided programs often start early.
+          </span>
+        </span>
       </label>
       <div className="flex gap-2">
         <Button variant="outline" onClick={() => setStep(1)}>Back</Button>

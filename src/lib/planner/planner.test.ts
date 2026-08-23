@@ -203,3 +203,35 @@ describe("plan ↔ engine integration (R10 + order)", () => {
     expect(PLAN_BONUS).toBeGreaterThan(0);
   });
 });
+
+describe("pediatrician-guided early start (eligibility clamp)", () => {
+  it("a 4.5m baby with approval gets a full plan of 6-month foods, no min-age warnings", () => {
+    const baby = makeBaby({
+      birthDate: birthDateForAgeMonths(4.5),
+      readiness: { earlyStartApproved: true },
+    });
+    const plan = generatePlan({ baby, ...emptyInput });
+    expect(plan.entries.filter((e) => e.weekIndex === 0).length).toBeGreaterThan(0);
+    const warnings = validatePlan({ plan, baby, ...emptyInput });
+    expect(warnings.filter((w) => w.kind === "min-age")).toHaveLength(0);
+  });
+
+  it("without approval the same 4.5m baby gets nothing until the weeks reach 6 months", () => {
+    const baby = makeBaby({ birthDate: birthDateForAgeMonths(4.5), readiness: {} });
+    const plan = generatePlan({ baby, ...emptyInput });
+    expect(plan.entries.filter((e) => e.weekIndex === 0)).toHaveLength(0);
+  });
+
+  it("the clamp stops at 6 months: 9-month foods still respect min-age for an early starter", () => {
+    const baby = makeBaby({
+      birthDate: birthDateForAgeMonths(4.5),
+      readiness: { earlyStartApproved: true },
+    });
+    const plan = generatePlan({ baby, ...emptyInput });
+    const grapeEntry = plan.entries.find((e) => e.foodSlug === "grapes");
+    if (grapeEntry) {
+      // 6 (clamped) + weeks must be ≥ 9 months before grapes appear
+      expect(grapeEntry.weekIndex).toBeGreaterThanOrEqual(13);
+    }
+  });
+});

@@ -47,6 +47,25 @@ export const DEFAULT_ALLERGEN_ORDER: AllergenId[] = [
   "shellfish",
 ];
 
+/**
+ * Age used for food eligibility. A pediatrician-guided early start
+ * (earlyStartApproved, 4–6 months corrected) unlocks the 6-month starter
+ * foods: the pediatrician's program supersedes our floor, and the first
+ * prep band on every food is already the smooth texture an early starter
+ * needs. Under 4 months nothing is clamped — that gate is hard.
+ */
+export function eligibilityAgeMonths(baby: BabyProfile, today: Date): number {
+  const age = correctedAgeMonths(baby, today);
+  if (
+    baby.readiness.earlyStartApproved === true &&
+    age >= EARLY_START_MONTHS &&
+    age < READY_MONTHS
+  ) {
+    return READY_MONTHS;
+  }
+  return age;
+}
+
 export type EngineInput = {
   baby: BabyProfile;
   logs: ExposureLog[];
@@ -90,7 +109,7 @@ export type ScoredFood = {
 };
 
 export type Warning = {
-  kind: "symptom-hold" | "hard-block" | "maintenance-lapse" | "food-hold";
+  kind: "symptom-hold" | "hard-block" | "maintenance-lapse" | "food-hold" | "early-start";
   message: string;
   allergenId?: AllergenId;
   foodSlug?: string;
@@ -233,21 +252,27 @@ export function recommend(input: EngineInput): Recommendation {
   const allergenStates = deriveAllergenStates({ baby, logs, overrides, foods });
   const warnings: Warning[] = [];
 
-  // R0 — readiness gate
+  // R0 — readiness gate. Pediatrician guidance supersedes both the 6-month
+  // default and the readiness checklist (many supervised programs start at
+  // 4 months, before all the classic signs appear). Under 4 months stays a
+  // hard floor — no supervised program starts earlier.
+  const pediatricianGuided = baby.readiness.earlyStartApproved === true;
   const gateReasons: string[] = [];
-  const ageOk =
-    age >= READY_MONTHS || (age >= EARLY_START_MONTHS && baby.readiness.earlyStartApproved === true);
-  if (!ageOk) {
+  if (age < EARLY_START_MONTHS) {
     gateReasons.push(
-      age < EARLY_START_MONTHS
-        ? "Most babies are ready around 6 months (corrected age). It's early yet — watch for the readiness signs."
-        : "Between 4 and 6 months, start solids only if your pediatrician specifically advised it.",
+      "Most babies are ready around 6 months (corrected age), and even pediatrician-guided programs wait until at least 4 months. It's early yet — watch for the readiness signs.",
     );
-  }
-  if (!baby.readiness.confirmedAt) {
-    gateReasons.push(
-      "Confirm the readiness signs first: sits with minimal support, steady head control, brings objects to the mouth, shows interest in food, and the tongue-thrust reflex has faded.",
-    );
+  } else if (!pediatricianGuided) {
+    if (age < READY_MONTHS) {
+      gateReasons.push(
+        "Between 4 and 6 months, start solids only if your pediatrician specifically advised it — if they have, tell us below and you can start today.",
+      );
+    }
+    if (!baby.readiness.confirmedAt) {
+      gateReasons.push(
+        "Confirm the readiness signs first: sits with minimal support, steady head control, brings objects to the mouth, shows interest in food, and the tongue-thrust reflex has faded.",
+      );
+    }
   }
   if (gateReasons.length > 0) {
     return {
@@ -262,6 +287,21 @@ export function recommend(input: EngineInput): Recommendation {
     };
   }
 
+  // A pediatrician-guided early starter (4–6 months) is deliberately on the
+  // program before our 6-month food floor, so eligibility uses the clamped
+  // age — every food's first prep band is already the smooth purée/mash an
+  // early starter needs. Surface the caveat once instead of gating.
+  const eligibilityAge = eligibilityAgeMonths(baby, today);
+  if (pediatricianGuided && (age < READY_MONTHS || !baby.readiness.confirmedAt)) {
+    warnings.push({
+      kind: "early-start",
+      message:
+        "You're starting on your pediatrician's guidance" +
+        (age < READY_MONTHS ? " before 6 months" : "") +
+        ". Stick to smooth, thin textures (the first prep option on each food page) and let their advice override anything suggested here.",
+    });
+  }
+
   // ——— Exclusions (R7, R8) ———
   const excludedSlugs = new Map<string, string>(); // slug → reason
   const pausedAllergens = new Set<AllergenId>();
@@ -272,7 +312,7 @@ export function recommend(input: EngineInput): Recommendation {
   }
 
   for (const food of foods) {
-    if (age < food.minAgeMonths) {
+    if (eligibilityAge < food.minAgeMonths) {
       excludedSlugs.set(food.slug, `Not before ${food.minAgeMonths} months (corrected age).`);
       continue;
     }

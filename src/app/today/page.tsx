@@ -36,6 +36,7 @@ export default function TodayPage() {
   const overrides = useActiveOverrides();
   const plan = useActivePlan();
   const checkIns = useActiveCheckIns();
+  const saveBaby = useGuideStore((s) => s.saveBaby);
   const setTextureStage = useGuideStore((s) => s.setTextureStage);
   const resolveCheckIn = useGuideStore((s) => s.resolveCheckIn);
   const snoozeBackupNudge = useGuideStore((s) => s.snoozeBackupNudge);
@@ -90,6 +91,7 @@ export default function TodayPage() {
   const age = correctedAgeMonths(baby, new Date());
 
   if (rec.gate === "not-ready") {
+    const canSelfSelect = age >= 4 && !baby.readiness.earlyStartApproved;
     return (
       <div className="mx-auto max-w-lg space-y-4">
         <h1 className="text-2xl font-bold">Almost there</h1>
@@ -105,6 +107,32 @@ export default function TodayPage() {
             </ul>
           </AlertDescription>
         </Alert>
+        {canSelfSelect && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Starting on your pediatrician&apos;s advice?</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Plenty of families start solids between 4 and 6 months on their pediatrician&apos;s
+                specific guidance — sometimes before every readiness sign has appeared. If that&apos;s
+                you, start the program today: we&apos;ll keep suggestions to smooth, mashable first
+                foods, and your pediatrician&apos;s advice always comes first.
+              </p>
+              <Button
+                className="w-full bg-emerald-700 text-white hover:bg-emerald-800"
+                onClick={() =>
+                  saveBaby({
+                    ...baby,
+                    readiness: { ...baby.readiness, earlyStartApproved: true },
+                  })
+                }
+              >
+                Our pediatrician advised us to start — begin today
+              </Button>
+            </CardContent>
+          </Card>
+        )}
         <p className="text-sm text-muted-foreground">
           Meanwhile, browse the{" "}
           <Link href="/foods" className="underline underline-offset-2">
