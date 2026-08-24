@@ -1,14 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Bricolage_Grotesque, Figtree, JetBrains_Mono } from "next/font/google";
 import Link from "next/link";
 import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
 import { AppNav } from "@/components/AppNav";
+import { MobileTabBar } from "@/components/MobileTabBar";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { SyncProvider } from "@/components/SyncProvider";
 import "./globals.css";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const bricolage = Bricolage_Grotesque({ variable: "--font-bricolage", subsets: ["latin"] });
+const figtree = Figtree({ variable: "--font-figtree", subsets: ["latin"] });
+const jetbrainsMono = JetBrains_Mono({ variable: "--font-jetbrains-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
@@ -22,18 +24,19 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#047857",
+  themeColor: "#1E7A52",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en" className={`${bricolage.variable} ${figtree.variable} ${jetbrainsMono.variable}`}>
       <body className="antialiased">
         <ServiceWorkerRegister />
         <SyncProvider />
         <AppNav />
         <main className="mx-auto w-full max-w-4xl px-4 pb-16 pt-6">{children}</main>
-        <footer className="border-t px-4 py-6 text-center text-xs text-muted-foreground">
+        <MobileTabBar />
+        <footer className="border-t px-4 py-6 pb-24 text-center text-xs text-muted-foreground md:pb-6">
           <p className="mx-auto max-w-2xl">
             {BRAND} is a free educational guide, not medical advice. Every baby is different —
             always follow your pediatrician&apos;s guidance. In an emergency, call 911.
