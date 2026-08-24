@@ -1,12 +1,13 @@
-import { and, isNull, lte } from "drizzle-orm";
+import { and, eq, isNull, lte } from "drizzle-orm";
 import webpush from "web-push";
 import { getDb, schema } from "@/lib/db";
+import { emailEnabled, sendEmail } from "@/lib/email";
 
 /**
  * Phase 8B — reminder delivery. Called every 5 minutes by a scheduled job
  * with the CRON_SECRET header. Sends every due, unsent reminder: web push
- * first, one attempt per subscription; marks sent regardless of partial
- * failures (at-most-once beats duplicate pings for this use case).
+ * to every subscription, plus email when Resend is configured; marks sent
+ * regardless of partial failures (at-most-once beats duplicate pings).
  */
 
 type ReminderPayload = { title: string; body: string; url?: string };
@@ -58,7 +59,6 @@ export async function POST(req: Request) {
           // 404/410 = dead subscription — clean it up.
           const status = (e as { statusCode?: number }).statusCode;
           if (status === 404 || status === 410) {
-            const { eq } = await import("drizzle-orm");
             await db
               .delete(schema.pushSubscriptions)
               .where(eq(schema.pushSubscriptions.endpoint, sub.endpoint));
@@ -66,7 +66,26 @@ export async function POST(req: Request) {
         }
       }
     }
-    const { eq } = await import("drizzle-orm");
+    if (emailEnabled) {
+      const [account] = await db
+        .select({ email: schema.user.email })
+        .from(schema.user)
+        .where(eq(schema.user.id, reminder.userId))
+        .limit(1);
+      if (account?.email) {
+        const ok = await sendEmail({
+          to: account.email,
+          subject: payload.title,
+          text: payload.body,
+          actionUrl: payload.url
+            ? new URL(payload.url, process.env.BETTER_AUTH_URL ?? "http://localhost:3000").toString()
+            : undefined,
+          actionLabel: "Open the check-in",
+        });
+        if (ok) sent++;
+        else failed++;
+      }
+    }
     await db
       .update(schema.reminders)
       .set({ sentAt: new Date() })

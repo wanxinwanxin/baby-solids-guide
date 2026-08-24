@@ -2,7 +2,7 @@
 
 import Link from"next/link";
 import { useState } from"react";
-import { signIn, signOut, signUp, useSession } from"@/lib/auth-client";
+import { authClient, signIn, signOut, signUp, useSession } from"@/lib/auth-client";
 import { useAuthEnabled, useSyncStatus } from"@/components/SyncProvider";
 import { useHydrated } from"@/lib/hooks";
 import { Alert, AlertDescription, AlertTitle } from"@/components/ui/alert";
@@ -29,6 +29,7 @@ export default function AccountPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -55,12 +56,30 @@ export default function AccountPage() {
   async function submit() {
     setBusy(true);
     setError(null);
+    setNotice(null);
     const action =
       mode === "sign-in"
         ? signIn.email({ email, password })
         : signUp.email({ email, password, name: email.split("@")[0] });
     const { error: err } = await action;
     if (err) setError(err.message ?? "Something went wrong — try again.");
+    setBusy(false);
+  }
+
+  async function requestReset() {
+    if (!email) {
+      setError("Enter your email above first, then tap the reset link again.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    const { error: err } = await authClient.requestPasswordReset({
+      email,
+      redirectTo: "/account/reset-password",
+    });
+    if (err) setError(err.message ?? "Couldn't send the reset email — try again.");
+    else setNotice("If that address has an account, a reset link is on its way.");
     setBusy(false);
   }
 
@@ -189,7 +208,8 @@ export default function AccountPage() {
             autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
           />
         </label>
-        {error && <p className="text-sm text-red-700 dark:text-red-400">{error}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        {notice && <p className="text-sm text-primary">{notice}</p>}
         <Button
           type="submit"
           disabled={busy || isPending}
@@ -197,6 +217,15 @@ export default function AccountPage() {
         >
           {mode === "sign-in" ? "Sign in" : "Create account"}
         </Button>
+        {mode === "sign-in" && (
+          <button
+            type="button"
+            onClick={() => void requestReset()}
+            className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+          >
+            Forgot password? Email me a reset link
+          </button>
+        )}
       </form>
 
       <GoogleButton />
