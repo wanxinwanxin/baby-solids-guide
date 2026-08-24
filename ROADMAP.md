@@ -734,3 +734,48 @@ Tasks:
 As rev. 1: name shortlist → knockout search (USPTO TESS classes 9/41/44, domains, app stores, handles) → owner picks → single-point rename via `src/lib/brand.ts` with a grep gate (zero "OpenSolids" outside brand.ts and git history); custom domain (`railway domain add`, `NEXT_PUBLIC_SITE_URL` update, 301 from the railway.app subdomain); per-food OG images via `next/og`; `@axe-core/playwright` scan of `/`, `/foods`, `/foods/carrot`, `/today`, `/log`, `/safety`, `/plan`, `/learn` as a CI gate (0 critical); `/api/health` + Railway healthcheck + weekly production ping; zero-third-party error stance documented; licensing defaults for owner sign-off (code MIT, content CC BY 4.0).
 
 **Verification:** domain 200 + TLS, old subdomain 301s; OG cards validate on 3 spot-checked foods; axe CI job green; healthcheck wired; rename grep gate passes; full `npm run check` + e2e + Lighthouse ≥ 90 re-run on the renamed production deploy.
+
+---
+
+# Part III — Owner feedback round 2 (2026-08-24)
+
+Direct product feedback after using the redesigned app. Phases D1–D2 shipped same-day; the rest are specced for one-shot agent execution.
+
+### Phase D1 — Day preview on Today ✅ SHIPPED 2026-08-24
+
+`/today` gains ‹ › day-stepper (0 to +84 days) next to the date eyebrow. The engine is pure (`recommend()` takes an injected clock), so previewing runs it with the future date: picks, plan week (R10), allergen queue, and texture nudges all shift to that day, assuming today's history. h1 becomes "Tomorrow for X" / "{date} for X"; a banner explains the assumption and links the plan board; reality-pinned cards (check-ins, backup nudge, account) hide while previewing. This also makes plan→today reflection *visible*: drag a food to next week on `/plan`, preview next week on `/today`, see it surface.
+
+### Phase D2 — "Safe so far" pantry ✅ SHIPPED 2026-08-24
+
+Definition (binding): a food is "safe so far" when it has ≥1 log with `amountEaten !== "none"` and no log with allergen-pausing symptoms (`deriveFoodStats().hasPausingSymptoms === false`). Surfaces: a "Safe so far" card on `/today` (emoji chips → food pages, count, capped at 24 + overflow link) and "YOURS: Safe so far / Not yet tried" filter chips in the foods browser (store-backed, hidden until hydration and first log).
+
+### Phase D3 — Meal combos & blender-simple recipes (~4–6 days, content + engine)
+
+Goal: turn the safe-so-far pantry into concrete "serve this together" guidance. Explicitly simplistic recipes — blend/mash/freeze-cube/reheat tier, never cooking projects.
+
+1. **Content type `content/recipes/*.ts`** (Zod-validated like foods): `slug, name, foods: FoodSlug[] (2–4), bands: AgeBand[], method: "blend" | "mash" | "stir" | "assemble" | "freeze-cubes", steps: string[] (≤5, each ≤120 chars), whyItWorks (taste/nutrition rationale), ironPairing: boolean (vit-C + iron combos), storage: string ("freeze flat in cube tray; reheat to steaming, cool to body temp"), sources`. Corpus target: 40 recipes v1 (every recipe's foods must exist in the food DB; content-lint enforces referential integrity + band coverage + ≥10 iron-pairing recipes).
+2. **Combo suggester** (pure function, `src/lib/combos.ts`): given safe set + today's picks, rank recipes where every ingredient is safe-or-today's-pick; boost iron+vitC pairing, new-food-with-familiar-anchor, and flavor `flavorPairings` overlap; deterministic tie-breaks like the engine.
+3. **Surfaces:** `/today` "Make it a meal" card (top 2 combos for today's picks); food pages "Goes well with" upgraded to real recipe links; `/foods` gains a Recipes tab or `/recipes` index with band filter.
+4. **Verification:** content-lint referential gate; unit tests for ranking determinism + safety invariant (never suggests a foods with pausing symptoms or gated allergen); e2e: seeded safe set shows a combo card whose ingredients are all safe.
+
+### Phase D4 — Family sharing: two accounts, one baby (~1–1.5 weeks, backend-heavy)
+
+Goal: parent A and parent B sign in with individual accounts (Google or email) and read/write the same baby.
+
+1. **Data model:** new `baby_members` table `(babyId uuid FK, userId text FK, role: "owner" | "member", createdAt)`, unique (babyId, userId). Backfill: every existing `babies.userId` becomes an owner row; `babies.userId` stays as "created by" but access checks move to membership. New `invites` table `(id, babyId, token unique, createdByUserId, expiresAt (72h), acceptedByUserId?, acceptedAt?)`.
+2. **API:** `POST /api/babies/:id/invites` (owner only → returns share URL `/join/<token>`), `POST /api/invites/:token/accept` (session required; adds membership; idempotent), `DELETE /api/babies/:id/members/:userId` (owner removes member; owner cannot remove self while other members exist — transfer first). `GET/PUT /api/sync` changes from "snapshot by userId" to "snapshot = union of babies where user is a member" — per-baby merge instead of per-user snapshot: babies/logs/overrides/checkIns/plans all already carry babyId, so `loadSnapshot`/`saveSnapshot` filter by membership set. LWW semantics unchanged (updatedAt wins regardless of which parent wrote).
+3. **Conflict truth:** both parents log offline → both logs survive (different ids); simultaneous edits to the same baby profile → LWW on updatedAt, same as today's two-device case, which the sync e2e already proves.
+4. **UI:** `/account` gains a "Family" card per baby: members list, "Invite a co-parent" → copyable link + QR; `/join/<token>` page (sign-in wall → accept → redirect to /today with the shared baby active). Snapshot delete (account deletion) removes memberships, and deletes a baby only when it has no other members.
+5. **Verification:** pglite integration tests (invite → accept → both users read/write same baby; member removal; account deletion leaves co-parent's data); two-context e2e extending sync.spec: A invites, B accepts, B logs, A sees it; RLS-style negative tests (non-member 403 on every route).
+
+### Phase D5 — Privacy-preserving usage visibility (~1 day + owner decision)
+
+Today: zero analytics by design ("no tracking" is on the marketing page). Shipped now: `GET /api/stats` gated by `x-cron-secret` — aggregate counts only (users, babies, logs, 7d/30d actives from existing sync timestamps; guests invisible by design). Owner options, in ascending order of visibility vs. privacy cost:
+1. **Status quo+** (shipped): DB aggregates of signed-in users only. Zero new collection; keeps the promise literally.
+2. **Server-side page counting:** count requests in the Next server (path + day granularity, no cookies, no UA/IP storage) → tiny `page_views(day, path, n)` table. Sees guests; still no individual tracking. ~half day. Copy stays honest with "no cookies, no individual tracking; we count page loads in aggregate".
+3. **Self-hosted Plausible/Umami:** full funnels/referrers, cookieless. Requires a service + updating the no-tracking copy. Recommended only if growth work starts in earnest.
+Recommendation: ship 2 when traffic matters; never ship third-party ad-tech analytics — it would poison the product's core trust claim.
+
+### Also answered 2026-08-24 (no build needed)
+- **Plan → Today reflection already works** (engine R10: planned foods get +1.25 for the plan week the viewed date falls in; plan order drives the allergen queue). D1 made it visible.
+- **Mobile status:** responsive PWA (manifest + service worker + push + bottom tab bar + Add-to-Home-Screen). No native app; none needed until push-on-iOS-Safari limits or app-store distribution become goals.
