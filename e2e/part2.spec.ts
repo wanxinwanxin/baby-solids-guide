@@ -224,3 +224,25 @@ test.describe("Insights (Phase 14)", () => {
     await expect(page.getByRole("link", { name: /Log/ }).first()).toBeVisible();
   });
 });
+
+test.describe("Day preview (Part III D1) + safe-so-far (D2)", () => {
+  test("step to tomorrow, see the preview banner, come back; safe list appears after a log", async ({ page }) => {
+    await completeOnboarding(page);
+    await expect(page.getByRole("heading", { name: "Today for Testling" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Next day" }).click();
+    await expect(page.getByRole("heading", { name: "Tomorrow for Testling" })).toBeVisible();
+    await expect(page.getByText(/Suggestions assume the history you have today/)).toBeVisible();
+    await page.getByRole("button", { name: "← back to today" }).click();
+    await expect(page.getByRole("heading", { name: "Today for Testling" })).toBeVisible();
+
+    // No safe list yet, then one appears after a clean log.
+    await expect(page.getByText("Safe so far")).toHaveCount(0);
+    await mutateStore(
+      page,
+      `(state) => { state.logs.push({ id: "sl-1", babyId: state.babies[0].id, date: "${isoDaysAgo(1)}", foodSlug: "banana", prepBandUsed: "6-8m", amountEaten: "some", enjoyment: "liked", gagging: false, symptoms: [], updatedAt: new Date().toISOString() }); }`,
+    );
+    await expect(page.getByRole("heading", { name: "Safe so far" })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Banana/ }).first()).toBeVisible();
+  });
+});

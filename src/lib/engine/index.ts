@@ -158,7 +158,7 @@ type FoodStats = {
   hasPausingSymptoms: boolean;
 };
 
-function deriveFoodStats(logs: ExposureLog[]): Map<string, FoodStats> {
+export function deriveFoodStats(logs: ExposureLog[]): Map<string, FoodStats> {
   const stats = new Map<string, FoodStats>();
   const sorted = [...logs].sort((a, b) => a.date.localeCompare(b.date));
   for (const log of sorted) {

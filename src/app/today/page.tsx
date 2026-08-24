@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { allFoods } from "../../../content/foods";
 import { correctedAgeMonths } from "@/lib/age";
+import { deriveFoodStats } from "@/lib/engine";
 import { ALLERGEN_LABELS, BAND_LABELS } from "@/lib/food-utils";
 import {
   useActiveBaby,
@@ -103,10 +104,20 @@ export default function TodayPage() {
   const { data: session } = useSession();
   const syncState = useSyncStatus((s) => s.state);
   const now = useMemo(() => new Date(), []);
+  /** Day preview: 0 = today, up to 12 weeks out. The engine is pure — feeding
+   * it a future date shows that day's picks, plan week, and allergen queue
+   * (assuming today's logs, since the future ones don't exist yet). */
+  const MAX_PREVIEW_DAYS = 84;
+  const [offsetDays, setOffsetDays] = useState(0);
+  const previewing = offsetDays > 0;
+  const viewDate = useMemo(
+    () => new Date(now.getTime() + offsetDays * 86400000),
+    [now, offsetDays],
+  );
   const rec = useMemo(() => {
     if (!baby) return null;
-    return recommend({ baby, logs, overrides, foods: allFoods, today: now, plan });
-  }, [baby, logs, overrides, plan, now]);
+    return recommend({ baby, logs, overrides, foods: allFoods, today: viewDate, plan });
+  }, [baby, logs, overrides, plan, viewDate]);
   const { due: dueCheckIns, upcoming: upcomingCheckIns } = useMemo(
     () => pendingCheckIns(checkIns, now),
     [checkIns, now],
@@ -123,6 +134,16 @@ export default function TodayPage() {
     for (const l of logs) m.set(l.foodSlug, (m.get(l.foodSlug) ?? 0) + 1);
     return m;
   }, [logs]);
+  /** Established safe: eaten at least once, never with allergen-pausing
+   * symptoms — the baby's growing pantry. */
+  const safeFoods = useMemo(() => {
+    const stats = deriveFoodStats(logs);
+    return [...triedSlugs]
+      .filter((slug) => !stats.get(slug)?.hasPausingSymptoms)
+      .map((slug) => foodBySlug.get(slug))
+      .filter((f): f is NonNullable<typeof f> => !!f)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [logs, triedSlugs]);
 
   const showAccountCard = authEnabled && !session && logs.length >= 5;
   const showBackupNudge =
@@ -284,22 +305,60 @@ export default function TodayPage() {
     TEXTURE_STAGES[TEXTURE_STAGES.findIndex((s) => s.id === rec.textureStage.current) + 1];
   const allergensUnderway = rec.allergenStates.filter((s) => s.status !== "not-started").length;
   const foodsPct = Math.round((triedSlugs.size / allFoods.length) * 100);
-  const dateLabel = now.toLocaleDateString(undefined, {
+  const viewAge = correctedAgeMonths(baby, viewDate);
+  const dateLabel = viewDate.toLocaleDateString(undefined, {
     weekday: "short",
     month: "short",
     day: "numeric",
   });
+  const dayWord =
+    offsetDays === 0
+      ? "Today"
+      : offsetDays === 1
+        ? "Tomorrow"
+        : viewDate.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="space-y-1.5">
-          <p className="font-data text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-            {dateLabel} · {age.toFixed(1)} mo{baby.dueDate ? " corrected" : ""} · stage{" "}
-            {rec.textureStage.current}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="font-data text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+              {dateLabel} · {viewAge.toFixed(1)} mo{baby.dueDate ? " corrected" : ""} · stage{" "}
+              {rec.textureStage.current}
+            </p>
+            <span className="flex items-center gap-0.5">
+              <button
+                type="button"
+                aria-label="Previous day"
+                disabled={offsetDays === 0}
+                onClick={() => setOffsetDays((d) => Math.max(0, d - 1))}
+                className="flex size-7 items-center justify-center rounded-full border text-sm text-foreground/70 hover:border-primary/60 disabled:opacity-30"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                aria-label="Next day"
+                disabled={offsetDays >= MAX_PREVIEW_DAYS}
+                onClick={() => setOffsetDays((d) => Math.min(MAX_PREVIEW_DAYS, d + 1))}
+                className="flex size-7 items-center justify-center rounded-full border text-sm text-foreground/70 hover:border-primary/60 disabled:opacity-30"
+              >
+                ›
+              </button>
+              {previewing && (
+                <button
+                  type="button"
+                  onClick={() => setOffsetDays(0)}
+                  className="font-data ml-1.5 rounded-full bg-secondary px-2.5 py-1 text-[10.5px] uppercase tracking-[0.06em] text-secondary-foreground hover:bg-secondary/70"
+                >
+                  ← back to today
+                </button>
+              )}
+            </span>
+          </div>
           <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-            Today for {baby.nickname}
+            {dayWord} for {baby.nickname}
           </h1>
         </div>
         <div className="flex items-center gap-3.5">
@@ -327,7 +386,21 @@ export default function TodayPage() {
         </div>
       </div>
 
-      {showAccountCard && (
+      {previewing && (
+        <Alert className="border-primary/40 bg-secondary/40">
+          <AlertTitle>Previewing {dayWord.toLowerCase() === "tomorrow" ? "tomorrow" : dayWord}</AlertTitle>
+          <AlertDescription>
+            Suggestions assume the history you have today — each food you actually log sharpens
+            the days after it. Changes on the{" "}
+            <Link href="/plan" className="font-semibold text-primary underline underline-offset-2">
+              plan board
+            </Link>{" "}
+            show up here instantly.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!previewing && showAccountCard && (
         <Alert className="border-primary/50 bg-secondary/50">
           <AlertTitle>Save {baby.nickname}&apos;s data</AlertTitle>
           <AlertDescription>
@@ -340,7 +413,7 @@ export default function TodayPage() {
         </Alert>
       )}
 
-      {showBackupNudge && (
+      {!previewing && showBackupNudge && (
         <Alert className="border-honey/50 bg-accent">
           <AlertTitle className="text-accent-foreground">
             Back up {baby.nickname}&apos;s history
@@ -367,7 +440,7 @@ export default function TodayPage() {
         </Alert>
       )}
 
-      {(dueCheckIns.length > 0 || upcomingCheckIns.length > 0) && (
+      {!previewing && (dueCheckIns.length > 0 || upcomingCheckIns.length > 0) && (
         <Card className={cn(dueCheckIns.length > 0 && "bg-accent/40 ring-honey/50")}>
           <CardHeader className="pb-0">
             <CardTitle className="flex items-center gap-2 font-sans text-base font-bold">
@@ -655,6 +728,41 @@ export default function TodayPage() {
           )}
         </div>
       </section>
+
+      {safeFoods.length > 0 && (
+        <section className="flex flex-col gap-3.5 rounded-2xl bg-card p-5 ring-1 ring-border">
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="font-sans text-lg font-bold">Safe so far</h2>
+            <span className="font-data text-[11px] uppercase tracking-[0.06em] text-foreground/70">
+              {safeFoods.length} {safeFoods.length === 1 ? "food" : "foods"}
+            </span>
+          </div>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Eaten at least once with no reaction logged — {baby.nickname}&apos;s growing pantry.
+            Keep favorites in rotation while the new ones arrive.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {safeFoods.slice(0, 24).map((f) => (
+              <Link
+                key={f.slug}
+                href={`/foods/${f.slug}`}
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-primary/30 bg-secondary/40 px-3.5 text-sm font-medium text-foreground/85 hover:border-primary"
+              >
+                <span aria-hidden="true">{f.emoji}</span>
+                {f.name}
+              </Link>
+            ))}
+            {safeFoods.length > 24 && (
+              <Link
+                href="/foods"
+                className="inline-flex min-h-9 items-center rounded-full border px-3.5 text-sm font-semibold text-primary hover:border-primary/60"
+              >
+                +{safeFoods.length - 24} more →
+              </Link>
+            )}
+          </div>
+        </section>
+      )}
 
       {rec.retryQueue.length > 0 && (
         <section className="flex flex-wrap items-center gap-x-3 gap-y-2">
