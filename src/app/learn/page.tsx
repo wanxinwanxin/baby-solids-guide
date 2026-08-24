@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { allGuides } from "../../../content/guides";
-import { Card, CardContent } from "@/components/ui/card";
+import type { Metadata } from"next";
+import Link from"next/link";
+import { allGuides } from"../../../content/guides";
+import { Card, CardContent } from"@/components/ui/card";
 
 export const metadata: Metadata = {
   title: "Learn: the big picture of starting solids",
@@ -23,11 +23,11 @@ export default function LearnPage() {
       <div className="grid gap-4 sm:grid-cols-2">
         {allGuides.map((g, i) => (
           <Link key={g.slug} href={`/learn/${g.slug}`}>
-            <Card className="h-full transition-colors hover:border-emerald-400">
+            <Card className="h-full transition-colors hover:border-primary/60">
               <CardContent className="pt-6">
                 <div className="flex items-baseline justify-between gap-2">
                   <h2 className="font-semibold">
-                    <span className="mr-2 text-emerald-700 dark:text-emerald-400">{i + 1}.</span>
+                    <span className="mr-2 text-primary">{i + 1}.</span>
                     {g.title}
                   </h2>
                   <span className="shrink-0 text-xs text-muted-foreground">{g.minRead} min</span>

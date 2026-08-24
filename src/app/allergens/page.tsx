@@ -1,21 +1,21 @@
 "use client";
 
-import Link from "next/link";
-import { useMemo } from "react";
-import { allFoods } from "../../../content/foods";
-import { allergenPrograms } from "../../../content/allergens";
-import { DEFAULT_ALLERGEN_ORDER, deriveAllergenStates, riskTier } from "@/lib/engine";
-import { icsForMaintenance } from "@/lib/checkins";
-import { useActivePlan } from "@/lib/hooks";
-import type { AllergenId } from "@/content-schema/food";
-import { ALLERGEN_LABELS, todayIso } from "@/lib/food-utils";
-import { useActiveBaby, useActiveLogs, useActiveOverrides, useHydrated } from "@/lib/hooks";
-import { useGuideStore } from "@/lib/storage/store";
-import type { AllergenStatus } from "@/lib/storage/types";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from"next/link";
+import { useMemo } from"react";
+import { allFoods } from"../../../content/foods";
+import { allergenPrograms } from"../../../content/allergens";
+import { DEFAULT_ALLERGEN_ORDER, deriveAllergenStates, riskTier } from"@/lib/engine";
+import { icsForMaintenance } from"@/lib/checkins";
+import { useActivePlan } from"@/lib/hooks";
+import type { AllergenId } from"@/content-schema/food";
+import { ALLERGEN_LABELS, todayIso } from"@/lib/food-utils";
+import { useActiveBaby, useActiveLogs, useActiveOverrides, useHydrated } from"@/lib/hooks";
+import { useGuideStore } from"@/lib/storage/store";
+import type { AllergenStatus } from"@/lib/storage/types";
+import { Alert, AlertDescription, AlertTitle } from"@/components/ui/alert";
+import { Badge } from"@/components/ui/badge";
+import { Button } from"@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from"@/components/ui/card";
 
 const STATUS_LABELS: Record<AllergenStatus, string> = {
   "not-started": "Not started",
@@ -27,8 +27,8 @@ const STATUS_LABELS: Record<AllergenStatus, string> = {
 
 const STATUS_STYLE: Record<AllergenStatus, string> = {
   "not-started": "",
-  introducing: "border-emerald-400 text-emerald-700 dark:text-emerald-400",
-  maintaining: "border-emerald-600 text-emerald-800 dark:text-emerald-300",
+  introducing: "border-primary/60 text-primary",
+  maintaining: "border-primary text-primary-deep",
   "reacted-paused": "border-red-400 text-red-700 dark:text-red-400",
   "avoid-per-doctor": "border-red-400 text-red-700 dark:text-red-400",
 };
@@ -74,7 +74,7 @@ export default function AllergensPage() {
       {!baby && (
         <Alert>
           <AlertDescription>
-            <Link href="/onboarding" className="underline underline-offset-2">
+            <Link href="/onboarding"className="underline underline-offset-2">
               Set up a profile
             </Link>{" "}
             to track allergen progress. You can still read each program below.
@@ -98,7 +98,7 @@ export default function AllergensPage() {
                   <Link href={`/allergens/${program.id}`} className="underline-offset-2 hover:underline">
                     {ALLERGEN_LABELS[program.id]}
                   </Link>
-                  <Badge variant="outline" className={STATUS_STYLE[status]}>
+                  <Badge variant="outline"className={STATUS_STYLE[status]}>
                     {STATUS_LABELS[status]}
                   </Badge>
                 </CardTitle>
@@ -145,7 +145,7 @@ export default function AllergensPage() {
                 )}
                 <Link
                   href={`/allergens/${program.id}`}
-                  className="inline-block text-emerald-700 underline underline-offset-2 dark:text-emerald-400"
+                  className="inline-block text-primary underline underline-offset-2"
                 >
                   Introduction program →
                 </Link>
@@ -216,7 +216,7 @@ function OrderAndReminders({
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
           {hasPlan && (
-            <p className="rounded-md border border-emerald-300 p-2 text-xs text-muted-foreground">
+            <p className="rounded-md border border-primary/40 p-2 text-xs text-muted-foreground">
               Your plan currently sets the order (first appearance on the board wins). This list
               applies when no plan is active.
             </p>
@@ -259,7 +259,7 @@ function OrderAndReminders({
             tolerance. Put a weekly nudge in your own calendar — it works even when this app is
             closed.
           </p>
-          <Button variant="outline" size="sm" onClick={downloadMaintenanceIcs} disabled={!anyMaintaining}>
+          <Button variant="outline"size="sm"onClick={downloadMaintenanceIcs} disabled={!anyMaintaining}>
             ⬇ Add weekly reminders to my calendar (.ics)
           </Button>
           {!anyMaintaining && (

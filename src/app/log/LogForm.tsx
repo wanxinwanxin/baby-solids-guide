@@ -1,24 +1,24 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
-import { allFoods, foodBySlug } from "../../../content/foods";
-import type { AgeBand } from "@/content-schema/food";
-import { BAND_LABELS, bandForAgeMonths, todayIso } from "@/lib/food-utils";
-import { correctedAgeMonths } from "@/lib/age";
-import { onsetForElapsed } from "@/lib/checkins";
-import { useActiveBaby, useActiveCheckIns, useHydrated } from "@/lib/hooks";
-import { newId, useGuideStore } from "@/lib/storage/store";
-import { CheckInOffer } from "./CheckInOffer";
-import type { AmountEaten, Enjoyment, SymptomId } from "@/lib/storage/types";
-import { SYMPTOM_IDS, SYMPTOM_LABELS } from "@/lib/storage/types";
-import { triage, type TriageResult } from "@/lib/triage";
-import { EmergencyDialog } from "@/components/EmergencyDialog";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import Link from"next/link";
+import { useRouter, useSearchParams } from"next/navigation";
+import { useMemo, useState } from"react";
+import { allFoods, foodBySlug } from"../../../content/foods";
+import type { AgeBand } from"@/content-schema/food";
+import { BAND_LABELS, bandForAgeMonths, todayIso } from"@/lib/food-utils";
+import { correctedAgeMonths } from"@/lib/age";
+import { onsetForElapsed } from"@/lib/checkins";
+import { useActiveBaby, useActiveCheckIns, useHydrated } from"@/lib/hooks";
+import { newId, useGuideStore } from"@/lib/storage/store";
+import { CheckInOffer } from"./CheckInOffer";
+import type { AmountEaten, Enjoyment, SymptomId } from"@/lib/storage/types";
+import { SYMPTOM_IDS, SYMPTOM_LABELS } from"@/lib/storage/types";
+import { triage, type TriageResult } from"@/lib/triage";
+import { EmergencyDialog } from"@/components/EmergencyDialog";
+import { Alert, AlertDescription, AlertTitle } from"@/components/ui/alert";
+import { Button } from"@/components/ui/button";
+import { Input } from"@/components/ui/input";
+import { cn } from"@/lib/utils";
 
 const AMOUNTS: { id: AmountEaten; label: string }[] = [
   { id: "none", label: "None" },
@@ -48,7 +48,7 @@ function Chip({
       onClick={onClick}
       className={cn(
         "min-h-11 rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
-        active ? "border-emerald-700 bg-emerald-700 text-white" : "hover:border-emerald-400",
+        active ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/60",
       )}
     >
       {children}
@@ -105,7 +105,7 @@ export function LogForm() {
         <AlertTitle>Set up your baby&apos;s profile first</AlertTitle>
         <AlertDescription>
           Logging needs a profile so recommendations can adapt.{" "}
-          <Link href="/onboarding" className="underline underline-offset-2">
+          <Link href="/onboarding"className="underline underline-offset-2">
             Start here →
           </Link>
         </AlertDescription>
@@ -154,7 +154,7 @@ export function LogForm() {
   if (savedClean && food && baby) {
     return (
       <div className="mx-auto max-w-lg space-y-4">
-        <Alert className="border-emerald-300">
+        <Alert className="border-primary/40">
           <AlertTitle className="text-base">Logged — nice work. 🎉</AlertTitle>
           <AlertDescription>
             {food.name} is in the book for {baby.nickname}.
@@ -162,7 +162,7 @@ export function LogForm() {
         </Alert>
         {!activeCheckIn && <CheckInOffer food={food} baby={baby} logId={savedClean.logId} />}
         <div className="flex gap-3">
-          <Button onClick={() => router.push("/today")} className="bg-emerald-700 text-white hover:bg-emerald-800">
+          <Button onClick={() => router.push("/today")} className="bg-primary text-primary-foreground hover:bg-primary/85">
             Back to Today
           </Button>
           <Button
@@ -187,7 +187,7 @@ export function LogForm() {
       <div className="mx-auto max-w-lg space-y-4">
         <Alert
           className={cn(
-            saved.severity === "educate" ? "border-emerald-300" : "border-red-400",
+            saved.severity === "educate" ? "border-primary/40" : "border-red-400",
           )}
         >
           <AlertTitle className="text-base">{saved.headline}</AlertTitle>
@@ -209,7 +209,7 @@ export function LogForm() {
         )}
         <div className="flex gap-3">
           <Button onClick={() => router.push("/today")}>Back to Today</Button>
-          <Link href="/safety" className="self-center text-sm underline underline-offset-2">
+          <Link href="/safety"className="self-center text-sm underline underline-offset-2">
             Emergency guide
           </Link>
         </div>
@@ -223,7 +223,7 @@ export function LogForm() {
 
       <div className="flex items-baseline justify-between">
         <h1 className="text-2xl font-bold">{activeCheckIn ? "Check-in" : "Log a food"}</h1>
-        <Link href="/safety" className="text-xs text-red-700 underline underline-offset-2 dark:text-red-400">
+        <Link href="/safety"className="text-xs text-red-700 underline underline-offset-2 dark:text-red-400">
           Worried right now? Emergency guide
         </Link>
       </div>
@@ -252,7 +252,7 @@ export function LogForm() {
         <h2 className="text-sm font-semibold">Food</h2>
         {food ? (
           <div className="flex items-center gap-3">
-            <span className="rounded-lg border border-emerald-700 bg-emerald-50 px-4 py-2 font-medium dark:bg-emerald-950">
+            <span className="rounded-lg border border-primary bg-secondary px-4 py-2 font-medium">
               {food.name}
             </span>
             {!activeCheckIn && (
@@ -333,10 +333,10 @@ export function LogForm() {
                 type="checkbox"
                 checked={gagging}
                 onChange={(e) => setGagging(e.target.checked)}
-                className="size-4 accent-emerald-700"
+                className="size-4 accent-primary"
               />
               Some gagging (normal reflex — see{" "}
-              <Link href="/safety" className="underline underline-offset-2">
+              <Link href="/safety"className="underline underline-offset-2">
                 gagging vs. choking
               </Link>
               )
@@ -384,7 +384,7 @@ export function LogForm() {
             <Button
               onClick={save}
               size="lg"
-              className="ml-auto bg-emerald-700 text-white hover:bg-emerald-800"
+              className="ml-auto bg-primary text-primary-foreground hover:bg-primary/85"
             >
               Save log
             </Button>

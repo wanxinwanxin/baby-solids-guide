@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { allGuides, guideBySlug } from "../../../../content/guides";
+import type { Metadata } from"next";
+import Link from"next/link";
+import { notFound } from"next/navigation";
+import { allGuides, guideBySlug } from"../../../../content/guides";
 
 export function generateStaticParams() {
   return allGuides.map((g) => ({ slug: g.slug }));
@@ -29,7 +29,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
   return (
     <article className="mx-auto max-w-2xl space-y-6">
       <div className="space-y-2">
-        <p className="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+        <p className="text-xs font-medium uppercase tracking-wide text-primary">
           Learn · {guide.minRead} min read
         </p>
         <h1 className="text-3xl font-bold">{guide.title}</h1>
@@ -47,9 +47,9 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
         </section>
       ))}
 
-      <div className="flex flex-wrap items-center gap-4 rounded-lg border border-emerald-300 p-4">
+      <div className="flex flex-wrap items-center gap-4 rounded-lg border border-primary/40 p-4">
         <p className="text-sm font-medium">Ready to put it into practice?</p>
-        <Link href="/onboarding" className="text-sm text-emerald-700 underline underline-offset-2 dark:text-emerald-400">
+        <Link href="/onboarding"className="text-sm text-primary underline underline-offset-2">
           Set up your plan →
         </Link>
         {next && (
@@ -64,7 +64,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
         <ul className="space-y-1">
           {guide.sources.map((s) => (
             <li key={s.url}>
-              <a href={s.url} rel="noopener noreferrer" target="_blank" className="underline underline-offset-2">
+              <a href={s.url} rel="noopener noreferrer"target="_blank"className="underline underline-offset-2">
                 {s.label}
               </a>{" "}
               (retrieved {s.retrievedOn})

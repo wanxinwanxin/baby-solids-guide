@@ -1,15 +1,15 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
-import { signIn, signOut, signUp, useSession } from "@/lib/auth-client";
-import { useAuthEnabled, useSyncStatus } from "@/components/SyncProvider";
-import { useHydrated } from "@/lib/hooks";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import Link from"next/link";
+import { useState } from"react";
+import { signIn, signOut, signUp, useSession } from"@/lib/auth-client";
+import { useAuthEnabled, useSyncStatus } from"@/components/SyncProvider";
+import { useHydrated } from"@/lib/hooks";
+import { Alert, AlertDescription, AlertTitle } from"@/components/ui/alert";
+import { Button } from"@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from"@/components/ui/card";
+import { Input } from"@/components/ui/input";
+import { cn } from"@/lib/utils";
 
 const STATUS_LABEL = {
   off: "",
@@ -42,7 +42,7 @@ export default function AccountPage() {
           <AlertTitle>Sync isn&apos;t configured in this deployment</AlertTitle>
           <AlertDescription>
             Your data still lives safely on this device, and you can{" "}
-            <Link href="/history" className="underline underline-offset-2">
+            <Link href="/history"className="underline underline-offset-2">
               export a backup
             </Link>{" "}
             any time.
@@ -90,7 +90,7 @@ export default function AccountPage() {
       <div className="mx-auto max-w-md space-y-5">
         <div className="flex items-baseline justify-between">
           <h1 className="text-2xl font-bold">Account</h1>
-          <span className="text-xs text-emerald-700 dark:text-emerald-400">{STATUS_LABEL[syncState]}</span>
+          <span className="text-xs text-primary">{STATUS_LABEL[syncState]}</span>
         </div>
         <Card>
           <CardHeader className="pb-2">
@@ -102,10 +102,10 @@ export default function AccountPage() {
               device. Nothing else is stored — no analytics, no tracking.
             </p>
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" onClick={downloadServerData}>
+              <Button variant="outline"size="sm"onClick={downloadServerData}>
                 Download my data from the server
               </Button>
-              <Button variant="outline" size="sm" onClick={() => void signOut()}>
+              <Button variant="outline"size="sm"onClick={() => void signOut()}>
                 Sign out
               </Button>
             </div>
@@ -119,10 +119,10 @@ export default function AccountPage() {
                 clear it from History.
               </p>
               <div className="flex gap-2">
-                <Button variant="destructive" size="sm" onClick={deleteAccount}>
+                <Button variant="destructive"size="sm"onClick={deleteAccount}>
                   Yes, delete my account
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setConfirmDelete(false)}>
+                <Button variant="outline"size="sm"onClick={() => setConfirmDelete(false)}>
                   Cancel
                 </Button>
               </div>
@@ -149,7 +149,7 @@ export default function AccountPage() {
         no ads, no tracking — and guest mode keeps working if you skip this.
       </p>
 
-      <div className="flex gap-1 rounded-lg border p-1" role="tablist">
+      <div className="flex gap-1 rounded-lg border p-1"role="tablist">
         {(["sign-in", "sign-up"] as const).map((m) => (
           <button
             key={m}
@@ -159,7 +159,7 @@ export default function AccountPage() {
             onClick={() => setMode(m)}
             className={cn(
               "flex-1 rounded-md px-3 py-1.5 text-sm font-medium",
-              mode === m ? "bg-emerald-700 text-white" : "text-muted-foreground",
+              mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground",
             )}
           >
             {m === "sign-in" ? "Sign in" : "Create account"}
@@ -176,7 +176,7 @@ export default function AccountPage() {
       >
         <label className="block space-y-1 text-sm">
           <span className="font-medium">Email</span>
-          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+          <Input type="email"value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
         </label>
         <label className="block space-y-1 text-sm">
           <span className="font-medium">Password</span>
@@ -193,7 +193,7 @@ export default function AccountPage() {
         <Button
           type="submit"
           disabled={busy || isPending}
-          className="w-full bg-emerald-700 text-white hover:bg-emerald-800"
+          className="w-full bg-primary text-primary-foreground hover:bg-primary/85"
         >
           {mode === "sign-in" ? "Sign in" : "Create account"}
         </Button>

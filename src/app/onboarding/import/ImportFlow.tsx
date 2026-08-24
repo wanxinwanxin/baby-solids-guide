@@ -1,18 +1,18 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
-import { allFoods } from "../../../../content/foods";
-import { ALLERGEN_IDS } from "@/content-schema/food";
-import { ALLERGEN_LABELS, CATEGORY_LABELS, todayIso } from "@/lib/food-utils";
-import { useActiveBaby, useHydrated } from "@/lib/hooks";
-import { newId, useGuideStore } from "@/lib/storage/store";
-import type { AllergenStatus, TextureStage } from "@/lib/storage/types";
-import { TEXTURE_STAGES } from "@/lib/storage/types";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import Link from"next/link";
+import { useRouter } from"next/navigation";
+import { useRef, useState } from"react";
+import { allFoods } from"../../../../content/foods";
+import { ALLERGEN_IDS } from"@/content-schema/food";
+import { ALLERGEN_LABELS, CATEGORY_LABELS, todayIso } from"@/lib/food-utils";
+import { useActiveBaby, useHydrated } from"@/lib/hooks";
+import { newId, useGuideStore } from"@/lib/storage/store";
+import type { AllergenStatus, TextureStage } from"@/lib/storage/types";
+import { TEXTURE_STAGES } from"@/lib/storage/types";
+import { Alert, AlertDescription, AlertTitle } from"@/components/ui/alert";
+import { Button } from"@/components/ui/button";
+import { cn } from"@/lib/utils";
 
 const IMPORT_STATUSES: { id: AllergenStatus | "auto"; label: string }[] = [
   { id: "auto", label: "From the checklist" },
@@ -41,7 +41,7 @@ export function ImportFlow() {
         <AlertTitle>First, a 2-minute profile</AlertTitle>
         <AlertDescription>
           The import needs a baby profile to attach to.{" "}
-          <Link href="/onboarding" className="underline underline-offset-2">
+          <Link href="/onboarding"className="underline underline-offset-2">
             Set it up →
           </Link>{" "}
           (the last step brings you right back here).
@@ -120,7 +120,7 @@ export function ImportFlow() {
         <p className="mt-1 text-xs text-muted-foreground">
           Restore a full OpenSolids export instead of ticking boxes.
         </p>
-        <Button variant="outline" size="sm" className="mt-2" onClick={() => fileRef.current?.click()}>
+        <Button variant="outline"size="sm"className="mt-2"onClick={() => fileRef.current?.click()}>
           Restore from JSON
         </Button>
         <input
@@ -151,8 +151,8 @@ export function ImportFlow() {
                 className={cn(
                   "min-h-10 rounded-full border px-3 py-1.5 text-sm transition-colors",
                   tried.has(f.slug)
-                    ? "border-emerald-700 bg-emerald-700 text-white"
-                    : "hover:border-emerald-400",
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "hover:border-primary/60",
                 )}
               >
                 {f.name}
@@ -199,7 +199,7 @@ export function ImportFlow() {
               onClick={() => setStage(s.id)}
               className={cn(
                 "rounded-lg border p-3 text-left text-sm transition-colors",
-                stage === s.id ? "border-emerald-700 bg-emerald-50 dark:bg-emerald-950" : "hover:border-emerald-400",
+                stage === s.id ? "border-primary bg-secondary" : "hover:border-primary/60",
               )}
             >
               <span className="font-medium">
@@ -212,10 +212,10 @@ export function ImportFlow() {
       </section>
 
       <div className="flex items-center gap-4">
-        <Button size="lg" className="bg-emerald-700 text-white hover:bg-emerald-800" onClick={finish}>
+        <Button size="lg"className="bg-primary text-primary-foreground hover:bg-primary/85"onClick={finish}>
           Done — build my plan ({tried.size} foods)
         </Button>
-        <Link href="/today" className="text-sm text-muted-foreground underline underline-offset-2">
+        <Link href="/today"className="text-sm text-muted-foreground underline underline-offset-2">
           Skip for now
         </Link>
       </div>

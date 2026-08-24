@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
-import { SOURCES } from "../../../content/sources";
-import { PrintButton } from "@/components/PrintButton";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Metadata } from"next";
+import { SOURCES } from"../../../content/sources";
+import { PrintButton } from"@/components/PrintButton";
+import { Alert, AlertDescription, AlertTitle } from"@/components/ui/alert";
+import { Card, CardContent, CardHeader, CardTitle } from"@/components/ui/card";
 
 export const metadata: Metadata = {
   title: "Safety: gagging vs. choking & emergencies",
@@ -35,7 +35,7 @@ export default function SafetyPage() {
           every baby gags while learning. Choking is a blocked airway. The difference is sound:
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Card className="border-emerald-300">
+          <Card className="border-primary/40">
             <CardHeader>
               <CardTitle className="text-base">Gagging — normal, stay calm</CardTitle>
             </CardHeader>
@@ -146,19 +146,19 @@ export default function SafetyPage() {
 
       <footer className="border-t pt-4 text-xs text-muted-foreground">
         Sources:{" "}
-        <a href={SOURCES.aapChoking.url} className="underline underline-offset-2" target="_blank" rel="noopener noreferrer">
+        <a href={SOURCES.aapChoking.url} className="underline underline-offset-2"target="_blank"rel="noopener noreferrer">
           AAP Choking Prevention
         </a>
         {" · "}
-        <a href={SOURCES.cdcChokingHazards.url} className="underline underline-offset-2" target="_blank" rel="noopener noreferrer">
+        <a href={SOURCES.cdcChokingHazards.url} className="underline underline-offset-2"target="_blank"rel="noopener noreferrer">
           CDC Choking Hazards
         </a>
         {" · "}
-        <a href={SOURCES.fareEmergencyPlan.url} className="underline underline-offset-2" target="_blank" rel="noopener noreferrer">
+        <a href={SOURCES.fareEmergencyPlan.url} className="underline underline-offset-2"target="_blank"rel="noopener noreferrer">
           FARE Emergency Care Plan
         </a>
         {" · "}
-        <a href={SOURCES.fdaFish.url} className="underline underline-offset-2" target="_blank" rel="noopener noreferrer">
+        <a href={SOURCES.fdaFish.url} className="underline underline-offset-2"target="_blank"rel="noopener noreferrer">
           FDA/EPA fish advice
         </a>
         . Educational guidance, not medical advice.

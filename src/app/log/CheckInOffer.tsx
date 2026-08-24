@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import type { Food } from "@/content-schema/food";
+import { useState } from"react";
+import type { Food } from"@/content-schema/food";
 import {
   CHECKIN_PRESETS,
   dueAtForPreset,
   googleCalendarUrl,
   icsForCheckIns,
-} from "@/lib/checkins";
-import { useSession } from "@/lib/auth-client";
-import { newId, useGuideStore } from "@/lib/storage/store";
-import type { BabyProfile, CheckInPreset } from "@/lib/storage/types";
-import { allergenPrograms } from "../../../content/allergens";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+} from"@/lib/checkins";
+import { useSession } from"@/lib/auth-client";
+import { newId, useGuideStore } from"@/lib/storage/store";
+import type { BabyProfile, CheckInPreset } from"@/lib/storage/types";
+import { allergenPrograms } from"../../../content/allergens";
+import { Button } from"@/components/ui/button";
+import { cn } from"@/lib/utils";
 
 /**
  * Phase 8A — offered right after saving a log: schedule symptom check-ins,
@@ -50,7 +50,7 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
         logId,
         createdAt: now.toISOString(),
         dueAt,
-        status: "pending" as const,
+        status: "pending"as const,
       })),
     );
     // Signed-in users also get these as server-delivered push notifications.
@@ -92,7 +92,7 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
 
   if (scheduled) {
     return (
-      <div className="space-y-3 rounded-lg border border-emerald-300 p-4 text-sm">
+      <div className="space-y-3 rounded-lg border border-primary/40 p-4 text-sm">
         <p className="font-medium">
           ✓ {scheduled.dueAts.length} check-in{scheduled.dueAts.length === 1 ? "" : "s"} scheduled —
           they&apos;ll wait for you on the Today screen.
@@ -113,7 +113,7 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
               })}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-md border px-3 py-1.5 text-xs hover:border-emerald-400"
+              className="rounded-md border px-3 py-1.5 text-xs hover:border-primary/60"
             >
               📅 Google Calendar (
               {new Date(dueAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
@@ -123,7 +123,7 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
           <button
             type="button"
             onClick={downloadIcs}
-            className="rounded-md border px-3 py-1.5 text-xs hover:border-emerald-400"
+            className="rounded-md border px-3 py-1.5 text-xs hover:border-primary/60"
           >
             ⬇ .ics for Apple/Outlook
           </button>
@@ -148,7 +148,7 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
             aria-pressed={selected.has(p.id)}
             className={cn(
               "min-h-9 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-              selected.has(p.id) ? "border-emerald-700 bg-emerald-700 text-white" : "hover:border-emerald-400",
+              selected.has(p.id) ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/60",
             )}
           >
             {p.label}
@@ -159,7 +159,7 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
         size="sm"
         disabled={selected.size === 0}
         onClick={schedule}
-        className="bg-emerald-700 text-white hover:bg-emerald-800"
+        className="bg-primary text-primary-foreground hover:bg-primary/85"
       >
         Schedule check-in{selected.size === 1 ? "" : "s"}
       </Button>

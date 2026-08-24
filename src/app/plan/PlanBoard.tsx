@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { useMemo, useState } from "react";
+import Link from"next/link";
+import { useMemo, useState } from"react";
 import {
   DndContext,
   DragOverlay,
@@ -14,18 +14,18 @@ import {
   useSensors,
   type DragEndEvent,
   type DragStartEvent,
-} from "@dnd-kit/core";
-import { allFoods, foodBySlug } from "../../../content/foods";
-import { useActiveBaby, useActiveLogs, useActiveOverrides, useActivePlan, useHydrated } from "@/lib/hooks";
-import { generatePlan, PLAN_WEEKS, validatePlan, type PlanWarning } from "@/lib/planner";
-import { planWeekIndex } from "@/lib/engine";
-import { newId, useGuideStore } from "@/lib/storage/store";
-import type { PlanEntry } from "@/lib/storage/types";
-import { mondayOf } from "@/lib/planner";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+} from"@dnd-kit/core";
+import { allFoods, foodBySlug } from"../../../content/foods";
+import { useActiveBaby, useActiveLogs, useActiveOverrides, useActivePlan, useHydrated } from"@/lib/hooks";
+import { generatePlan, PLAN_WEEKS, validatePlan, type PlanWarning } from"@/lib/planner";
+import { planWeekIndex } from"@/lib/engine";
+import { newId, useGuideStore } from"@/lib/storage/store";
+import type { PlanEntry } from"@/lib/storage/types";
+import { mondayOf } from"@/lib/planner";
+import { Alert, AlertDescription, AlertTitle } from"@/components/ui/alert";
+import { Button } from"@/components/ui/button";
+import { Input } from"@/components/ui/input";
+import { cn } from"@/lib/utils";
 
 function chipLabel(slug: string): string {
   const food = foodBySlug.get(slug);
@@ -96,13 +96,13 @@ function WeekLane({
       ref={setNodeRef}
       className={cn(
         "rounded-lg border p-3",
-        isCurrent && "border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/40",
-        isOver && "border-emerald-400 ring-2 ring-emerald-200",
+        isCurrent && "border-primary bg-secondary/50",
+        isOver && "border-primary/60 ring-2 ring-primary/30",
       )}
     >
       <div className="mb-2 flex items-baseline justify-between">
         <span className="text-sm font-semibold">{label}</span>
-        {isCurrent && <span className="text-xs text-emerald-700 dark:text-emerald-400">this week</span>}
+        {isCurrent && <span className="text-xs text-primary">this week</span>}
       </div>
       <div className="flex min-h-9 flex-wrap gap-1.5">
         {entries.length === 0 && <span className="text-xs text-muted-foreground">drop foods here</span>}
@@ -158,7 +158,7 @@ export function PlanBoard() {
         <AlertTitle>Set up a profile to plan</AlertTitle>
         <AlertDescription>
           The planner uses your baby&apos;s age and allergy profile to sanity-check every week.{" "}
-          <Link href="/onboarding" className="underline underline-offset-2">
+          <Link href="/onboarding"className="underline underline-offset-2">
             Start here →
           </Link>
         </AlertDescription>
@@ -237,7 +237,7 @@ export function PlanBoard() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Introduction plan</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={suggest}>
+          <Button variant="outline"onClick={suggest}>
             {plan?.entries.length ? "Re-suggest plan" : "Suggest a plan"}
           </Button>
           {plan &&
@@ -254,12 +254,12 @@ export function PlanBoard() {
                 >
                   Yes
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setConfirmClear(false)}>
+                <Button variant="outline"size="sm"onClick={() => setConfirmClear(false)}>
                   No
                 </Button>
               </span>
             ) : (
-              <Button variant="ghost" onClick={() => setConfirmClear(true)}>
+              <Button variant="ghost"onClick={() => setConfirmClear(true)}>
                 Clear plan
               </Button>
             ))}
@@ -270,13 +270,13 @@ export function PlanBoard() {
         Two rules are science: iron-rich foods early, and common allergens one at a time (then kept
         in rotation). Beyond that, the order is genuinely yours — drag foods around, or tap a food
         below to add it to the selected week. The board warns, it never dictates.{" "}
-        <Link href="/learn/ordering" className="underline underline-offset-2">
+        <Link href="/learn/ordering"className="underline underline-offset-2">
           Does order matter? →
         </Link>
       </p>
 
       {!plan && (
-        <Alert className="border-emerald-300">
+        <Alert className="border-primary/40">
           <AlertTitle>No plan yet</AlertTitle>
           <AlertDescription>
             &quot;Suggest a plan&quot; builds a 12-week starting point from {baby.nickname}&apos;s
@@ -351,7 +351,7 @@ function TrayChip({ slug, onAdd }: { slug: string; onAdd: () => void }) {
       {...attributes}
       onClick={onAdd}
       className={cn(
-        "min-h-9 cursor-grab touch-none rounded-full border px-3 py-1.5 text-sm transition-colors hover:border-emerald-400",
+        "min-h-9 cursor-grab touch-none rounded-full border px-3 py-1.5 text-sm transition-colors hover:border-primary/60",
         isDragging && "opacity-40",
       )}
     >
@@ -414,7 +414,7 @@ function TrayArea({
             </select>
           </label>
         ) : (
-          <button type="button" onClick={onStartEmpty} className="ml-auto text-xs underline underline-offset-2">
+          <button type="button"onClick={onStartEmpty} className="ml-auto text-xs underline underline-offset-2">
             start with an empty board
           </button>
         )}

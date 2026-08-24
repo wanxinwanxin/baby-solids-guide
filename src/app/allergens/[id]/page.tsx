@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { allergenPrograms } from "../../../../content/allergens";
-import { foodBySlug } from "../../../../content/foods";
-import { ALLERGEN_LABELS } from "@/lib/food-utils";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Metadata } from"next";
+import Link from"next/link";
+import { notFound } from"next/navigation";
+import { allergenPrograms } from"../../../../content/allergens";
+import { foodBySlug } from"../../../../content/foods";
+import { ALLERGEN_LABELS } from"@/lib/food-utils";
+import { Alert, AlertDescription, AlertTitle } from"@/components/ui/alert";
+import { Card, CardContent, CardHeader, CardTitle } from"@/components/ui/card";
 
 export function generateStaticParams() {
   return allergenPrograms.map((p) => ({ id: p.id }));
@@ -31,7 +31,7 @@ export default async function AllergenPage({ params }: { params: Promise<{ id: s
     <article className="space-y-6">
       <h1 className="text-3xl font-bold">Introducing {ALLERGEN_LABELS[program.id]}</h1>
 
-      <Card className="border-emerald-300">
+      <Card className="border-primary/40">
         <CardHeader>
           <CardTitle className="text-base">First serve</CardTitle>
         </CardHeader>
@@ -63,7 +63,7 @@ export default async function AllergenPage({ params }: { params: Promise<{ id: s
           <p className="mt-2">
             Trouble breathing, tongue or lip swelling, widespread hives with vomiting, or a pale,
             floppy baby means <strong>call 911 now</strong>. See the{" "}
-            <Link href="/safety" className="underline underline-offset-2">
+            <Link href="/safety"className="underline underline-offset-2">
               emergency guide
             </Link>
             .
@@ -93,7 +93,7 @@ export default async function AllergenPage({ params }: { params: Promise<{ id: s
             <Link
               key={slug}
               href={`/foods/${slug}`}
-              className="rounded-full border px-3 py-1.5 text-sm hover:border-emerald-400"
+              className="rounded-full border px-3 py-1.5 text-sm hover:border-primary/60"
             >
               {foodBySlug.get(slug)?.name ?? slug} →
             </Link>
@@ -106,7 +106,7 @@ export default async function AllergenPage({ params }: { params: Promise<{ id: s
         <ul className="space-y-1">
           {program.sources.map((s) => (
             <li key={s.url}>
-              <a href={s.url} rel="noopener noreferrer" target="_blank" className="underline underline-offset-2">
+              <a href={s.url} rel="noopener noreferrer"target="_blank"className="underline underline-offset-2">
                 {s.label}
               </a>{" "}
               (retrieved {s.retrievedOn})

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSession } from "@/lib/auth-client";
+import { useEffect, useState } from"react";
+import { useSession } from"@/lib/auth-client";
 
 function urlBase64ToUint8Array(base64: string): Uint8Array {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
@@ -23,8 +23,8 @@ export function PushOptIn() {
       await Promise.resolve(); // defer past the synchronous effect body
       if (cancelled) return;
       if (
-        !("serviceWorker" in navigator) ||
-        !("PushManager" in window) ||
+        !("serviceWorker"in navigator) ||
+        !("PushManager"in window) ||
         !process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
       ) {
         setState("unsupported");
@@ -80,7 +80,7 @@ export function PushOptIn() {
     <button
       type="button"
       onClick={() => void enable()}
-      className="text-xs text-emerald-700 underline underline-offset-2 dark:text-emerald-400"
+      className="text-xs text-primary underline underline-offset-2"
     >
       📳 Get check-ins as phone notifications, even with the app closed →
     </button>
