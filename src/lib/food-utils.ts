@@ -52,6 +52,7 @@ export function bandForAgeMonths(ageMonths: number): AgeBand {
 export type SlimFood = {
   slug: string;
   name: string;
+  aliases: string[];
   category: FoodCategory;
   minAgeMonths: number;
   ironRich: boolean;
@@ -60,12 +61,27 @@ export type SlimFood = {
   firstFoodPick: boolean;
   nutrients?: import("@/content-schema/food").NutrientTag[];
   emoji?: string;
+  /** Cut-diagram id of the earliest prep band that has one (card thumbnails). */
+  cutDiagram?: string;
+  /** One-line serving hint: the first band's form, truncated at a word break. */
+  hint: string;
 };
+
+const HINT_MAX = 64;
+
+function shortForm(form: string): string {
+  if (form.length <= HINT_MAX) return form;
+  const slice = form.slice(0, HINT_MAX + 1);
+  const lastSpace = slice.lastIndexOf(" ");
+  const cut = slice.slice(0, lastSpace > HINT_MAX / 2 ? lastSpace : HINT_MAX);
+  return `${cut.replace(/[\s,;:.—–-]+$/, "")}…`;
+}
 
 export function slimFood(f: Food): SlimFood {
   return {
     slug: f.slug,
     name: f.name,
+    aliases: f.aliases,
     category: f.category,
     minAgeMonths: f.minAgeMonths,
     ironRich: f.ironRich,
@@ -74,6 +90,8 @@ export function slimFood(f: Food): SlimFood {
     firstFoodPick: f.firstFoodPick,
     nutrients: f.nutrients,
     emoji: f.emoji,
+    cutDiagram: f.prepSpecs.find((p) => p.cutDiagram)?.cutDiagram,
+    hint: shortForm(f.prepSpecs[0].form),
   };
 }
 

@@ -2,14 +2,14 @@ import { expect, test } from "@playwright/test";
 
 test("browse: filter iron-rich → open salmon → see safe form + pass/fail test", async ({ page }) => {
   await page.goto("/foods");
-  await expect(page.getByRole("heading", { name: "Food library" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /foods, all free/ })).toBeVisible();
 
   await page.getByRole("button", { name: "Iron-rich" }).click();
   const salmon = page.getByRole("link", { name: /Salmon/ });
   await expect(salmon).toBeVisible();
   await salmon.click();
 
-  await expect(page.getByRole("heading", { name: "Salmon" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Salmon", exact: true })).toBeVisible();
   await expect(page.getByText("Safe form at 6–8 months")).toBeVisible();
   await expect(page.getByText(/Pass\/fail test:/)).toBeVisible();
   await expect(page.getByText("Common allergen: Fish")).toBeVisible();

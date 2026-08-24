@@ -11,12 +11,10 @@ export const metadata: Metadata = {
 
 export default function FoodsPage() {
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Food library</h1>
-      <p className="max-w-2xl text-sm text-muted-foreground">
-        {allFoods.length} foods, each with the exact form that makes it safe at every age, a
-        physical pass/fail test, and tips for getting the texture right.
-      </p>
+    <div className="space-y-6">
+      <h1 className="text-4xl font-extrabold tracking-tight sm:text-[2.75rem]">
+        {allFoods.length} foods, all free<span className="text-primary">.</span>
+      </h1>
       <FoodBrowser foods={allFoods.map(slimFood)} />
     </div>
   );
