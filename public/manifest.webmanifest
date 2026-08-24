@@ -4,8 +4,8 @@
   "description": "Free, science-based guide for starting your baby on solid foods.",
   "start_url": "/today",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#047857",
+  "background_color": "#FBF8F3",
+  "theme_color": "#1E7A52",
   "icons": [
     {
       "src": "/icon.svg",
