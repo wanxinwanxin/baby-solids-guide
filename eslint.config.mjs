@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Designer mockup handoff — generated runtime + static comps, not app code.
+    "design/**",
   ]),
 ]);
 
