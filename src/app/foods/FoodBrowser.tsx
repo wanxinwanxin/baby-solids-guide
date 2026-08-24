@@ -3,13 +3,24 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { AgeBand, FoodCategory } from "@/content-schema/food";
+import { deriveFoodStats } from "@/lib/engine";
 import { ALLERGEN_LABELS, CATEGORY_LABELS, type SlimFood } from "@/lib/food-utils";
+import { useActiveLogs, useHydrated } from "@/lib/hooks";
 import { CutDiagram, isDiagramVariant } from "@/components/diagrams/CutDiagram";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-type Filter = "all" | "iron" | "allergen" | "first-picks" | "omega3" | "vitaminC" | FoodCategory;
+type Filter =
+  | "all"
+  | "iron"
+  | "allergen"
+  | "first-picks"
+  | "omega3"
+  | "vitaminC"
+  | "safe"
+  | "untried"
+  | FoodCategory;
 
 const SHOW_FILTERS: { id: Filter; label: string }[] = [
   { id: "first-picks", label: "Great first foods" },
@@ -73,6 +84,23 @@ export function FoodBrowser({ foods }: { foods: SlimFood[] }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [band, setBand] = useState<AgeBand | null>(null);
+  const hydrated = useHydrated();
+  const logs = useActiveLogs();
+
+  /** Per-food tried/safe state from the active baby's logs (empty for guests
+   * with no history — the chips still work, they just match nothing). */
+  const triedState = useMemo(() => {
+    const stats = deriveFoodStats(logs);
+    const tried = new Set<string>();
+    const safe = new Set<string>();
+    for (const l of logs) {
+      if (l.amountEaten !== "none") {
+        tried.add(l.foodSlug);
+        if (!stats.get(l.foodSlug)?.hasPausingSymptoms) safe.add(l.foodSlug);
+      }
+    }
+    return { tried, safe };
+  }, [logs]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -92,10 +120,12 @@ export function FoodBrowser({ foods }: { foods: SlimFood[] }) {
         if (filter === "first-picks") return f.firstFoodPick;
         if (filter === "omega3") return f.nutrients?.includes("omega3") ?? false;
         if (filter === "vitaminC") return f.nutrients?.includes("vitaminC") ?? false;
+        if (filter === "safe") return triedState.safe.has(f.slug);
+        if (filter === "untried") return !triedState.tried.has(f.slug);
         return f.category === filter;
       })
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [foods, query, filter, band]);
+  }, [foods, query, filter, band, triedState]);
 
   return (
     <div className="space-y-5">
@@ -141,6 +171,26 @@ export function FoodBrowser({ foods }: { foods: SlimFood[] }) {
             {f.label}
           </Chip>
         ))}
+        {hydrated && triedState.tried.size > 0 && (
+          <>
+            <span aria-hidden="true" className="mx-1 hidden h-5 w-px bg-border sm:inline-block" />
+            <GroupLabel>YOURS</GroupLabel>
+            <Chip
+              fill="primary"
+              selected={filter === "safe"}
+              onClick={() => setFilter((cur) => (cur === "safe" ? "all" : "safe"))}
+            >
+              Safe so far
+            </Chip>
+            <Chip
+              fill="primary"
+              selected={filter === "untried"}
+              onClick={() => setFilter((cur) => (cur === "untried" ? "all" : "untried"))}
+            >
+              Not yet tried
+            </Chip>
+          </>
+        )}
         <span aria-hidden="true" className="mx-1 hidden h-5 w-px bg-border sm:inline-block" />
         <GroupLabel>CATEGORY</GroupLabel>
         {CATEGORY_FILTERS.map((f) => (
