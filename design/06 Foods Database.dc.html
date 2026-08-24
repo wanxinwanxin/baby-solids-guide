@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;padding:0;background:#ECE6DB;}
+  body{font-family:'Figtree',sans-serif;color:#1F2E26;-webkit-font-smoothing:antialiased;}
+  a{color:#1E7A52;text-decoration:none;}a:hover{color:#175E40;text-decoration:underline;}
+  *{box-sizing:border-box;}
+</style>
+</helmet>
+<div style="padding:48px;display:flex;flex-direction:column;gap:24px;align-items:center">
+  <div style="width:1240px;display:flex;flex-direction:column;gap:4px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.14em;color:#5D6C62">OPENSOLIDS · DELIVERABLE 06 / 08</div>
+    <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:28px;letter-spacing:-0.01em">Foods database — search-first, diagram thumbnails</div>
+  </div>
+
+  <div style="width:1240px;background:#FBF8F3;border:1px solid #E7E0D4;border-radius:14px;overflow:hidden;box-shadow:0 20px 44px -16px rgba(31,46,38,0.25)">
+    <nav style="display:flex;align-items:center;gap:24px;padding:0 44px;height:64px;border-bottom:1px solid #E7E0D4">
+      <span style="display:inline-flex;align-items:center;gap:8px">
+        <svg viewBox="0 0 78 64" width="24" aria-hidden="true"><circle cx="26" cy="32" r="23" fill="#E6F0E9" stroke="#1E7A52" stroke-width="4"></circle><line x1="26" y1="10" x2="26" y2="54" stroke="#1E7A52" stroke-width="3.5" stroke-dasharray="6 5"></line><path d="M 50 32 L 50 10 A 22 22 0 0 1 72 32 Z" fill="#1E7A52"></path></svg>
+        <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:19px;letter-spacing:-0.015em">OpenSolids</span>
+      </span>
+      <span style="display:flex;gap:4px">
+        <span style="font-size:14.5px;font-weight:600;color:#46564C;padding:7px 15px;border-radius:999px;white-space:nowrap">Today</span>
+        <span style="font-size:14.5px;font-weight:600;color:#FBF8F3;background:#1E7A52;padding:7px 15px;border-radius:999px;white-space:nowrap">Foods</span>
+        <span style="font-size:14.5px;font-weight:600;color:#46564C;padding:7px 15px;border-radius:999px;white-space:nowrap">Plan</span>
+        <span style="font-size:14.5px;font-weight:600;color:#46564C;padding:7px 15px;border-radius:999px;white-space:nowrap">Learn</span>
+        <span style="font-size:14.5px;font-weight:600;color:#46564C;padding:7px 15px;border-radius:999px;white-space:nowrap">More ▾</span>
+      </span>
+    </nav>
+
+    <div style="padding:44px 44px 52px 44px;display:flex;flex-direction:column;gap:24px">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:46px;margin:0;letter-spacing:-0.02em">153 foods, all free<span style="color:#1E7A52">.</span></h1>
+        <div style="display:flex;align-items:center;gap:12px;background:#FFFEFB;border:1.5px solid #1F2E26;border-radius:999px;height:56px;padding:0 24px;max-width:560px;box-shadow:0 8px 24px -14px rgba(31,46,38,0.25)">
+          <svg width="17" height="17" viewBox="0 0 17 17" aria-hidden="true"><circle cx="7.5" cy="7.5" r="5.8" fill="none" stroke="#46564C" stroke-width="2"></circle><line x1="12" y1="12" x2="16" y2="16" stroke="#46564C" stroke-width="2" stroke-linecap="round"></line></svg>
+          <span style="font-size:16px;color:#5D6C62">Search foods — try "salmon" or "what's iron-rich"</span>
+          <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:#5D6C62;border:1px solid #E7E0D4;border-radius:6px;padding:3px 8px;white-space:nowrap">/</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.1em;color:#5D6C62;margin-right:4px;white-space:nowrap">BAND</span>
+          <span style="font-size:13px;font-weight:600;padding:7px 15px;border-radius:999px;background:#1E7A52;color:#FBF8F3;white-space:nowrap">6–8 mo</span>
+          <span style="font-size:13px;font-weight:600;padding:7px 15px;border-radius:999px;background:#FFFEFB;border:1px solid #E7E0D4;color:#46564C;white-space:nowrap">9–12 mo</span>
+          <span style="font-size:13px;font-weight:600;padding:7px 15px;border-radius:999px;background:#FFFEFB;border:1px solid #E7E0D4;color:#46564C;white-space:nowrap">12–24 mo</span>
+          <span style="width:1px;height:22px;background:#E7E0D4;margin:0 6px"></span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.1em;color:#5D6C62;margin-right:4px;white-space:nowrap">SHOW</span>
+          <span style="font-size:13px;font-weight:600;padding:7px 15px;border-radius:999px;background:#FFFEFB;border:1px solid #E7E0D4;color:#46564C;white-space:nowrap">Great first foods</span>
+          <span style="font-size:13px;font-weight:600;padding:7px 15px;border-radius:999px;background:#1F2E26;color:#FBF8F3;white-space:nowrap">Iron-rich ✓</span>
+          <span style="font-size:13px;font-weight:600;padding:7px 15px;border-radius:999px;background:#FFFEFB;border:1px solid #E7E0D4;color:#46564C;white-space:nowrap">9 common allergens</span>
+          <span style="font-size:13px;font-weight:600;padding:7px 15px;border-radius:999px;background:#FFFEFB;border:1px solid #E7E0D4;color:#46564C;white-space:nowrap">Not yet tried</span>
+          <span style="width:1px;height:22px;background:#E7E0D4;margin:0 6px"></span>
+          <span style="font-size:13px;font-weight:600;padding:7px 15px;border-radius:999px;background:#FFFEFB;border:1px solid #E7E0D4;color:#46564C;white-space:nowrap">Vegetable</span>
+          <span style="font-size:13px;font-weight:600;padding:7px 15px;border-radius:999px;background:#FFFEFB;border:1px solid #E7E0D4;color:#46564C;white-space:nowrap">Fruit</span>
+          <span style="font-size:13px;font-weight:600;padding:7px 15px;border-radius:999px;background:#FFFEFB;border:1px solid #E7E0D4;color:#46564C;white-space:nowrap">Protein</span>
+          <span style="font-size:13px;font-weight:600;padding:7px 15px;border-radius:999px;background:#FFFEFB;border:1px solid #E7E0D4;color:#46564C;white-space:nowrap">More ▾</span>
+        </div>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#46564C;font-variant-numeric:tabular-nums">18 IRON-RICH FOODS AT 6–8 MO · SORTED A–Z</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+
+        <div style="background:#FFFEFB;border:1px solid #E7E0D4;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px">
+          <div style="background:#F2F6F1;border-radius:10px;height:96px;display:flex;align-items:center;justify-content:center">
+            <svg viewBox="0 0 160 90" style="height:82px" aria-label="Beef: shredded">
+              <path d="M 30 30 q 18 8 36 2 M 42 44 q 20 10 40 0 M 28 56 q 22 8 46 4 M 44 68 q 18 8 40 2" fill="none" stroke="#1F2E26" stroke-width="2.2" stroke-linecap="round" opacity="0.6"></path>
+              <circle cx="122" cy="64" r="8" fill="#F7ECD9" stroke="#96610F" stroke-width="1.5"></circle>
+            </svg>
+          </div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+            <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">Beef</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#5D6C62;white-space:nowrap">6M+</span>
+          </div>
+          <p style="margin:0;font-size:13px;line-height:1.45;color:#5D6C62;flex:1">Fine, moist shreds stirred into puree</p>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span style="font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:#1F2E26;color:#FBF8F3;white-space:nowrap">Iron-rich</span>
+            <span style="font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:#F5EFE3;color:#4A5A50;white-space:nowrap">Protein</span>
+          </div>
+        </div>
+
+        <div style="background:#FFFEFB;border:1px solid #E7E0D4;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px">
+          <div style="background:#F2F6F1;border-radius:10px;height:96px;display:flex;align-items:center;justify-content:center">
+            <svg viewBox="0 0 160 90" style="height:82px" aria-label="Black beans: mashed">
+              <path d="M 36 42 h 88 q 2 26 -44 28 q -46 -2 -44 -28 z" fill="#E6F0E9" stroke="#1F2E26" stroke-width="2.2"></path>
+              <path d="M 46 42 q 8 -8 16 0 q 8 -8 16 0 q 8 -8 16 0 q 8 -8 16 0" fill="none" stroke="#1E7A52" stroke-width="2" opacity="0.6"></path>
+            </svg>
+          </div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+            <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">Black beans</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#5D6C62;white-space:nowrap">6M+</span>
+          </div>
+          <p style="margin:0;font-size:13px;line-height:1.45;color:#5D6C62;flex:1">Smooth mash, skins pinched off</p>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span style="font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:#1F2E26;color:#FBF8F3;white-space:nowrap">Iron-rich</span>
+            <span style="font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:#D8E8DD;color:#175E40;white-space:nowrap">Legume</span>
+          </div>
+        </div>
+
+        <div style="background:#FFFEFB;border:1.5px solid #1E7A52;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:0 8px 24px -12px rgba(31,46,38,0.18)">
+          <div style="background:#F2F6F1;border-radius:10px;height:96px;display:flex;align-items:center;justify-content:center;position:relative">
+            <svg viewBox="0 0 160 90" style="height:82px" aria-label="Egg: omelette strips">
+              <rect x="28" y="20" width="70" height="52" rx="8" fill="#E6F0E9" stroke="#1F2E26" stroke-width="2.2"></rect>
+              <line x1="51" y1="20" x2="51" y2="72" stroke="#1E7A52" stroke-width="1.8" stroke-dasharray="5 4"></line>
+              <line x1="74" y1="20" x2="74" y2="72" stroke="#1E7A52" stroke-width="1.8" stroke-dasharray="5 4"></line>
+              <rect x="112" y="20" width="22" height="52" rx="8" fill="#D8E8DD" stroke="#1F2E26" stroke-width="2.2"></rect>
+            </svg>
+            <span style="position:absolute;top:8px;right:8px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.08em;background:#E6F0E9;color:#175E40;border-radius:999px;padding:3px 8px;white-space:nowrap">TRIED ✓</span>
+          </div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+            <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">Egg</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#5D6C62;white-space:nowrap">6M+</span>
+          </div>
+          <p style="margin:0;font-size:13px;line-height:1.45;color:#5D6C62;flex:1">Firm omelette strips or moist yolk mash</p>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span style="font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:#1F2E26;color:#FBF8F3;white-space:nowrap">Iron-rich</span>
+            <span style="font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;border:1.5px solid #1F2E26;color:#1F2E26;background:#FFFEFB;white-space:nowrap">Allergen: egg</span>
+          </div>
+        </div>
+
+        <div style="background:#FFFEFB;border:1px solid #E7E0D4;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px">
+          <div style="background:#F2F6F1;border-radius:10px;height:96px;display:flex;align-items:center;justify-content:center">
+            <svg viewBox="0 0 160 90" style="height:82px" aria-label="Chicken: batons">
+              <rect x="34" y="22" width="20" height="50" rx="9" fill="#E6F0E9" stroke="#1F2E26" stroke-width="2.2"></rect>
+              <rect x="64" y="22" width="20" height="50" rx="9" fill="#E6F0E9" stroke="#1F2E26" stroke-width="2.2"></rect>
+              <rect x="106" y="24" width="13" height="46" rx="6.5" fill="#F7ECD9" stroke="#96610F" stroke-width="1.5"></rect>
+              <rect x="123" y="28" width="13" height="42" rx="6.5" fill="#F7ECD9" stroke="#96610F" stroke-width="1.5"></rect>
+            </svg>
+          </div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+            <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">Chicken</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#5D6C62;white-space:nowrap">6M+</span>
+          </div>
+          <p style="margin:0;font-size:13px;line-height:1.45;color:#5D6C62;flex:1">Soft two-finger batons, poached moist</p>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span style="font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:#1F2E26;color:#FBF8F3;white-space:nowrap">Iron-rich</span>
+            <span style="font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:#F5EFE3;color:#4A5A50;white-space:nowrap">Protein</span>
+          </div>
+        </div>
+
+        <div style="background:#FFFEFB;border:1px solid #E7E0D4;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px">
+          <div style="background:#F2F6F1;border-radius:10px;height:96px;display:flex;align-items:center;justify-content:center">
+            <svg viewBox="0 0 160 90" style="height:82px" aria-label="Chickpeas: smooth hummus">
+              <path d="M 38 40 h 84 q 2 24 -42 26 q -44 -2 -42 -26 z" fill="#E6F0E9" stroke="#1F2E26" stroke-width="2.2"></path>
+              <path d="M 52 40 q 14 -12 28 0 q 14 -12 28 0" fill="none" stroke="#1E7A52" stroke-width="2" opacity="0.6"></path>
+              <circle cx="52" cy="28" r="6" fill="#D8E8DD" stroke="#1F2E26" stroke-width="1.8"></circle>
+              <circle cx="68" cy="24" r="6" fill="#D8E8DD" stroke="#1F2E26" stroke-width="1.8"></circle>
+            </svg>
+          </div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+            <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">Chickpeas</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#5D6C62;white-space:nowrap">6M+</span>
+          </div>
+          <p style="margin:0;font-size:13px;line-height:1.45;color:#5D6C62;flex:1">Thin, smooth hummus — never whole</p>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span style="font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:#1F2E26;color:#FBF8F3;white-space:nowrap">Iron-rich</span>
+            <span style="font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:#D8E8DD;color:#175E40;white-space:nowrap">Legume</span>
+          </div>
+        </div>
+
+        <div style="background:#FFFEFB;border:1px solid #E7E0D4;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px">
+          <div style="background:#F2F6F1;border-radius:10px;height:96px;display:flex;align-items:center;justify-content:center">
+            <svg viewBox="0 0 160 90" style="height:82px" aria-label="Lentils: thick mash">
+              <path d="M 36 44 h 88 q 0 24 -44 24 q -44 0 -44 -24 z" fill="#E6F0E9" stroke="#1F2E26" stroke-width="2.2"></path>
+              <circle cx="58" cy="36" r="4.5" fill="none" stroke="#1F2E26" stroke-width="1.8"></circle>
+              <circle cx="74" cy="30" r="4.5" fill="none" stroke="#1F2E26" stroke-width="1.8"></circle>
+              <circle cx="92" cy="34" r="4.5" fill="none" stroke="#1F2E26" stroke-width="1.8"></circle>
+            </svg>
+          </div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+            <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">Lentils</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#5D6C62;white-space:nowrap">6M+</span>
+          </div>
+          <p style="margin:0;font-size:13px;line-height:1.45;color:#5D6C62;flex:1">Soft-cooked, mashed spoonable thick</p>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span style="font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:#1F2E26;color:#FBF8F3;white-space:nowrap">Iron-rich</span>
+            <span style="font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:#D8E8DD;color:#175E40;white-space:nowrap">Legume</span>
+          </div>
+        </div>
+
+        <div style="background:#FFFEFB;border:1px solid #E7E0D4;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px">
+          <div style="background:#F2F6F1;border-radius:10px;height:96px;display:flex;align-items:center;justify-content:center">
+            <svg viewBox="0 0 160 90" style="height:82px" aria-label="Oatmeal: smooth porridge">
+              <path d="M 36 40 h 88 q 2 26 -44 28 q -46 -2 -44 -28 z" fill="#E6F0E9" stroke="#1F2E26" stroke-width="2.2"></path>
+              <path d="M 48 40 q 10 -10 20 0 q 10 -10 20 0 q 10 -10 20 0" fill="none" stroke="#1E7A52" stroke-width="2" opacity="0.6"></path>
+              <ellipse cx="120" cy="26" rx="13" ry="7" fill="#D8E8DD" stroke="#1F2E26" stroke-width="1.8"></ellipse>
+            </svg>
+          </div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+            <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">Oatmeal</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#5D6C62;white-space:nowrap">6M+</span>
+          </div>
+          <p style="margin:0;font-size:13px;line-height:1.45;color:#5D6C62;flex:1">Iron-fortified, smooth and spoonable</p>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span style="font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:#1F2E26;color:#FBF8F3;white-space:nowrap">Iron-rich</span>
+            <span style="font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:#EFE9DC;color:#4A5A50;white-space:nowrap">Grain</span>
+          </div>
+        </div>
+
+        <div style="background:#FFFEFB;border:1px solid #E7E0D4;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px">
+          <div style="background:#F2F6F1;border-radius:10px;height:96px;display:flex;align-items:center;justify-content:center;position:relative">
+            <svg viewBox="0 0 160 90" style="height:82px" aria-label="Salmon: flakes">
+              <path d="M 26 30 Q 50 20 72 28 L 68 56 Q 48 66 30 54 Z" fill="#E6F0E9" stroke="#1F2E26" stroke-width="2.2"></path>
+              <path d="M 40 32 Q 48 42 42 54" fill="none" stroke="#1E7A52" stroke-width="1.6" opacity="0.55"></path>
+              <rect x="96" y="28" width="15" height="12" rx="4" fill="#D8E8DD" stroke="#1F2E26" stroke-width="1.8" transform="rotate(-8 103 34)"></rect>
+              <rect x="120" y="34" width="14" height="11" rx="4" fill="#E6F0E9" stroke="#1F2E26" stroke-width="1.8" transform="rotate(10 127 39)"></rect>
+              <rect x="102" y="54" width="15" height="12" rx="4" fill="#E6F0E9" stroke="#1F2E26" stroke-width="1.8" transform="rotate(6 109 60)"></rect>
+              <rect x="126" y="58" width="14" height="11" rx="4" fill="#D8E8DD" stroke="#1F2E26" stroke-width="1.8" transform="rotate(-5 133 63)"></rect>
+            </svg>
+            <span style="position:absolute;top:8px;right:8px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.08em;background:#1F2E26;color:#FBF8F3;border-radius:999px;padding:3px 8px;white-space:nowrap">TODAY'S PICK</span>
+          </div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+            <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">Salmon</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#5D6C62;white-space:nowrap">6M+</span>
+          </div>
+          <p style="margin:0;font-size:13px;line-height:1.45;color:#5D6C62;flex:1">Pin-bone-checked flakes, kept moist</p>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span style="font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:#1F2E26;color:#FBF8F3;white-space:nowrap">Iron-rich</span>
+            <span style="font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;border:1.5px solid #1F2E26;color:#1F2E26;background:#FFFEFB;white-space:nowrap">Allergen: fish</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #E7E0D4;padding-top:20px;gap:16px;flex-wrap:wrap">
+        <span style="font-size:13.5px;color:#5D6C62">Showing 8 of 18 iron-rich foods · <span style="color:#1E7A52;font-weight:600">Load more</span></span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.1em;color:#5D6C62;white-space:nowrap">DIAGRAM THUMBS = THE 6–8 MO FORM OF EACH FOOD</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: 1340}}"></script>
+</body>
+</html>
