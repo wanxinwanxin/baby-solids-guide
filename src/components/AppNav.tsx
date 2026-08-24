@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useHydrated } from "@/lib/hooks";
 import { useGuideStore } from "@/lib/storage/store";
+import { useSession } from "@/lib/auth-client";
+import { useAuthEnabled } from "@/components/SyncProvider";
 import { BRAND } from "@/lib/brand";
 import { BrandMark } from "@/components/BrandMark";
 import { cn } from "@/lib/utils";
@@ -26,8 +28,39 @@ const MORE = [
   { href: "/history", label: "History" },
   { href: "/insights", label: "Insights" },
   { href: "/safety", label: "Safety" },
-  { href: "/account", label: "Account" },
 ];
+
+/**
+ * The account entry lives where people expect it: the top-right corner of
+ * every page. Signed out → "Sign in"; signed in → an initial-avatar chip.
+ * Hidden entirely on deployments without auth configured.
+ */
+function AccountButton() {
+  const enabled = useAuthEnabled();
+  const { data: session } = useSession();
+  if (!enabled) return null;
+  if (session?.user) {
+    const initial = (session.user.name || session.user.email || "?").trim().charAt(0).toUpperCase();
+    return (
+      <Link
+        href="/account"
+        aria-label="Account"
+        title={session.user.email ?? "Account"}
+        className="flex size-9 shrink-0 items-center justify-center rounded-full border border-primary/40 bg-secondary text-sm font-bold text-secondary-foreground"
+      >
+        {initial}
+      </Link>
+    );
+  }
+  return (
+    <Link
+      href="/account"
+      className="shrink-0 rounded-full border px-3 py-1.5 text-sm font-semibold text-foreground hover:border-primary/60 md:px-3.5 md:py-2"
+    >
+      Sign in
+    </Link>
+  );
+}
 
 function BabySwitcher() {
   const hydrated = useHydrated();
@@ -152,6 +185,7 @@ export function AppNav() {
           >
             + Log
           </Link>
+          <AccountButton />
         </div>
       </div>
     </header>
