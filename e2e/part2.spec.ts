@@ -246,3 +246,15 @@ test.describe("Day preview (Part III D1) + safe-so-far (D2)", () => {
     await expect(page.getByRole("link", { name: /Banana/ }).first()).toBeVisible();
   });
 });
+
+test.describe("Recipes (Part III D3)", () => {
+  test("index renders the corpus; a recipe page shows steps and ingredient links", async ({ page }) => {
+    await page.goto("/recipes");
+    await expect(page.getByRole("heading", { name: /blender-simple recipes/ })).toBeVisible();
+    await page.getByRole("link", { name: /Banana peanut oat mash/ }).click();
+    await expect(page.getByRole("heading", { name: "Banana peanut oat mash" })).toBeVisible();
+    await expect(page.getByText("Steps", { exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Peanut butter/ })).toBeVisible();
+    await expect(page.getByText(/Why it works/)).toBeVisible();
+  });
+});

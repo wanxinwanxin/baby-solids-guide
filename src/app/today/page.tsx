@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { allFoods } from "../../../content/foods";
+import { allRecipes } from "../../../content/recipes";
 import { correctedAgeMonths } from "@/lib/age";
+import { rankCombos } from "@/lib/combos";
 import { deriveFoodStats } from "@/lib/engine";
 import { ALLERGEN_LABELS, BAND_LABELS } from "@/lib/food-utils";
 import {
@@ -144,6 +146,32 @@ export default function TodayPage() {
       .filter((f): f is NonNullable<typeof f> => !!f)
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [logs, triedSlugs]);
+  /** D3 — top meal combos from the pantry + today's picks. The blocked set
+   * mirrors the engine's exclusions so a combo never smuggles in a food the
+   * engine would refuse. */
+  const combos = useMemo(() => {
+    if (!baby || !rec || rec.gate !== "ready") return [];
+    const stats = deriveFoodStats(logs);
+    const pausedAllergens = new Set(
+      rec.allergenStates
+        .filter((s) => s.status === "reacted-paused" || s.status === "avoid-per-doctor")
+        .map((s) => s.allergenId),
+    );
+    const blockedSlugs = new Set<string>(baby.doctorAvoidList);
+    for (const f of allFoods) {
+      if (f.commonAllergen && baby.knownAllergies.includes(f.commonAllergen)) blockedSlugs.add(f.slug);
+      if (f.commonAllergen && pausedAllergens.has(f.commonAllergen)) blockedSlugs.add(f.slug);
+      if (stats.get(f.slug)?.hasPausingSymptoms) blockedSlugs.add(f.slug);
+    }
+    return rankCombos({
+      recipes: allRecipes,
+      foods: foodBySlug,
+      safeSlugs: new Set(safeFoods.map((f) => f.slug)),
+      todaysPickSlugs: rec.todaysPicks.map((p) => p.slug),
+      ageMonths: correctedAgeMonths(baby, viewDate),
+      blockedSlugs,
+    }).slice(0, 2);
+  }, [baby, rec, logs, safeFoods, viewDate]);
 
   const showAccountCard = authEnabled && !session && logs.length >= 5;
   const showBackupNudge =
@@ -728,6 +756,49 @@ export default function TodayPage() {
           )}
         </div>
       </section>
+
+      {combos.length > 0 && (
+        <section className="flex flex-col gap-3.5 rounded-2xl bg-card p-5 ring-1 ring-border">
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="font-sans text-lg font-bold">Make it a meal</h2>
+            <Link
+              href="/recipes"
+              className="font-data text-[11px] uppercase tracking-[0.06em] text-primary hover:text-primary-deep"
+            >
+              All recipes →
+            </Link>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {combos.map(({ recipe, usesPicks }) => (
+              <Link
+                key={recipe.slug}
+                href={`/recipes/${recipe.slug}`}
+                className="flex flex-col gap-2 rounded-xl border p-3.5 transition-colors hover:border-primary"
+              >
+                <span className="font-heading text-base leading-tight font-bold">{recipe.name}</span>
+                <span className="flex flex-wrap gap-1.5">
+                  {recipe.foods.map((slug) => (
+                    <Badge
+                      key={slug}
+                      variant={usesPicks.includes(slug) ? "secondary" : "outline"}
+                    >
+                      {foodBySlug.get(slug)?.name ?? slug}
+                      {usesPicks.includes(slug) && " · today"}
+                    </Badge>
+                  ))}
+                </span>
+                <span className="line-clamp-2 text-[13px] leading-snug text-muted-foreground">
+                  {recipe.whyItWorks}
+                </span>
+              </Link>
+            ))}
+          </div>
+          <p className="text-[12.5px] text-muted-foreground">
+            Only foods {baby.nickname} has already handled safely (plus today&apos;s picks) make
+            this list.
+          </p>
+        </section>
+      )}
 
       {safeFoods.length > 0 && (
         <section className="flex flex-col gap-3.5 rounded-2xl bg-card p-5 ring-1 ring-border">

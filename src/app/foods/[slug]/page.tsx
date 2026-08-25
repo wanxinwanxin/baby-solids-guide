@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { allFoods, foodBySlug } from "../../../../content/foods";
+import { allRecipes } from "../../../../content/recipes";
 import { ALLERGEN_LABELS, CATEGORY_LABELS, NUTRIENT_LABELS } from "@/lib/food-utils";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -47,6 +48,10 @@ export default async function FoodPage({ params }: { params: Promise<{ slug: str
 
   const lname = food.name.toLowerCase();
   const categoryLabel = CATEGORY_LABELS[food.category];
+  const recipesWithFood = allRecipes
+    .filter((r) => r.foods.includes(food.slug))
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .slice(0, 8);
 
   return (
     <article className="space-y-10">
@@ -251,6 +256,27 @@ export default async function FoodPage({ params }: { params: Promise<{ slug: str
                   className="inline-flex items-center rounded-full border bg-card px-4.5 py-2 text-sm font-semibold text-foreground/80 transition-colors hover:border-primary hover:text-foreground"
                 >
                   {foodBySlug.get(p)?.name ?? p}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {recipesWithFood.length > 0 && (
+        <section className="space-y-3">
+          <SectionHeading>Recipes that use it</SectionHeading>
+          <ul className="flex flex-wrap gap-2">
+            {recipesWithFood.map((r) => (
+              <li key={r.slug}>
+                <Link
+                  href={`/recipes/${r.slug}`}
+                  className="inline-flex items-center gap-1.5 rounded-full border bg-card px-4.5 py-2 text-sm font-semibold text-foreground/80 transition-colors hover:border-primary hover:text-foreground"
+                >
+                  {r.name}
+                  {r.ironPairing && (
+                    <span className="font-data text-[10px] text-secondary-foreground">IRON+C</span>
+                  )}
                 </Link>
               </li>
             ))}

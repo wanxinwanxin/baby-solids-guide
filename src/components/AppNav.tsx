@@ -24,6 +24,7 @@ const PRIMARY = [
 ];
 
 const MORE = [
+  { href: "/recipes", label: "Recipes" },
   { href: "/allergens", label: "Allergens" },
   { href: "/history", label: "History" },
   { href: "/insights", label: "Insights" },
