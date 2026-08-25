@@ -204,8 +204,101 @@ async function main() {
     errors.push(`corpus: only ${ironPairingCount} iron-pairing recipes (need ≥${IRON_PAIRING_MIN})`);
   }
 
+  // ——— zh translation overlays (i18n) ———
+  // Structural checks only: every base entry has an overlay, no orphans, and
+  // every overlay array mirrors its base array length so the index-aligned
+  // merge in src/lib/l10n-merge.ts can never mispair sentences.
+  const { ZH_FOODS } = await import("../content/i18n/zh/foods");
+  const { ZH_RECIPES } = await import("../content/i18n/zh/recipes");
+  const { ZH_GUIDES } = await import("../content/i18n/zh/guides");
+  const { ZH_ALLERGENS } = await import("../content/i18n/zh/allergens");
+  const zhCounts = {
+    foods: Object.keys(ZH_FOODS).length,
+    recipes: Object.keys(ZH_RECIPES).length,
+    guides: Object.keys(ZH_GUIDES).length,
+    allergens: Object.keys(ZH_ALLERGENS).length,
+  };
+  const zhStarted = Object.values(zhCounts).some((n) => n > 0);
+  if (zhStarted) {
+    const same = (zl: string, field: string, a: number, b: number) => {
+      if (a !== b) errors.push(`${zl}: ${field} has ${b} item(s), base has ${a}`);
+    };
+    for (const f of allFoods) {
+      const zl = `zh:food:${f.slug}`;
+      const o = ZH_FOODS[f.slug];
+      if (!o) {
+        errors.push(`${zl}: missing zh overlay`);
+        continue;
+      }
+      if (o.slug !== f.slug) errors.push(`${zl}: overlay slug "${o.slug}" mismatch`);
+      same(zl, "nutritionHighlights", f.nutritionHighlights.length, o.nutritionHighlights.length);
+      same(zl, "prepSpecs", f.prepSpecs.length, o.prepSpecs.length);
+      f.prepSpecs.forEach((spec, i) => {
+        const os = o.prepSpecs[i];
+        if (!os) return;
+        same(zl, `prepSpecs[${i}].prepSteps`, spec.prepSteps.length, os.prepSteps.length);
+        same(zl, `prepSpecs[${i}].commonMistakes`, spec.commonMistakes.length, os.commonMistakes.length);
+      });
+      same(zl, "tips", f.tips.length, o.tips.length);
+      if (f.watchOuts) same(zl, "watchOuts", f.watchOuts.length, o.watchOuts?.length ?? 0);
+      if (f.servingGuidance) {
+        same(zl, "servingGuidance", f.servingGuidance.length, o.servingGuidance?.length ?? 0);
+      }
+      if ((f.chokingRisk === "moderate" || f.chokingRisk === "high") && !o.chokingNotes?.trim()) {
+        errors.push(`${zl}: base has chokingNotes but overlay does not (safety copy must translate)`);
+      }
+    }
+    for (const slug of Object.keys(ZH_FOODS)) {
+      if (!foodSlugSet.has(slug)) errors.push(`zh:food:${slug}: overlay has no base food`);
+    }
+    for (const r of allRecipes) {
+      const zl = `zh:recipe:${r.slug}`;
+      const o = ZH_RECIPES[r.slug];
+      if (!o) {
+        errors.push(`${zl}: missing zh overlay`);
+        continue;
+      }
+      same(zl, "steps", r.steps.length, o.steps.length);
+    }
+    for (const slug of Object.keys(ZH_RECIPES)) {
+      if (!recipeSlugs.has(slug)) errors.push(`zh:recipe:${slug}: overlay has no base recipe`);
+    }
+    for (const g of allGuides) {
+      const zl = `zh:guide:${g.slug}`;
+      const o = ZH_GUIDES[g.slug];
+      if (!o) {
+        errors.push(`${zl}: missing zh overlay`);
+        continue;
+      }
+      same(zl, "sections", g.sections.length, o.sections.length);
+      g.sections.forEach((sec, i) => {
+        const os = o.sections[i];
+        if (os) same(zl, `sections[${i}].paragraphs`, sec.paragraphs.length, os.paragraphs.length);
+      });
+    }
+    for (const slug of Object.keys(ZH_GUIDES)) {
+      if (!guideSlugs.has(slug)) errors.push(`zh:guide:${slug}: overlay has no base guide`);
+    }
+    for (const p of allergenPrograms) {
+      const zl = `zh:allergen:${p.id}`;
+      const o = ZH_ALLERGENS[p.id];
+      if (!o) {
+        errors.push(`${zl}: missing zh overlay`);
+        continue;
+      }
+      same(zl, "doseProgression", p.doseProgression.length, o.doseProgression.length);
+      same(zl, "reactionSigns", p.reactionSigns.length, o.reactionSigns.length);
+      same(zl, "notes", p.notes.length, o.notes.length);
+    }
+    for (const id of Object.keys(ZH_ALLERGENS)) {
+      if (!allergenPrograms.some((p) => p.id === id)) {
+        errors.push(`zh:allergen:${id}: overlay has no base program`);
+      }
+    }
+  }
+
   console.log(
-    `content-lint: ${allFoods.length} foods, ${allergensCovered.size}/9 allergens, ${ironRichCount} iron-rich, ${allGuides.length} guides, ${allRecipes.length} recipes (${ironPairingCount} iron-pairing).`,
+    `content-lint: ${allFoods.length} foods, ${allergensCovered.size}/9 allergens, ${ironRichCount} iron-rich, ${allGuides.length} guides, ${allRecipes.length} recipes (${ironPairingCount} iron-pairing), zh overlays: ${zhCounts.foods} foods / ${zhCounts.recipes} recipes / ${zhCounts.guides} guides / ${zhCounts.allergens} allergens.`,
   );
   finish(errors);
 }

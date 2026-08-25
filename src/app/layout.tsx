@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Figtree, JetBrains_Mono } from "next/font/google";
+import { Bricolage_Grotesque, Figtree, JetBrains_Mono, Noto_Sans_SC } from "next/font/google";
 import Link from "next/link";
 import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
 import { AppNav } from "@/components/AppNav";
@@ -15,6 +15,9 @@ import "./globals.css";
 const bricolage = Bricolage_Grotesque({ variable: "--font-bricolage", subsets: ["latin"] });
 const figtree = Figtree({ variable: "--font-figtree", subsets: ["latin"] });
 const jetbrainsMono = JetBrains_Mono({ variable: "--font-jetbrains-mono", subsets: ["latin"] });
+// CJK glyph fallback for zh — served in unicode-range chunks, so English
+// visitors download nothing extra.
+const notoSansSC = Noto_Sans_SC({ variable: "--font-noto-sc", subsets: ["latin"] });
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -41,7 +44,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang={locale === "zh" ? "zh-CN" : "en"}
-      className={`${bricolage.variable} ${figtree.variable} ${jetbrainsMono.variable}`}
+      className={`${bricolage.variable} ${figtree.variable} ${jetbrainsMono.variable} ${notoSansSC.variable}`}
     >
       <body className="antialiased">
         <LocaleProvider locale={locale}>
