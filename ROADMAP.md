@@ -26,7 +26,7 @@ Core promises:
 5. **Allergy-aware** — risk-stratified allergen introduction schedules and reaction playbooks, following NIAID/AAP guidance.
 6. **Free & private** — no paywall, no ads, no trackers. Local-first storage with optional account sync.
 
-Non-goals for v1 (§12): meal planning/recipes at scale, native mobile apps, community features, multi-language.
+Non-goals for v1 (§12): meal planning/recipes at scale, native mobile apps, community features. (Multi-language was originally a non-goal but shipped 2026-08: a nav language toggle with full Simplified Chinese coverage — cookie locale, per-surface message modules in `src/lib/i18n/`, and zh content overlays for all foods/recipes/guides/allergens under `content/i18n/zh/`, gated by content-lint.)
 
 ---
 
