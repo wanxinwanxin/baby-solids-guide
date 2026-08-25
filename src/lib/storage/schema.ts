@@ -71,7 +71,12 @@ export const planSchema = z.object({
   babyId: z.string().min(1),
   anchorMonday: isoDate,
   entries: z.array(
-    z.object({ id: z.string().min(1), foodSlug: z.string().min(1), weekIndex: z.number().int().min(0).max(51) }),
+    z.object({
+      id: z.string().min(1),
+      foodSlug: z.string().min(1),
+      weekIndex: z.number().int().min(0).max(51),
+      dayIndex: z.number().int().min(0).max(364).optional(),
+    }),
   ),
   updatedAt: isoDateTime.optional(),
 });

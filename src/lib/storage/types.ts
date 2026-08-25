@@ -130,7 +130,13 @@ export type CheckIn = {
 export type CheckInPreset = "15m" | "1h" | "2h" | "2d" | "1w";
 
 /** 12-week introduction plan (Phase 11). */
-export type PlanEntry = { id: string; foodSlug: string; weekIndex: number };
+/**
+ * `dayIndex` (days from anchorMonday) is the real schedule slot — new foods
+ * are spaced by an observation window so a reaction is traceable to one
+ * food. `weekIndex` is derived from it and kept for the board UI and for
+ * plans written before day-level scheduling existed.
+ */
+export type PlanEntry = { id: string; foodSlug: string; weekIndex: number; dayIndex?: number };
 export type Plan = {
   babyId: string;
   anchorMonday: string; // ISO date of week 0's Monday

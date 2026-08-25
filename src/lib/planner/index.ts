@@ -16,8 +16,25 @@ import type { AllergenOverride, BabyProfile, ExposureLog, Plan, PlanEntry } from
  */
 
 const WEEKS_PER_MONTH = 30.4375 / 7;
+const DAYS_PER_MONTH = 30.4375;
 export const PLAN_WEEKS = 12;
-export const FOODS_PER_WEEK = 4;
+
+/**
+ * The observation window a new food owns before the next one starts, so a
+ * reaction points at exactly one food. Three days is what the allergen
+ * guidance asks for, and applying it to every new food is what keeps a
+ * seven-day week to two or three introductions — the old week-bucket
+ * planner packed in four, leaving no clear days between them at all.
+ */
+export const INTRO_SPACING_DAYS = 3;
+
+/** Days a food must sit reaction-free before it may partner a new food. */
+export const COMPANION_ESTABLISHED_DAYS = 7;
+
+/** Schedule slot of an entry; pre-day-level plans fall back to their week. */
+export function entryDay(entry: PlanEntry): number {
+  return entry.dayIndex ?? entry.weekIndex * 7;
+}
 
 /** ISO date of the Monday of the week containing `date` (UTC). */
 export function mondayOf(date: Date): string {
@@ -32,6 +49,100 @@ export function mondayOf(date: Date): string {
 // starter plans against the 6-month starter foods, same as the engine.
 function ageAtWeek(baby: BabyProfile, today: Date, weekIndex: number): number {
   return eligibilityAgeMonths(baby, today) + weekIndex / WEEKS_PER_MONTH;
+}
+
+function ageAtDay(baby: BabyProfile, today: Date, dayIndex: number): number {
+  return eligibilityAgeMonths(baby, today) + dayIndex / DAYS_PER_MONTH;
+}
+
+/**
+ * Lay an ordered list of foods onto the calendar, each starting after the
+ * previous one's observation window. This is the single place day slots are
+ * assigned, so every edit path (generate, add, move, remove) produces a
+ * plan with the same spacing guarantee.
+ */
+export function scheduleSlugs(
+  orderedSlugs: string[],
+  foodBySlug: Map<string, Food>,
+  startDay = 0,
+): PlanEntry[] {
+  const entries: PlanEntry[] = [];
+  let day = startDay;
+  for (const foodSlug of orderedSlugs) {
+    entries.push({
+      id: `plan-${foodSlug}`,
+      foodSlug,
+      dayIndex: day,
+      weekIndex: Math.floor(day / 7),
+    });
+    day += INTRO_SPACING_DAYS;
+  }
+  return entries;
+}
+
+/** The plan's foods in schedule order, de-duplicated. */
+export function planOrder(plan: Plan): string[] {
+  const ordered = [...plan.entries]
+    .map((entry, i) => ({ entry, i }))
+    .sort((a, b) => entryDay(a.entry) - entryDay(b.entry) || a.i - b.i)
+    .map(({ entry }) => entry.foodSlug);
+  return [...new Set(ordered)];
+}
+
+/**
+ * Day the plan may start on. A plan for a baby who is not yet old enough
+ * begins partway down the calendar; edits must not slide foods back in
+ * front of that gate.
+ */
+export function planStartDay(plan: Plan): number {
+  return plan.entries.length === 0 ? 0 : Math.min(...plan.entries.map(entryDay));
+}
+
+/** Re-space an existing plan without changing the order the parent chose. */
+export function reflowPlan(plan: Plan, foodBySlug: Map<string, Food>): Plan {
+  return {
+    ...plan,
+    entries: scheduleSlugs(planOrder(plan), foodBySlug, planStartDay(plan)),
+  };
+}
+
+/**
+ * Put a food into a week and re-space everything after it. A food appears
+ * once, so dropping it into an earlier week also lifts it out of the later
+ * one — and the foods behind it slide back by exactly one observation
+ * window rather than bunching up.
+ */
+export function addFoodToWeek(
+  plan: Plan,
+  foodSlug: string,
+  weekIndex: number,
+  foodBySlug: Map<string, Food>,
+): Plan {
+  const start = planStartDay(plan);
+  const order = planOrder(plan).filter((slug) => slug !== foodSlug);
+
+  // Inserting at position i gives the food day `start + i * spacing`. Take the
+  // last position that still lands inside the requested week, so the food
+  // joins the end of that week and only the foods behind it shift.
+  const weekOf = (i: number) => Math.floor((start + i * INTRO_SPACING_DAYS) / 7);
+  const slots = [...Array(order.length + 1).keys()].filter((i) => weekOf(i) === weekIndex);
+  const at = slots.length
+    ? slots[slots.length - 1]
+    : weekIndex * 7 < start
+      ? 0 // requested week is before this plan can start
+      : order.length; // requested week is past the end of the plan
+
+  order.splice(at, 0, foodSlug);
+  return { ...plan, entries: scheduleSlugs(order, foodBySlug, start) };
+}
+
+export function removeFoodFromPlan(
+  plan: Plan,
+  foodSlug: string,
+  foodBySlug: Map<string, Food>,
+): Plan {
+  const order = planOrder(plan).filter((slug) => slug !== foodSlug);
+  return { ...plan, entries: scheduleSlugs(order, foodBySlug, planStartDay(plan)) };
 }
 
 /**
@@ -94,45 +205,61 @@ export function generatePlan(input: GeneratePlanInput): Plan {
         a.slug.localeCompare(b.slug),
     );
 
+  // Walk the calendar day by day rather than filling week buckets: each
+  // pick consumes its own observation window, so the number of foods a week
+  // holds falls out of the spacing instead of being assumed.
   const entries: PlanEntry[] = [];
   const used = new Set<string>();
-  const push = (foodSlug: string, weekIndex: number) => {
-    entries.push({ id: `plan-${foodSlug}`, foodSlug, weekIndex });
-    used.add(foodSlug);
-  };
-
+  const horizon = weeks * 7;
   let allergenIdx = 0;
-  for (let w = 0; w < weeks; w++) {
-    let slots = FOODS_PER_WEEK;
+  let lastAllergenWeek = -1;
+  let day = 0;
 
-    // One new allergen per week from week 1 on.
-    if (w >= 1 && allergenIdx < allergenQueue.length) {
+  while (day < horizon) {
+    const week = Math.floor(day / 7);
+    const age = ageAtDay(baby, today, day);
+    let chosen: Food | undefined;
+
+    // At most one new allergen per week, from week 1 on.
+    if (week >= 1 && week > lastAllergenWeek && allergenIdx < allergenQueue.length) {
       const allergen = allergenQueue[allergenIdx];
       const preferred = PREFERRED_VEHICLES[allergen];
-      const vehicle = foods
+      chosen = foods
         .filter((f) => f.commonAllergen === allergen && !excluded(f) && !used.has(f.slug))
         .sort(
           (a, b) =>
             Number(b.slug === preferred) - Number(a.slug === preferred) ||
             a.slug.localeCompare(b.slug),
         )
-        .find((f) => ageAtWeek(baby, today, w) >= f.minAgeMonths);
-      if (vehicle) {
-        push(vehicle.slug, w);
+        .find((f) => age >= f.minAgeMonths);
+      if (chosen) {
         allergenIdx++;
-        slots--;
+        lastAllergenWeek = week;
       }
     }
 
-    for (const f of generalPool) {
-      if (slots === 0) break;
-      if (used.has(f.slug)) continue;
-      if (ageAtWeek(baby, today, w) < f.minAgeMonths) continue;
-      // Keep high-choking-risk foods out of the very first weeks.
-      if (f.chokingRisk === "high" && w < 2) continue;
-      push(f.slug, w);
-      slots--;
+    chosen ??= generalPool.find(
+      (f) =>
+        !used.has(f.slug) &&
+        age >= f.minAgeMonths &&
+        // Keep high-choking-risk foods out of the very first weeks.
+        !(f.chokingRisk === "high" && week < 2),
+    );
+
+    if (!chosen) {
+      day += 1; // nothing eligible yet — the age gate may open tomorrow
+      continue;
     }
+    // Keep the day the walk actually landed on — re-laying the sequence from
+    // day 0 here would erase the wait while an age gate was still shut.
+    entries.push({
+      id: `plan-${chosen.slug}`,
+      foodSlug: chosen.slug,
+      dayIndex: day,
+      weekIndex: Math.floor(day / 7),
+    });
+    used.add(chosen.slug);
+    day += INTRO_SPACING_DAYS;
   }
 
   return { babyId: baby.id, anchorMonday: mondayOf(today), entries };

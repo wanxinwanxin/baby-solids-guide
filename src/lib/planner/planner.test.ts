@@ -2,7 +2,15 @@ import { describe, expect, it } from "vitest";
 import type { Food } from "@/content-schema/food";
 import type { BabyProfile, ExposureLog, Plan } from "@/lib/storage/types";
 import { allergenOrderFromPlan, planWeekIndex, recommend, PLAN_BONUS } from "@/lib/engine";
-import { generatePlan, mondayOf, validatePlan } from "./index";
+import {
+  addFoodToWeek,
+  INTRO_SPACING_DAYS,
+  generatePlan,
+  mondayOf,
+  removeFoodFromPlan,
+  scheduleSlugs,
+  validatePlan,
+} from "./index";
 
 const TODAY = new Date("2026-08-22T12:00:00Z"); // a Saturday
 const DAY = 86400000;
@@ -233,5 +241,90 @@ describe("pediatrician-guided early start (eligibility clamp)", () => {
       // 6 (clamped) + weeks must be ≥ 9 months before grapes appear
       expect(grapeEntry.weekIndex).toBeGreaterThanOrEqual(13);
     }
+  });
+});
+
+describe("day-level spacing", () => {
+  const foodBySlug = new Map(FOODS.map((f) => [f.slug, f]));
+
+  function gaps(plan: Plan): number[] {
+    const days = plan.entries.map((e) => e.dayIndex!).sort((a, b) => a - b);
+    return days.slice(1).map((d, i) => d - days[i]);
+  }
+
+  it("never schedules two foods closer than the observation window", () => {
+    // Gaps may be longer than one window when the walk waits for an age gate.
+    const plan = generatePlan({ baby: makeBaby(), ...emptyInput });
+    for (const gap of gaps(plan)) expect(gap).toBeGreaterThanOrEqual(INTRO_SPACING_DAYS);
+  });
+
+  it("gives every new allergen its full observation window before the next food", () => {
+    const plan = generatePlan({ baby: makeBaby(), ...emptyInput });
+    const ordered = [...plan.entries].sort((a, b) => a.dayIndex! - b.dayIndex!);
+    ordered.forEach((entry, i) => {
+      const next = ordered[i + 1];
+      if (!next) return;
+      if (foodBySlug.get(entry.foodSlug)?.commonAllergen) {
+        expect(next.dayIndex! - entry.dayIndex!).toBeGreaterThanOrEqual(INTRO_SPACING_DAYS);
+      }
+    });
+  });
+
+  it("keeps a week to at most three introductions", () => {
+    const plan = generatePlan({ baby: makeBaby(), ...emptyInput });
+    const perWeek = new Map<number, number>();
+    for (const e of plan.entries) perWeek.set(e.weekIndex, (perWeek.get(e.weekIndex) ?? 0) + 1);
+    for (const count of perWeek.values()) expect(count).toBeLessThanOrEqual(3);
+  });
+
+  it("derives weekIndex from dayIndex", () => {
+    const plan = generatePlan({ baby: makeBaby(), ...emptyInput });
+    for (const e of plan.entries) expect(e.weekIndex).toBe(Math.floor(e.dayIndex! / 7));
+  });
+});
+
+describe("plan edits re-space the calendar", () => {
+  const foodBySlug = new Map(FOODS.map((f) => [f.slug, f]));
+  const base: Plan = {
+    babyId: "baby-1",
+    anchorMonday: "2026-08-17",
+    entries: scheduleSlugs(["beef", "lentils", "avocado", "banana"], foodBySlug),
+  };
+
+  it("moves a food out of its later week when it is added to an earlier one", () => {
+    const moved = addFoodToWeek(base, "banana", 0, foodBySlug);
+    expect(moved.entries.filter((e) => e.foodSlug === "banana")).toHaveLength(1);
+    expect(moved.entries.find((e) => e.foodSlug === "banana")!.weekIndex).toBe(0);
+  });
+
+  it("pushes foods after the insertion point back by exactly one window", () => {
+    const before = base.entries.find((e) => e.foodSlug === "banana")!.dayIndex!;
+    const added = addFoodToWeek(base, "broccoli", 0, foodBySlug);
+    const after = added.entries.find((e) => e.foodSlug === "banana")!.dayIndex!;
+    expect(after - before).toBe(INTRO_SPACING_DAYS);
+  });
+
+  it("pulls the tail forward when a food is removed", () => {
+    const before = base.entries.find((e) => e.foodSlug === "banana")!.dayIndex!;
+    const removed = removeFoodFromPlan(base, "lentils", foodBySlug);
+    const after = removed.entries.find((e) => e.foodSlug === "banana")!.dayIndex!;
+    expect(after).toBeLessThan(before);
+    expect(removed.entries.some((e) => e.foodSlug === "lentils")).toBe(false);
+  });
+
+  it("holds the spacing invariant after an arbitrary edit", () => {
+    const edited = addFoodToWeek(addFoodToWeek(base, "egg", 0, foodBySlug), "yogurt", 0, foodBySlug);
+    const days = edited.entries.map((e) => e.dayIndex!).sort((a, b) => a - b);
+    days.slice(1).forEach((d, i) => expect(d - days[i]).toBe(INTRO_SPACING_DAYS));
+  });
+
+  it("never slides a food in front of a plan that starts late", () => {
+    const late: Plan = {
+      babyId: "baby-1",
+      anchorMonday: "2026-08-17",
+      entries: scheduleSlugs(["beef", "lentils"], foodBySlug, 42),
+    };
+    const edited = addFoodToWeek(late, "avocado", 0, foodBySlug);
+    for (const e of edited.entries) expect(e.dayIndex!).toBeGreaterThanOrEqual(42);
   });
 });
