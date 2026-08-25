@@ -56,4 +56,33 @@ export const planMsgs = {
     en: "Drag onto a week, or tap to add to the selected week. Drop a planned food back here to remove it.",
     zh: "把食物拖到某一周，或点按加入选中的那一周。把已安排的食物拖回这里即可移除。",
   },
+
+  // --- Day-level scheduling (spacing explainer + chip start dates) ---
+  /** {days} = INTRO_SPACING_DAYS. */
+  spacingNote: {
+    en: "New foods start about {days} days apart, so a reaction can be traced back to one food.",
+    zh: "每种新食物之间大约相隔 {days} 天，这样一旦出现反应，就能追溯到具体是哪一种。",
+  },
+  /** {label} = chip label, {date} = localized start date. */
+  startsOn: { en: "{label} starts {date}", zh: "{label}从{date}开始" },
+
+  // --- Per-week "add a food" combobox ---
+  addFood: { en: "+ Add food", zh: "+ 添加食物" },
+  /** {week} = week lane label. */
+  addFoodAria: { en: "Add a food to {week}", zh: "添加食物到{week}" },
+  closeAddFood: { en: "Close", zh: "收起" },
+  /** {week} = week lane label. Kept distinct from the tray's search label. */
+  addFoodSearchAria: { en: "Find a food to add to {week}", zh: "查找要添加到{week}的食物" },
+  addFoodPlaceholder: { en: "Type a food name…", zh: "输入食物名称…" },
+  addFoodListAria: { en: "Matching foods", zh: "匹配的食物" },
+  addFoodNoMatch: { en: "No foods match that.", zh: "没有匹配的食物。" },
+  /** {n} = matches beyond the visible cap. */
+  addFoodMore: { en: "{n} more match — keep typing to narrow it down.", zh: "还有 {n} 个匹配——继续输入可以缩小范围。" },
+  /** {months} = food.minAgeMonths. */
+  hintMinAge: { en: "{months}m+", zh: "{months} 个月以上" },
+  /** {allergen} = localized allergen label. */
+  hintAllergen: { en: "allergen: {allergen}", zh: "过敏原：{allergen}" },
+  hintChoking: { en: "high choking risk", zh: "高窒息风险" },
+  /** {n} = 1-based week number the food already sits in. */
+  hintAlreadyIn: { en: "already in week {n} — picking it moves it", zh: "已在第 {n} 周——选中即可移过来" },
 } satisfies Msgs;
