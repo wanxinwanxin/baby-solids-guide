@@ -125,6 +125,31 @@ export const todayMsgs = {
   howToServe: { en: "How to serve →", zh: "做法 →" },
   logIt: { en: "Log it", zh: "记录" },
 
+  // ——— Nutrient profile + benefits (src/components/NutrientProfile.tsx) ———
+  nutrientMixTitle: { en: "Today's nutrient mix", zh: "今日营养构成" },
+  nutrientMixSub: {
+    en: "How many of today's {n} picks carry each nutrient.",
+    zh: "今日 {n} 种推荐里，各有几种能提供这项营养。",
+  },
+  nutrientMixSubOne: {
+    en: "What today's pick brings to the table.",
+    zh: "今天这一种推荐能提供什么。",
+  },
+  nutrientChartLabel: {
+    en: "Nutrients across today's {n} picks — {list}",
+    zh: "今日 {n} 种推荐覆盖的营养——{list}",
+  },
+  nutrientChartLabelOne: {
+    en: "Nutrients in today's pick — {list}",
+    zh: "今日这一种推荐覆盖的营养——{list}",
+  },
+  nutrientAriaItem: { en: "{nutrient} in {n} of {m}", zh: "{nutrient}：{m} 种中有 {n} 种" },
+  nutrientAlso: { en: "Also: {list}", zh: "还有：{list}" },
+  foodGroups: { en: "Food groups: {list}", zh: "食物类别：{list}" },
+  listSep: { en: ", ", zh: "、" },
+  benefitsTitle: { en: "What these picks bring", zh: "这些推荐能带来什么" },
+  benefitSep: { en: " — ", zh: "：" },
+
   // ——— Allergen plan ———
   allergenPlan: { en: "Allergen plan", zh: "过敏原计划" },
   nOf9Underway: { en: "{n} of 9 underway", zh: "已开始 {n}/9" },

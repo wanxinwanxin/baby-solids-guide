@@ -23,6 +23,7 @@ import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
 import { READINESS_SIGNS, todayMsgs } from "@/lib/i18n/messages/today";
 import { CutDiagram, isDiagramVariant } from "@/components/diagrams/CutDiagram";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { NutrientBenefits, NutrientProfile } from "@/components/NutrientProfile";
 import { PushOptIn } from "@/components/PushOptIn";
 import { useAuthEnabled, useSyncStatus } from "@/components/SyncProvider";
 import { useSession } from "@/lib/auth-client";
@@ -326,6 +327,10 @@ export default function TodayPage() {
   const nextStage =
     TEXTURE_STAGES[TEXTURE_STAGES.findIndex((s) => s.id === rec.textureStage.current) + 1];
   const allergensUnderway = rec.allergenStates.filter((s) => s.status !== "not-started").length;
+  /** The localized Food behind each pick — powers the nutrient chart + benefits. */
+  const pickFoods = rec.todaysPicks
+    .map((p) => foodBySlug.get(p.slug))
+    .filter((f): f is NonNullable<typeof f> => !!f);
   const foodsPct = Math.round((triedSlugs.size / allFoods.length) * 100);
   const viewAge = correctedAgeMonths(baby, viewDate);
   const dateLabel = viewDate.toLocaleDateString(dateLocale, {
@@ -666,6 +671,12 @@ export default function TodayPage() {
             );
           })}
         </div>
+        {pickFoods.length > 0 && (
+          <div className="grid gap-x-8 gap-y-5 rounded-2xl bg-card p-5 ring-1 ring-border sm:grid-cols-2">
+            <NutrientProfile foods={pickFoods} />
+            <NutrientBenefits foods={pickFoods} />
+          </div>
+        )}
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
@@ -678,6 +689,7 @@ export default function TodayPage() {
           </div>
           <div
             className="flex gap-1.5"
+            role="img"
             aria-label={fmt(t.nOf9AllergensUnderway, { n: allergensUnderway })}
           >
             {rec.allergenStates.map((s) => (
