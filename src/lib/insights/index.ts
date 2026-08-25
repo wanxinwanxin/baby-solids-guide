@@ -2,7 +2,8 @@ import type { AgeBand, Food, FoodCategory, NutrientTag } from "@/content-schema/
 import { AGE_BANDS, FOOD_CATEGORIES, NUTRIENT_TAGS } from "@/content-schema/food";
 import { daysBetween } from "@/lib/age";
 import type { AllergenStateView } from "@/lib/engine";
-import { CATEGORY_LABELS, NUTRIENT_LABELS } from "@/lib/food-utils";
+import type { Locale } from "@/lib/i18n/config";
+import { categoryLabel, nutrientLabel } from "@/lib/i18n/labels";
 import type { ExposureLog } from "@/lib/storage/types";
 
 /**
@@ -63,6 +64,7 @@ export function categoryVariety(
   foods: Food[],
   today: Date,
   days = 14,
+  locale: Locale = "en",
 ): CategoryVariety[] {
   const categoryOf = new Map(foods.map((f) => [f.slug, f.category]));
   const eaten = new Map<FoodCategory, Set<string>>();
@@ -78,7 +80,7 @@ export function categoryVariety(
   }
   return FOOD_CATEGORIES.map((category) => ({
     category,
-    label: CATEGORY_LABELS[category],
+    label: categoryLabel(category, locale),
     distinctFoods: eaten.get(category)?.size ?? 0,
   }));
 }
@@ -208,6 +210,7 @@ export function nutrientCoverage(
   foods: Food[],
   today: Date,
   days = 7,
+  locale: Locale = "en",
 ): NutrientCount[] {
   const nutrientsOf = new Map(foods.map((f) => [f.slug, f.nutrients ?? []]));
   const counts = new Map<NutrientTag, number>(NUTRIENT_TAGS.map((t) => [t, 0]));
@@ -219,5 +222,5 @@ export function nutrientCoverage(
       counts.set(tag, counts.get(tag)! + 1);
     }
   }
-  return NUTRIENT_TAGS.map((tag) => ({ tag, label: NUTRIENT_LABELS[tag], count: counts.get(tag)! }));
+  return NUTRIENT_TAGS.map((tag) => ({ tag, label: nutrientLabel(tag, locale), count: counts.get(tag)! }));
 }

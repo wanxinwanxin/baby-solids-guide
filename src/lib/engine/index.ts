@@ -1,6 +1,9 @@
-import type { AgeBand, AllergenId, Food } from "@/content-schema/food";
+import type { AgeBand, AllergenId, Food, FoodCategory } from "@/content-schema/food";
 import { ALLERGEN_IDS } from "@/content-schema/food";
 import { correctedAgeMonths, daysBetween } from "@/lib/age";
+import type { Locale, Msg } from "@/lib/i18n/config";
+import { msg } from "@/lib/i18n/config";
+import { allergenLabel, bandLabel, categoryLabel } from "@/lib/i18n/labels";
 import { triage } from "@/lib/triage";
 import type {
   AllergenOverride,
@@ -262,9 +265,146 @@ export function riskTier(baby: BabyProfile): "high" | "moderate" | "low" {
   return "low";
 }
 
+// ——— Localized copy ———
+// The `en` strings are pinned by unit and e2e tests — keep them byte-for-byte.
+// English deliberately interpolates the raw allergen/category/band ids (that is
+// what the tests match); zh swaps in the localized labels instead.
+
+const zhAllergen = (id: AllergenId) => allergenLabel(id, "zh");
+
+const TEXTURE_STAGE_ZH: Record<TextureStage, { label: string; typicalAge: string }> = {
+  S1: { label: "细腻泥糊＋可抓握的软条", typicalAge: "约6–7个月" },
+  S2: { label: "带小颗粒的泥＋一口大小的软块", typicalAge: "约8–9个月" },
+  S3: { label: "切碎的软质家常食物", typicalAge: "约10–12个月" },
+  S4: { label: "安全切分的家庭餐", typicalAge: "12个月以上" },
+};
+
+const COPY = {
+  gateUnderFour: {
+    en: "Most babies are ready around 6 months (corrected age), and even pediatrician-guided programs wait until at least 4 months. It's early yet — watch for the readiness signs.",
+    zh: "大多数宝宝在6个月左右（按矫正月龄）才准备好吃辅食，即使是儿科医生指导的方案也至少要等到4个月。现在还早——先留意宝宝的准备信号吧。",
+  },
+  gateFourToSix: {
+    en: "Between 4 and 6 months, start solids only if your pediatrician specifically advised it — if they have, tell us below and you can start today.",
+    zh: "4到6个月之间，只有在儿科医生明确建议的情况下才开始添加辅食——如果医生已经建议了，请在下方告诉我们，今天就可以开始。",
+  },
+  gateConfirmSigns: {
+    en: "Confirm the readiness signs first: sits with minimal support, steady head control, brings objects to the mouth, shows interest in food, and the tongue-thrust reflex has faded.",
+    zh: "请先确认宝宝的准备信号：几乎不用支撑就能坐稳、头部控制稳定、会把东西送到嘴边、对食物表现出兴趣，而且吐舌反射已经消退。",
+  },
+  warnEarlyStart: (beforeSix: boolean): Msg => ({
+    en:
+      "You're starting on your pediatrician's guidance" +
+      (beforeSix ? " before 6 months" : "") +
+      ". Stick to smooth, thin textures (the first prep option on each food page) and let their advice override anything suggested here.",
+    zh:
+      (beforeSix
+        ? "你们是在儿科医生的指导下、不满6个月就开始添加辅食的。"
+        : "你们是在儿科医生的指导下开始添加辅食的。") +
+      "请坚持使用细腻稀薄的质地（每个食物页面的第一个制作方式），一切以医生的建议为准，优先于这里的任何推荐。",
+  }),
+  exclTooYoung: (minMonths: number): Msg => ({
+    en: `Not before ${minMonths} months (corrected age).`,
+    zh: `未满${minMonths}个月（矫正月龄）不建议尝试。`,
+  }),
+  exclAllergenPaused: (id: AllergenId): Msg => ({
+    en: `Paused: the ${id} group is on hold after a logged reaction or per medical advice.`,
+    zh: `已暂停：${zhAllergen(id)}类食物因记录到反应或遵医嘱而暂缓。`,
+  }),
+  exclDoctorAvoid: {
+    en: "On your doctor-avoid list.",
+    zh: "在医生建议避免的清单上。",
+  },
+  exclFoodHold: {
+    en: "On hold: symptoms were logged with this food — check with your pediatrician.",
+    zh: "暂缓中：这种食物曾记录到症状——请咨询儿科医生。",
+  },
+  warnFoodHold: (name: string): Msg => ({
+    en: `${name} is on hold after logged symptoms. Discuss with your pediatrician before re-offering.`,
+    zh: `${name}因记录到症状而暂缓。再次提供前，请先与儿科医生讨论。`,
+  }),
+  warnAvoidPerDoctor: (id: AllergenId): Msg => ({
+    en: `The ${id} group is excluded (known allergy / medical advice).`,
+    zh: `${zhAllergen(id)}类食物已排除（已知过敏／遵医嘱）。`,
+  }),
+  warnReactionPaused: (id: AllergenId): Msg => ({
+    en: `The ${id} group is paused after a logged reaction. See the reaction playbook, and clear it only after talking to your pediatrician.`,
+    zh: `${zhAllergen(id)}类食物在记录到反应后已暂停。请查看反应应对指南，并且只有在与儿科医生沟通后再解除暂停。`,
+  }),
+  peanutGateReason: {
+    en: "Severe eczema or an existing food allergy puts your baby in the higher-risk group for peanut allergy. Talk to your pediatrician or allergist before introducing peanut — they may recommend testing or a supervised first exposure, ideally around 4–6 months. Once they clear you, confirm it in the allergen tracker.",
+    zh: "重度湿疹或已有食物过敏，意味着宝宝属于花生过敏的较高风险人群。引入花生前，请先咨询儿科医生或过敏专科医生——他们可能会建议先做检测，或在监护下进行首次尝试，最好在4–6个月左右。医生确认可以后，请在过敏原追踪中确认。",
+  },
+  peanutGateGuidance: {
+    en: "Talk to your pediatrician first, then confirm clearance in the tracker.",
+    zh: "请先咨询儿科医生，再在追踪页确认已获许可。",
+  },
+  allergenGuidance: {
+    en: "Serve early in the day so you can watch for a reaction for the next 2 hours, alongside familiar foods — never with another brand-new food.",
+    zh: "请在一天较早的时候提供，方便在接下来的2小时里观察有无反应；搭配熟悉的食物一起吃——绝不要和另一种全新食物同时尝试。",
+  },
+  gateNeedSmoothDays: (days: number, id: AllergenId): Msg => ({
+    en: `Get ${days} smooth days of solids in first, then start ${id}.`,
+    zh: `先顺利吃满${days}天辅食，再开始尝试${zhAllergen(id)}。`,
+  }),
+  gateResolveReaction: {
+    en: "Resolve the paused reaction before starting a new allergen.",
+    zh: "请先处理已暂停的反应，再开始新的过敏原。",
+  },
+  gateCooldown: (days: number, id: AllergenId): Msg => ({
+    en: `Wait ${days} more day(s) after the last new allergen before starting ${id}.`,
+    zh: `距离上一种新过敏原还需再等${days}天，之后再开始尝试${zhAllergen(id)}。`,
+  }),
+  maintUrgent: (id: AllergenId, days: number): Msg => ({
+    en: `It's been ${days} days since ${id}. Consistent ongoing exposure (about twice a week) is what maintains tolerance — get it back in the rotation soon.`,
+    zh: `距离上次吃${zhAllergen(id)}已经${days}天了。持续规律地接触（大约每周两次）才能维持耐受——尽快让它回到日常轮换中吧。`,
+  }),
+  warnMaintLapse: (id: AllergenId, days: number): Msg => ({
+    en: `${id} hasn't been served in ${days} days — long gaps can undo the benefit of early introduction.`,
+    zh: `${zhAllergen(id)}已经${days}天没有提供了——间隔太久可能会抵消早期引入的益处。`,
+  }),
+  maintNudge: (id: AllergenId, days: number): Msg => ({
+    en: `Keep ${id} in the rotation — aim for about twice a week (last served ${days} days ago).`,
+    zh: `让${zhAllergen(id)}保持在日常轮换中——目标是大约每周两次（上次提供是${days}天前）。`,
+  }),
+  retryReason: (attempts: number, pairing: string | undefined): Msg => ({
+    en: `Refused ${attempts} time(s) so far — normal! Try a different prep or pair it with ${pairing ?? "a favorite"}. It can take 8–15 tries.`,
+    zh: `到目前为止已拒绝${attempts}次——很正常！试试换一种做法，或和${pairing ?? "宝宝爱吃的食物"}搭配。接受一种新食物可能需要8–15次尝试。`,
+  }),
+  reasonGoodFit: (band: AgeBand): Msg => ({
+    en: `A good fit for ${band} right now.`,
+    zh: `现在正适合${bandLabel(band, "zh")}这个阶段。`,
+  }),
+  reasonVariety: (category: FoodCategory): Msg => ({
+    en: `Nothing from the ${category} group this week — variety builds acceptance.`,
+    zh: `这周还没吃过${categoryLabel(category, "zh")}类——多样化有助于宝宝接受新食物。`,
+  }),
+  reasonAllergen: (id: AllergenId): Msg => ({
+    en: `Time to introduce ${id}: serve early in the day and watch for 2 hours.`,
+    zh: `该引入${zhAllergen(id)}了：请在一天较早时提供，并观察2小时。`,
+  }),
+  reasonIron: {
+    en: "Iron stores dip around 6 months — iron-rich foods are the priority.",
+    zh: "宝宝的铁储备在6个月左右开始下降——富含铁的食物是当前的重点。",
+  },
+  reasonPlanned: {
+    en: "On your plan for this week.",
+    zh: "在你本周的计划里。",
+  },
+  reasonPinned: (attempts: number, name: string): Msg => ({
+    en: `Offered ${attempts} time(s) — keep ${name.toLowerCase()} going for 2–3 days while you watch, before adding the next new food.`,
+    zh: `已提供${attempts}次——继续让宝宝吃${name}并观察2–3天，再添加下一种新食物。`,
+  }),
+  textureNudge: (count: number, next: (typeof TEXTURE_STAGES)[number]): Msg => ({
+    en: `Ready for the next texture? The last ${count} logs show confident eating. Consider moving to ${next.id}: ${next.label.toLowerCase()} (${next.typicalAge}). You confirm the switch — the app never auto-advances.`,
+    zh: `准备好进入下一个质地阶段了吗？最近${count}条记录显示宝宝吃得很有信心。可以考虑进入${next.id}：${TEXTURE_STAGE_ZH[next.id].label}（${TEXTURE_STAGE_ZH[next.id].typicalAge}）。是否切换由你来确认——应用绝不会自动升级。`,
+  }),
+};
+
 // ——— The engine ———
 
-export function recommend(input: EngineInput): Recommendation {
+export function recommend(input: EngineInput, locale: Locale = "en"): Recommendation {
+  const t = (m: Msg) => msg(m, locale);
   const { baby, logs, overrides, foods, today, plan } = input;
   const age = correctedAgeMonths(baby, today);
   const stats = deriveFoodStats(logs);
@@ -278,19 +418,13 @@ export function recommend(input: EngineInput): Recommendation {
   const pediatricianGuided = baby.readiness.earlyStartApproved === true;
   const gateReasons: string[] = [];
   if (age < EARLY_START_MONTHS) {
-    gateReasons.push(
-      "Most babies are ready around 6 months (corrected age), and even pediatrician-guided programs wait until at least 4 months. It's early yet — watch for the readiness signs.",
-    );
+    gateReasons.push(t(COPY.gateUnderFour));
   } else if (!pediatricianGuided) {
     if (age < READY_MONTHS) {
-      gateReasons.push(
-        "Between 4 and 6 months, start solids only if your pediatrician specifically advised it — if they have, tell us below and you can start today.",
-      );
+      gateReasons.push(t(COPY.gateFourToSix));
     }
     if (!baby.readiness.confirmedAt) {
-      gateReasons.push(
-        "Confirm the readiness signs first: sits with minimal support, steady head control, brings objects to the mouth, shows interest in food, and the tongue-thrust reflex has faded.",
-      );
+      gateReasons.push(t(COPY.gateConfirmSigns));
     }
   }
   if (gateReasons.length > 0) {
@@ -314,10 +448,7 @@ export function recommend(input: EngineInput): Recommendation {
   if (pediatricianGuided && (age < READY_MONTHS || !baby.readiness.confirmedAt)) {
     warnings.push({
       kind: "early-start",
-      message:
-        "You're starting on your pediatrician's guidance" +
-        (age < READY_MONTHS ? " before 6 months" : "") +
-        ". Stick to smooth, thin textures (the first prep option on each food page) and let their advice override anything suggested here.",
+      message: t(COPY.warnEarlyStart(age < READY_MONTHS)),
     });
   }
 
@@ -332,27 +463,24 @@ export function recommend(input: EngineInput): Recommendation {
 
   for (const food of foods) {
     if (eligibilityAge < food.minAgeMonths) {
-      excludedSlugs.set(food.slug, `Not before ${food.minAgeMonths} months (corrected age).`);
+      excludedSlugs.set(food.slug, t(COPY.exclTooYoung(food.minAgeMonths)));
       continue;
     }
     if (food.commonAllergen && pausedAllergens.has(food.commonAllergen)) {
-      excludedSlugs.set(
-        food.slug,
-        `Paused: the ${food.commonAllergen} group is on hold after a logged reaction or per medical advice.`,
-      );
+      excludedSlugs.set(food.slug, t(COPY.exclAllergenPaused(food.commonAllergen)));
       continue;
     }
     if (baby.doctorAvoidList.includes(food.slug)) {
-      excludedSlugs.set(food.slug, "On your doctor-avoid list.");
+      excludedSlugs.set(food.slug, t(COPY.exclDoctorAvoid));
       continue;
     }
     const s = stats.get(food.slug);
     if (s?.hasPausingSymptoms && !food.commonAllergen) {
-      excludedSlugs.set(food.slug, "On hold: symptoms were logged with this food — check with your pediatrician.");
+      excludedSlugs.set(food.slug, t(COPY.exclFoodHold));
       warnings.push({
         kind: "food-hold",
         foodSlug: food.slug,
-        message: `${food.name} is on hold after logged symptoms. Discuss with your pediatrician before re-offering.`,
+        message: t(COPY.warnFoodHold(food.name)),
       });
     }
   }
@@ -364,8 +492,8 @@ export function recommend(input: EngineInput): Recommendation {
       allergenId: id,
       message:
         state.status === "avoid-per-doctor"
-          ? `The ${id} group is excluded (known allergy / medical advice).`
-          : `The ${id} group is paused after a logged reaction. See the reaction playbook, and clear it only after talking to your pediatrician.`,
+          ? t(COPY.warnAvoidPerDoctor(id))
+          : t(COPY.warnReactionPaused(id)),
     });
   }
 
@@ -405,9 +533,8 @@ export function recommend(input: EngineInput): Recommendation {
         allergenId: "peanut",
         foodSlugs: [],
         gated: true,
-        gateReason:
-          "Severe eczema or an existing food allergy puts your baby in the higher-risk group for peanut allergy. Talk to your pediatrician or allergist before introducing peanut — they may recommend testing or a supervised first exposure, ideally around 4–6 months. Once they clear you, confirm it in the allergen tracker.",
-        guidance: "Talk to your pediatrician first, then confirm clearance in the tracker.",
+        gateReason: t(COPY.peanutGateReason),
+        guidance: t(COPY.peanutGateGuidance),
       };
     } else if (
       successfulDays >= ALLERGEN_SUCCESS_DAYS &&
@@ -419,16 +546,20 @@ export function recommend(input: EngineInput): Recommendation {
         allergenId: nextCandidate,
         foodSlugs: candidateFoods,
         gated: false,
-        guidance:
-          "Serve early in the day so you can watch for a reaction for the next 2 hours, alongside familiar foods — never with another brand-new food.",
+        guidance: t(COPY.allergenGuidance),
       };
     } else if (candidateFoods.length > 0 || successfulDays < ALLERGEN_SUCCESS_DAYS) {
       const why =
         successfulDays < ALLERGEN_SUCCESS_DAYS
-          ? `Get ${ALLERGEN_SUCCESS_DAYS} smooth days of solids in first, then start ${nextCandidate}.`
+          ? t(COPY.gateNeedSmoothDays(ALLERGEN_SUCCESS_DAYS, nextCandidate))
           : anyUnresolvedSymptoms
-            ? "Resolve the paused reaction before starting a new allergen."
-            : `Wait ${Math.ceil(ALLERGEN_COOLDOWN_DAYS - daysSinceNewAllergen)} more day(s) after the last new allergen before starting ${nextCandidate}.`;
+            ? t(COPY.gateResolveReaction)
+            : t(
+                COPY.gateCooldown(
+                  Math.ceil(ALLERGEN_COOLDOWN_DAYS - daysSinceNewAllergen),
+                  nextCandidate,
+                ),
+              );
       next = {
         allergenId: nextCandidate,
         foodSlugs: [],
@@ -449,19 +580,19 @@ export function recommend(input: EngineInput): Recommendation {
         allergenId: id,
         daysSince: days,
         urgent: true,
-        message: `It's been ${days} days since ${id}. Consistent ongoing exposure (about twice a week) is what maintains tolerance — get it back in the rotation soon.`,
+        message: t(COPY.maintUrgent(id, days)),
       });
       warnings.push({
         kind: "maintenance-lapse",
         allergenId: id,
-        message: `${id} hasn't been served in ${days} days — long gaps can undo the benefit of early introduction.`,
+        message: t(COPY.warnMaintLapse(id, days)),
       });
     } else if (days > MAINTENANCE_NUDGE_DAYS) {
       maintenance.push({
         allergenId: id,
         daysSince: days,
         urgent: false,
-        message: `Keep ${id} in the rotation — aim for about twice a week (last served ${days} days ago).`,
+        message: t(COPY.maintNudge(id, days)),
       });
     }
   }
@@ -496,7 +627,7 @@ export function recommend(input: EngineInput): Recommendation {
       name: food.name,
       score: RETRY_BONUS,
       suggestedBand: bandForAge(food, age),
-      reason: `Refused ${s.attempts} time(s) so far — normal! Try a different prep or pair it with ${food.flavorPairings[0] ?? "a favorite"}. It can take 8–15 tries.`,
+      reason: t(COPY.retryReason(s.attempts, food.flavorPairings[0])),
     });
   }
   retryQueue.sort(
@@ -521,10 +652,10 @@ export function recommend(input: EngineInput): Recommendation {
     if (state && state.status === "not-started" && food.commonAllergen !== eligibleNextAllergen) continue;
 
     let score = 1.0;
-    let reason = `A good fit for ${bandForAge(food, age)} right now.`;
+    let reason = t(COPY.reasonGoodFit(bandForAge(food, age)));
     if (!recentCategories.has(food.category)) {
       score += VARIETY_BONUS;
-      reason = `Nothing from the ${food.category} group this week — variety builds acceptance.`;
+      reason = t(COPY.reasonVariety(food.category));
     }
     const s = stats.get(food.slug);
     if (
@@ -537,17 +668,17 @@ export function recommend(input: EngineInput): Recommendation {
     }
     if (food.commonAllergen && food.commonAllergen === eligibleNextAllergen) {
       score += ALLERGEN_BONUS;
-      reason = `Time to introduce ${food.commonAllergen}: serve early in the day and watch for 2 hours.`;
+      reason = t(COPY.reasonAllergen(food.commonAllergen));
     }
     if (food.ironRich && ironPressure) {
       score += IRON_BONUS;
-      reason = "Iron stores dip around 6 months — iron-rich foods are the priority.";
+      reason = t(COPY.reasonIron);
     }
     // R10 last: when a food is both planned and otherwise prioritized, the
     // user's own plan is the clearest reason to surface.
     if (plannedThisWeek.has(food.slug)) {
       score += PLAN_BONUS;
-      reason = "On your plan for this week.";
+      reason = t(COPY.reasonPlanned);
     }
     scored.push({
       slug: food.slug,
@@ -597,7 +728,7 @@ export function recommend(input: EngineInput): Recommendation {
         name: pinFood.name,
         score: scored.find((s) => s.slug === pinFood.slug)?.score ?? 1,
         suggestedBand: bandForAge(pinFood, age),
-        reason: `Offered ${attempts} time(s) — keep ${pinFood.name.toLowerCase()} going for 2–3 days while you watch, before adding the next new food.`,
+        reason: t(COPY.reasonPinned(attempts, pinFood.name)),
       };
       todaysPicks = [pinned, ...scored.filter((s) => s.slug !== pinFood.slug)].slice(0, pickCount);
     }
@@ -613,7 +744,7 @@ export function recommend(input: EngineInput): Recommendation {
     const gaggingCount = recent.filter((l) => l.gagging).length;
     const noSymptoms = recent.every((l) => !triage(l.symptoms).pausesAllergen);
     if (recent.length >= 10 && ateWell >= 8 && gaggingCount <= 2 && noSymptoms) {
-      nudge = `Ready for the next texture? The last ${recent.length} logs show confident eating. Consider moving to ${nextStage.id}: ${nextStage.label.toLowerCase()} (${nextStage.typicalAge}). You confirm the switch — the app never auto-advances.`;
+      nudge = t(COPY.textureNudge(recent.length, nextStage));
     }
   }
 
