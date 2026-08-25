@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { correctedAgeMonths } from "@/lib/age";
-import { rankCombos } from "@/lib/combos";
+import { establishedSlugs, rankCombos } from "@/lib/combos";
 import { deriveFoodStats } from "@/lib/engine";
 import {
   useActiveBaby,
@@ -167,6 +167,9 @@ export default function TodayPage() {
       recipes: allRecipes,
       foods: foodBySlug,
       safeSlugs: new Set(safeFoods.map((f) => f.slug)),
+      // A brand-new food may only share the plate with foods that have been
+      // settled for a week, so a reaction has one plausible cause.
+      establishedSlugs: establishedSlugs(logs, viewDate),
       todaysPickSlugs: rec.todaysPicks.map((p) => p.slug),
       ageMonths: correctedAgeMonths(baby, viewDate),
       blockedSlugs,
