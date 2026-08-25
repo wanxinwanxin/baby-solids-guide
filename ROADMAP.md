@@ -749,7 +749,7 @@ Direct product feedback after using the redesigned app. Phases D1–D2 shipped s
 
 Definition (binding): a food is "safe so far" when it has ≥1 log with `amountEaten !== "none"` and no log with allergen-pausing symptoms (`deriveFoodStats().hasPausingSymptoms === false`). Surfaces: a "Safe so far" card on `/today` (emoji chips → food pages, count, capped at 24 + overflow link) and "YOURS: Safe so far / Not yet tried" filter chips in the foods browser (store-backed, hidden until hydration and first log).
 
-### Phase D3 — Meal combos & blender-simple recipes (~4–6 days, content + engine)
+### Phase D3 — Meal combos & blender-simple recipes ✅ SHIPPED 2026-08-24
 
 Goal: turn the safe-so-far pantry into concrete "serve this together" guidance. Explicitly simplistic recipes — blend/mash/freeze-cube/reheat tier, never cooking projects.
 
@@ -758,7 +758,7 @@ Goal: turn the safe-so-far pantry into concrete "serve this together" guidance. 
 3. **Surfaces:** `/today` "Make it a meal" card (top 2 combos for today's picks); food pages "Goes well with" upgraded to real recipe links; `/foods` gains a Recipes tab or `/recipes` index with band filter.
 4. **Verification:** content-lint referential gate; unit tests for ranking determinism + safety invariant (never suggests a foods with pausing symptoms or gated allergen); e2e: seeded safe set shows a combo card whose ingredients are all safe.
 
-### Phase D4 — Family sharing: two accounts, one baby (~1–1.5 weeks, backend-heavy)
+### Phase D4 — Family sharing: two accounts, one baby ✅ SHIPPED 2026-08-24
 
 Goal: parent A and parent B sign in with individual accounts (Google or email) and read/write the same baby.
 
@@ -768,7 +768,7 @@ Goal: parent A and parent B sign in with individual accounts (Google or email) a
 4. **UI:** `/account` gains a "Family" card per baby: members list, "Invite a co-parent" → copyable link + QR; `/join/<token>` page (sign-in wall → accept → redirect to /today with the shared baby active). Snapshot delete (account deletion) removes memberships, and deletes a baby only when it has no other members.
 5. **Verification:** pglite integration tests (invite → accept → both users read/write same baby; member removal; account deletion leaves co-parent's data); two-context e2e extending sync.spec: A invites, B accepts, B logs, A sees it; RLS-style negative tests (non-member 403 on every route).
 
-### Phase D5 — Privacy-preserving usage visibility (~1 day + owner decision)
+### Phase D5 — Privacy-preserving usage visibility ✅ DECIDED 2026-08-24: option 1 (accounts-only aggregates), by owner choice
 
 Today: zero analytics by design ("no tracking" is on the marketing page). Shipped now: `GET /api/stats` gated by `x-cron-secret` — aggregate counts only (users, babies, logs, 7d/30d actives from existing sync timestamps; guests invisible by design). Owner options, in ascending order of visibility vs. privacy cost:
 1. **Status quo+** (shipped): DB aggregates of signed-in users only. Zero new collection; keeps the promise literally.
