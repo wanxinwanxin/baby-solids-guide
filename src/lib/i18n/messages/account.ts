@@ -60,7 +60,12 @@ export const accountMsgs = {
     en: "On first sign-in, everything on this device is uploaded and merged with anything already in the account — nothing is lost in either direction.",
     zh: "首次登录时，这台设备上的所有数据都会上传，并与账户里已有的数据合并——两边都不会丢失任何东西。",
   },
-  continueGoogle: { en: "Continue with Google", zh: "使用 Google 继续" },
+  // Google OAuth. The `en` label stays "Continue with Google" (a Google-approved
+  // button label) rather than "Sign in with Google" so it can't collide with the
+  // e2e locator getByRole("button", { name: "Sign in" }), which matches on
+  // substring by default.
+  continueGoogle: { en: "Continue with Google", zh: "使用 Google 账号登录" },
+  orDivider: { en: "or", zh: "或" },
 } satisfies Msgs;
 
 /** Sync status pill next to the Account heading (e2e pins the en strings). */

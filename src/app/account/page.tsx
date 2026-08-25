@@ -1,11 +1,12 @@
 "use client";
 
 import Link from"next/link";
-import { useState } from"react";
+import { useEffect, useState } from"react";
 import { authClient, signIn, signOut, signUp, useSession } from"@/lib/auth-client";
 import { useAuthEnabled, useSyncStatus } from"@/components/SyncProvider";
 import { useHydrated } from"@/lib/hooks";
 import { FamilyCard } from"@/components/FamilyCard";
+import { InstallPrompt } from"@/components/InstallPrompt";
 import { Alert, AlertDescription, AlertTitle } from"@/components/ui/alert";
 import { Button } from"@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from"@/components/ui/card";
@@ -126,6 +127,7 @@ export default function AccountPage() {
           </CardContent>
         </Card>
         <FamilyCard myUserId={session.user.id} />
+        <InstallPrompt persistent />
         <div className="border-t pt-4">
           {confirmDelete ? (
             <div className="space-y-2 text-sm">
@@ -157,6 +159,8 @@ export default function AccountPage() {
     <div className="mx-auto max-w-md space-y-5">
       <h1 className="text-2xl font-bold">{t.saveTitle}</h1>
       <p className="text-sm text-muted-foreground">{t.saveLede}</p>
+
+      <GoogleSignIn />
 
       <div className="flex gap-1 rounded-lg border p-1"role="tablist">
         {(["sign-in", "sign-up"] as const).map((m) => (
@@ -203,7 +207,7 @@ export default function AccountPage() {
         <Button
           type="submit"
           disabled={busy || isPending}
-          className="w-full bg-primary text-primary-foreground hover:bg-primary/85"
+          className="h-11 w-full bg-primary text-primary-foreground hover:bg-primary/85"
         >
           {mode === "sign-in" ? t.tabSignIn : t.tabCreate}
         </Button>
@@ -218,30 +222,81 @@ export default function AccountPage() {
         )}
       </form>
 
-      <GoogleButton />
-
       <p className="text-xs text-muted-foreground">{t.firstSignInNote}</p>
+
+      <InstallPrompt persistent />
     </div>
   );
 }
 
-function GoogleButton() {
-  const t = useMsgs(accountMsgs);
-  const [google, setGoogle] = useState(false);
-  useState(() => {
+let googleEnabledCache: boolean | null = null;
+
+/** Mirrors useAuthEnabled: the button only exists where Google OAuth is configured. */
+function useGoogleEnabled(): boolean {
+  const [google, setGoogle] = useState(googleEnabledCache ?? false);
+  useEffect(() => {
+    if (googleEnabledCache !== null) return;
     fetch("/api/auth/status")
       .then((r) => r.json())
-      .then((d) => setGoogle(!!d.google))
-      .catch(() => {});
-  });
+      .then((d) => {
+        googleEnabledCache = !!d.google;
+        setGoogle(googleEnabledCache);
+      })
+      .catch(() => {
+        googleEnabledCache = false;
+      });
+  }, []);
+  return google;
+}
+
+/** Google's 4-color "G", inlined so the page stays self-contained (no CDN). */
+function GoogleGlyph() {
+  return (
+    <svg viewBox="0 0 48 48"className="size-5"aria-hidden="true"focusable="false">
+      <path
+        fill="#4285F4"
+        d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24s.85 6.91 2.34 9.88l7.35-5.7z"
+      />
+      <path
+        fill="#EA4335"
+        d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"
+      />
+    </svg>
+  );
+}
+
+/**
+ * Primary sign-in path: full-width Google button above the email form, with an
+ * "or" divider between them. Renders nothing when Google OAuth isn't configured.
+ */
+function GoogleSignIn() {
+  const t = useMsgs(accountMsgs);
+  const google = useGoogleEnabled();
   if (!google) return null;
   return (
-    <Button
-      variant="outline"
-      className="w-full"
-      onClick={() => void signIn.social({ provider: "google" })}
-    >
-      {t.continueGoogle}
-    </Button>
+    <div className="space-y-4">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => void signIn.social({ provider: "google" })}
+        className="h-11 w-full gap-3 border-border bg-card text-base font-medium text-foreground hover:bg-muted dark:bg-card dark:hover:bg-muted"
+      >
+        <GoogleGlyph />
+        {t.continueGoogle}
+      </Button>
+      <div className="flex items-center gap-3">
+        <span aria-hidden="true"className="h-px flex-1 bg-border" />
+        <span className="text-xs text-muted-foreground">{t.orDivider}</span>
+        <span aria-hidden="true"className="h-px flex-1 bg-border" />
+      </div>
+    </div>
   );
 }
