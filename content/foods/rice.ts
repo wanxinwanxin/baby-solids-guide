@@ -73,7 +73,7 @@ const rice: Food = {
   flavorPairings: ["lentils", "salmon", "avocado", "black-beans"],
   tips: [
     "Rotate rice with other grains — oats, barley, and quinoa — rather than serving it daily, to limit cumulative exposure to the inorganic arsenic rice can carry.",
-    "Cooking rice like pasta — in plenty of excess water, then drained — meaningfully reduces its arsenic content; rinse before cooking too.",
+    "Cooking rice like pasta — in plenty of excess water, then drained — cuts its arsenic by roughly half, but washes out most of the iron and folate in enriched rice too, so rotating grains is the better everyday habit. Rinsing beforehand does little for arsenic and only costs you more of those nutrients.",
     "Short-grain and sushi rice clump far better than long-grain; save the fluffy basmati for the adults.",
     "Press logs and balls with damp hands while the rice is still warm — cold rice loses its stick and crumbles.",
   ],

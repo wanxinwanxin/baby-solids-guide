@@ -200,8 +200,8 @@ export const NEVER_SERVE_ROWS: { hazard: Msg; alt: Msg }[] = [
   },
   {
     hazard: {
-      en: "High-mercury fish (shark, swordfish, king mackerel, tilefish, bigeye tuna)",
-      zh: "高汞鱼类（鲨鱼、剑鱼、大耳马鲛、方头鱼、大眼金枪鱼）",
+      en: "High-mercury fish (shark, swordfish, king mackerel, Gulf of Mexico tilefish, bigeye tuna, marlin, orange roughy)",
+      zh: "高汞鱼类（鲨鱼、剑鱼、大耳马鲛、墨西哥湾方头鱼、大眼金枪鱼、旗鱼、胸棘鲷）",
     },
     alt: {
       en: "Low-mercury choices: salmon, cod, sardines",
