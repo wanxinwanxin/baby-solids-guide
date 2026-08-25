@@ -157,8 +157,55 @@ async function main() {
   }
   if (allGuides.length < 6) errors.push(`corpus: only ${allGuides.length} Learn guides (need ≥6)`);
 
+  // ——— Recipes (Part III D3) ———
+  const RECIPES_MIN = Number(process.env.RECIPES_MIN ?? 40);
+  const IRON_PAIRING_MIN = 10;
+  const { RecipeSchema } = await import("../src/content-schema/recipe");
+  const { allRecipes } = await import("../content/recipes");
+  const foodSlugSet = new Set(allFoods.map((f) => f.slug));
+  const recipeSlugs = new Set<string>();
+  let ironPairingCount = 0;
+  for (const recipe of allRecipes) {
+    const rlabel = `recipe:${recipe.slug ?? "?"}`;
+    const parsed = RecipeSchema.safeParse(recipe);
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        errors.push(`${rlabel}: ${issue.path.join(".")} — ${issue.message}`);
+      }
+      continue;
+    }
+    if (recipeSlugs.has(recipe.slug)) errors.push(`${rlabel}: duplicate slug`);
+    recipeSlugs.add(recipe.slug);
+    for (const slug of recipe.foods) {
+      if (!foodSlugSet.has(slug)) errors.push(`${rlabel}: unknown food "${slug}"`);
+    }
+    // Safety: a recipe may only claim a band if every ingredient's age gate
+    // has opened by that band's start.
+    const bandStart = { "6-8m": 6, "9-12m": 9, "12-24m": 12 } as const;
+    for (const band of recipe.bands) {
+      for (const slug of recipe.foods) {
+        const ingredient = allFoods.find((f) => f.slug === slug);
+        if (ingredient && ingredient.minAgeMonths > bandStart[band]) {
+          errors.push(
+            `${rlabel}: "${slug}" is ${ingredient.minAgeMonths}m+ but the recipe claims band ${band}`,
+          );
+        }
+      }
+    }
+    if (new Set(recipe.foods).size !== recipe.foods.length) {
+      errors.push(`${rlabel}: duplicate ingredient`);
+    }
+    if (recipe.ironPairing) ironPairingCount++;
+  }
+  if (allRecipes.length < RECIPES_MIN) {
+    errors.push(`corpus: only ${allRecipes.length} recipes (need ≥${RECIPES_MIN})`);
+  }
+  if (ironPairingCount < IRON_PAIRING_MIN) {
+    errors.push(`corpus: only ${ironPairingCount} iron-pairing recipes (need ≥${IRON_PAIRING_MIN})`);
+  }
+
   console.log(
-    `content-lint: ${allFoods.length} foods, ${allergensCovered.size}/9 allergens, ${ironRichCount} iron-rich, ${allGuides.length} guides.`,
+    `content-lint: ${allFoods.length} foods, ${allergensCovered.size}/9 allergens, ${ironRichCount} iron-rich, ${allGuides.length} guides, ${allRecipes.length} recipes (${ironPairingCount} iron-pairing).`,
   );
   finish(errors);
 }
