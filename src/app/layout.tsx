@@ -31,6 +31,9 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: t.siteDescription,
     manifest: "/manifest.webmanifest",
+    // The label under the icon when iOS adds this to the home screen — without
+    // it Safari uses the full <title>, which is far too long to fit.
+    appleWebApp: { title: BRAND, capable: true, statusBarStyle: "default" },
   };
 }
 

@@ -22,6 +22,7 @@ import { allergenLabel, bandLabel, TEXTURE_STAGE_MSGS } from "@/lib/i18n/labels"
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
 import { READINESS_SIGNS, todayMsgs } from "@/lib/i18n/messages/today";
 import { CutDiagram, isDiagramVariant } from "@/components/diagrams/CutDiagram";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import { PushOptIn } from "@/components/PushOptIn";
 import { useAuthEnabled, useSyncStatus } from "@/components/SyncProvider";
 import { useSession } from "@/lib/auth-client";
@@ -471,6 +472,8 @@ export default function TodayPage() {
           </AlertDescription>
         </Alert>
       )}
+
+      {!previewing && <InstallPrompt />}
 
       {!previewing && (dueCheckIns.length > 0 || upcomingCheckIns.length > 0) && (
         <Card className={cn(dueCheckIns.length > 0 && "bg-accent/40 ring-honey/50")}>

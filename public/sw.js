@@ -21,7 +21,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: "/icon.svg",
+      icon: "/icon-192.png", // Chrome ignores SVG notification icons
+
       data: { url: data.url },
     }),
   );
