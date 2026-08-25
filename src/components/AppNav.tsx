@@ -9,6 +9,9 @@ import { useSession } from "@/lib/auth-client";
 import { useAuthEnabled } from "@/components/SyncProvider";
 import { BRAND } from "@/lib/brand";
 import { BrandMark } from "@/components/BrandMark";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { useMsgs } from "@/lib/i18n/LocaleProvider";
+import { chromeMsgs } from "@/lib/i18n/messages/chrome";
 import { cn } from "@/lib/utils";
 
 /**
@@ -16,19 +19,21 @@ import { cn } from "@/lib/utils";
  * else under "More". On mobile the links live in the bottom tab bar; the
  * top bar keeps brand + Emergency + baby switcher.
  */
-const PRIMARY = [
-  { href: "/today", label: "Today" },
-  { href: "/foods", label: "Foods" },
-  { href: "/recipes", label: "Recipes" },
-  { href: "/plan", label: "Plan" },
-  { href: "/learn", label: "Learn" },
+type NavMsgs = ReturnType<typeof useMsgs<typeof chromeMsgs>>;
+
+const primaryLinks = (t: NavMsgs) => [
+  { href: "/today", label: t.navToday },
+  { href: "/foods", label: t.navFoods },
+  { href: "/recipes", label: t.navRecipes },
+  { href: "/plan", label: t.navPlan },
+  { href: "/learn", label: t.navLearn },
 ];
 
-const MORE = [
-  { href: "/allergens", label: "Allergens" },
-  { href: "/history", label: "History" },
-  { href: "/insights", label: "Insights" },
-  { href: "/safety", label: "Safety" },
+const moreLinks = (t: NavMsgs) => [
+  { href: "/allergens", label: t.navAllergens },
+  { href: "/history", label: t.navHistory },
+  { href: "/insights", label: t.navInsights },
+  { href: "/safety", label: t.navSafety },
 ];
 
 /**
@@ -37,6 +42,7 @@ const MORE = [
  * Hidden entirely on deployments without auth configured.
  */
 function AccountButton() {
+  const t = useMsgs(chromeMsgs);
   const enabled = useAuthEnabled();
   const { data: session } = useSession();
   if (!enabled) return null;
@@ -45,8 +51,8 @@ function AccountButton() {
     return (
       <Link
         href="/account"
-        aria-label="Account"
-        title={session.user.email ?? "Account"}
+        aria-label={t.navAccount}
+        title={session.user.email ?? t.navAccount}
         className="flex size-9 shrink-0 items-center justify-center rounded-full border border-primary/40 bg-secondary text-sm font-bold text-secondary-foreground"
       >
         {initial}
@@ -58,12 +64,13 @@ function AccountButton() {
       href="/account"
       className="shrink-0 rounded-full border px-3 py-1.5 text-sm font-semibold text-foreground hover:border-primary/60 md:px-3.5 md:py-2"
     >
-      Sign in
+      {t.navSignIn}
     </Link>
   );
 }
 
 function BabySwitcher() {
+  const t = useMsgs(chromeMsgs);
   const hydrated = useHydrated();
   const babies = useGuideStore((s) => s.babies);
   const activeBabyId = useGuideStore((s) => s.activeBabyId);
@@ -73,7 +80,7 @@ function BabySwitcher() {
     <select
       value={activeBabyId ?? babies[0].id}
       onChange={(e) => setActiveBaby(e.target.value)}
-      aria-label="Switch baby"
+      aria-label={t.navSwitchBaby}
       className="shrink-0 rounded-full border bg-card px-2.5 py-1.5 text-sm"
     >
       {babies.map((b) => (
@@ -86,6 +93,8 @@ function BabySwitcher() {
 }
 
 function MoreMenu({ pathname }: { pathname: string }) {
+  const t = useMsgs(chromeMsgs);
+  const MORE = moreLinks(t);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -116,7 +125,7 @@ function MoreMenu({ pathname }: { pathname: string }) {
           (open || activeInMore) && "bg-secondary text-secondary-foreground",
         )}
       >
-        More
+        {t.navMore}
         <svg viewBox="0 0 12 12" className="size-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
           <path d="M2.5 4.5 6 8l3.5-3.5" />
         </svg>
@@ -148,6 +157,8 @@ function MoreMenu({ pathname }: { pathname: string }) {
 }
 
 export function AppNav() {
+  const t = useMsgs(chromeMsgs);
+  const PRIMARY = primaryLinks(t);
   const pathname = usePathname();
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
@@ -156,7 +167,7 @@ export function AppNav() {
           <BrandMark size={26} />
           {BRAND}
         </Link>
-        <nav className="hidden items-center gap-0.5 md:flex" aria-label="Main">
+        <nav className="hidden items-center gap-0.5 md:flex" aria-label={t.navMain}>
           {PRIMARY.map((l) => (
             <Link
               key={l.href}
@@ -178,14 +189,15 @@ export function AppNav() {
             href="/safety"
             className="rounded-full border border-destructive/40 px-3 py-1.5 text-xs font-semibold text-destructive md:hidden"
           >
-            Emergency
+            {t.navEmergency}
           </Link>
           <Link
             href="/log"
             className="hidden rounded-full bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-deep md:inline-flex dark:hover:bg-primary/80"
           >
-            + Log
+            {t.navLog}
           </Link>
+          <LanguageToggle />
           <AccountButton />
         </div>
       </div>

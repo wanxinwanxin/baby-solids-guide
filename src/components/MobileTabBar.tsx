@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMsgs } from "@/lib/i18n/LocaleProvider";
+import { chromeMsgs } from "@/lib/i18n/messages/chrome";
 import { cn } from "@/lib/utils";
 
 /**
@@ -9,10 +11,10 @@ import { cn } from "@/lib/utils";
  * Learn. Desktop keeps the top nav; this renders only below md. All targets
  * ≥ 44px per the acceptance criteria.
  */
-const TABS: { href: string; label: string; icon: React.ReactNode }[] = [
+const TABS: { href: string; msgKey: "navToday" | "navFoods" | "navPlan" | "navLearn"; icon: React.ReactNode }[] = [
   {
     href: "/today",
-    label: "Today",
+    msgKey: "navToday",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="size-5" aria-hidden="true">
         <circle cx="12" cy="12" r="4" />
@@ -22,7 +24,7 @@ const TABS: { href: string; label: string; icon: React.ReactNode }[] = [
   },
   {
     href: "/foods",
-    label: "Foods",
+    msgKey: "navFoods",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden="true">
         <path d="M15 3c2 0 4 2 4 5 0 6-4 13-7 13S5 14 5 8c0-3 2-5 4-5 1.2 0 2.2.5 3 1.5C12.8 3.5 13.8 3 15 3Z" />
@@ -32,7 +34,7 @@ const TABS: { href: string; label: string; icon: React.ReactNode }[] = [
   },
   {
     href: "/plan",
-    label: "Plan",
+    msgKey: "navPlan",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="size-5" aria-hidden="true">
         <rect x="3" y="5" width="18" height="16" rx="3" />
@@ -42,7 +44,7 @@ const TABS: { href: string; label: string; icon: React.ReactNode }[] = [
   },
   {
     href: "/learn",
-    label: "Learn",
+    msgKey: "navLearn",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden="true">
         <path d="M12 6c-2-1.5-4.5-2-8-2v14c3.5 0 6 .5 8 2 2-1.5 4.5-2 8-2V4c-3.5 0-6 .5-8 2Z" />
@@ -53,6 +55,7 @@ const TABS: { href: string; label: string; icon: React.ReactNode }[] = [
 ];
 
 export function MobileTabBar() {
+  const m = useMsgs(chromeMsgs);
   const pathname = usePathname();
   const tab = (t: (typeof TABS)[number]) => {
     const active = pathname === t.href || pathname.startsWith(`${t.href}/`);
@@ -67,20 +70,20 @@ export function MobileTabBar() {
         aria-current={active ? "page" : undefined}
       >
         {t.icon}
-        {t.label}
+        {m[t.msgKey]}
       </Link>
     );
   };
   return (
     <nav
-      aria-label="Primary"
+      aria-label={m.navPrimary}
       className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
       <div className="mx-auto flex max-w-md items-center px-2">
         {TABS.slice(0, 2).map(tab)}
         <Link
           href="/log"
-          aria-label="Log a food"
+          aria-label={m.navLogAria}
           className="mx-1 -mt-4 flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="size-6" aria-hidden="true">

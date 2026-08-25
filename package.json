@@ -14,7 +14,8 @@
     "check-links": "tsx scripts/check-links.ts",
     "check": "npm run typecheck && npm run lint && npm run test && npm run content-lint",
     "gen:food-index": "tsx scripts/gen-food-index.ts",
-    "gen:recipe-index": "tsx scripts/gen-recipe-index.ts"
+    "gen:recipe-index": "tsx scripts/gen-recipe-index.ts",
+    "gen:zh-index": "tsx scripts/gen-zh-index.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
