@@ -95,3 +95,70 @@ test("guest history → sign up → second browser sees it → edits flow back �
   await ctxA.close();
   await ctxB.close();
 });
+
+test("family sharing: A invites, B accepts, logs flow both ways, deletion hands off", async ({
+  browser,
+}: {
+  browser: Browser;
+}) => {
+  test.setTimeout(240000);
+  const stamp = Date.now();
+  const emailA = `e2e-fam-a-${stamp}@example.com`;
+  const emailB = `e2e-fam-b-${stamp}@example.com`;
+  const password = "test-password-123";
+
+  // Parent A: guest history → account → synced.
+  const ctxA = await browser.newContext();
+  const pageA = await ctxA.newPage();
+  await completeOnboarding(pageA, "FamBaby");
+  await logFood(pageA, "carrot");
+  await signIn(pageA, emailA, password, "sign-up");
+  await pageA.goto("/today");
+  await expect(pageA.getByText(/synced ✓|syncing…/)).toBeVisible({ timeout: 15000 });
+
+  // A creates an invite from the Family card.
+  await pageA.goto("/account");
+  await pageA.getByRole("button", { name: "Invite a co-parent" }).click();
+  const inviteUrl = (await pageA.locator("code").first().textContent()) ?? "";
+  expect(inviteUrl).toContain("/join/");
+  const joinPath = new URL(inviteUrl).pathname;
+
+  // Parent B: own account, accepts the invite, sees the shared baby.
+  const ctxB = await browser.newContext();
+  const pageB = await ctxB.newPage();
+  await signIn(pageB, emailB, password, "sign-up");
+  await pageB.goto(joinPath);
+  await pageB.getByRole("button", { name: /Accept as/ }).click();
+  await pageB.waitForURL("**/today", { timeout: 20000 });
+  await expect(pageB.getByRole("heading", { name: "Today for FamBaby" })).toBeVisible({
+    timeout: 20000,
+  });
+  await pageB.goto("/history");
+  await expect(pageB.getByText("Carrot × 1")).toBeVisible({ timeout: 20000 });
+
+  // B logs a food; A picks it up.
+  await logFood(pageB, "avocado");
+  await pageB.waitForTimeout(4000);
+  await pageA.goto("/history");
+  await expect(pageA.getByText("Avocado × 1")).toBeVisible({ timeout: 20000 });
+
+  // A's Family card lists both parents.
+  await pageA.goto("/account");
+  await expect(pageA.getByText(emailB)).toBeVisible({ timeout: 15000 });
+
+  // A (creator) deletes their account → the baby hands off to B.
+  await pageA.getByRole("button", { name: "Delete account and server data" }).click();
+  await pageA.getByRole("button", { name: "Yes, delete my account" }).click();
+  await expect(pageA.getByRole("heading", { name: "Save your data" })).toBeVisible({ timeout: 15000 });
+  await pageB.goto("/history");
+  await expect(pageB.getByText("Avocado × 1")).toBeVisible({ timeout: 20000 });
+
+  // B deletes too — the family is gone, server clean.
+  await pageB.goto("/account");
+  await pageB.getByRole("button", { name: "Delete account and server data" }).click();
+  await pageB.getByRole("button", { name: "Yes, delete my account" }).click();
+  await expect(pageB.getByRole("heading", { name: "Save your data" })).toBeVisible({ timeout: 15000 });
+
+  await ctxA.close();
+  await ctxB.close();
+});

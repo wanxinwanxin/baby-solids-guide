@@ -5,6 +5,7 @@ import { useState } from"react";
 import { authClient, signIn, signOut, signUp, useSession } from"@/lib/auth-client";
 import { useAuthEnabled, useSyncStatus } from"@/components/SyncProvider";
 import { useHydrated } from"@/lib/hooks";
+import { FamilyCard } from"@/components/FamilyCard";
 import { Alert, AlertDescription, AlertTitle } from"@/components/ui/alert";
 import { Button } from"@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from"@/components/ui/card";
@@ -130,6 +131,7 @@ export default function AccountPage() {
             </div>
           </CardContent>
         </Card>
+        <FamilyCard myUserId={session.user.id} />
         <div className="border-t pt-4">
           {confirmDelete ? (
             <div className="space-y-2 text-sm">

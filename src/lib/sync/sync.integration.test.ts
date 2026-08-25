@@ -136,3 +136,76 @@ describe("sync server persistence (pglite)", () => {
     expect(overrides).toEqual([]);
   });
 });
+
+describe("family sharing (D4, pglite)", () => {
+  const SHARED = "33333333-3333-4333-8333-333333333333";
+  const LOG_C = "44444444-4444-4444-8444-444444444441";
+  const LOG_D = "44444444-4444-4444-8444-444444444442";
+  const LOG_EVIL = "44444444-4444-4444-8444-444444444443";
+
+  it("creator's first push makes them owner; invited co-parent sees everything", async () => {
+    await createUser("parent-a", "mom@example.com");
+    await createUser("parent-b", "dad@example.com");
+    await createUser("stranger", "stranger@example.com");
+
+    const merged = mergeSnapshots(
+      await loadSnapshot(db, "parent-a"),
+      snapWith({ babies: [baby(SHARED)], logs: [log(LOG_C, SHARED)] }),
+    );
+    await saveSnapshot(db, "parent-a", merged);
+    const memberships = await db
+      .select()
+      .from(schema.babyMembers)
+      .where(eq(schema.babyMembers.babyId, SHARED));
+    expect(memberships).toHaveLength(1);
+    expect(memberships[0]).toMatchObject({ userId: "parent-a", role: "owner" });
+
+    // Simulate invite acceptance (the route inserts exactly this row).
+    await db.insert(schema.babyMembers).values({ babyId: SHARED, userId: "parent-b", role: "member" });
+    const forB = await loadSnapshot(db, "parent-b");
+    expect(forB.babies.map((b) => b.id)).toEqual([SHARED]);
+    expect(forB.logs.map((l) => l.id)).toEqual([LOG_C]);
+  });
+
+  it("co-parent's log flows back to the creator; a stranger's write is refused", async () => {
+    const fromB = mergeSnapshots(
+      await loadSnapshot(db, "parent-b"),
+      snapWith({ babies: [baby(SHARED)], logs: [log(LOG_D, SHARED)] }),
+    );
+    await saveSnapshot(db, "parent-b", fromB);
+    const forA = await loadSnapshot(db, "parent-a");
+    expect(forA.logs.map((l) => l.id).sort()).toEqual([LOG_C, LOG_D]);
+
+    // A stranger pushing the same babyId cannot write anything.
+    await saveSnapshot(
+      db,
+      "stranger",
+      snapWith({ babies: [baby(SHARED)], logs: [log(LOG_EVIL, SHARED)] }),
+    );
+    const after = await loadSnapshot(db, "parent-a");
+    expect(after.logs.map((l) => l.id).sort()).toEqual([LOG_C, LOG_D]);
+    expect((await loadSnapshot(db, "stranger")).babies).toEqual([]);
+  });
+
+  it("creator deletes their account → baby hands off to the co-parent", async () => {
+    const { deleteUserWithHandoff } = await import("@/lib/family");
+    await deleteUserWithHandoff(db, "parent-a");
+
+    const rows = await db.select().from(schema.babies).where(eq(schema.babies.id, SHARED));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].userId).toBe("parent-b");
+    const forB = await loadSnapshot(db, "parent-b");
+    expect(forB.babies.map((b) => b.id)).toEqual([SHARED]);
+    expect(forB.logs.map((l) => l.id).sort()).toEqual([LOG_C, LOG_D]);
+    const membership = await db
+      .select()
+      .from(schema.babyMembers)
+      .where(eq(schema.babyMembers.babyId, SHARED));
+    expect(membership).toHaveLength(1);
+    expect(membership[0]).toMatchObject({ userId: "parent-b", role: "owner" });
+
+    // Last member deletes → the baby finally cascades away.
+    await deleteUserWithHandoff(db, "parent-b");
+    expect(await db.select().from(schema.babies).where(eq(schema.babies.id, SHARED))).toEqual([]);
+  });
+});
