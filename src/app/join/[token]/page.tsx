@@ -5,6 +5,9 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
+import { fmt } from "@/lib/i18n/config";
+import { useMsgs } from "@/lib/i18n/LocaleProvider";
+import { joinMsgs } from "@/lib/i18n/messages/family";
 
 type Preview = { nickname: string; invitedBy: string } | { error: string };
 
@@ -14,6 +17,7 @@ type Preview = { nickname: string; invitedBy: string } | { error: string };
  * one tap and land on Today with the shared baby synced in.
  */
 export default function JoinPage() {
+  const t = useMsgs(joinMsgs);
   const params = useParams<{ token: string }>();
   const { data: session, isPending } = useSession();
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -24,8 +28,8 @@ export default function JoinPage() {
     if (!params?.token) return;
     fetch(`/api/invites/${params.token}`)
       .then(async (r) => setPreview(await r.json()))
-      .catch(() => setPreview({ error: "Couldn't load this invite — check the link." }));
-  }, [params?.token]);
+      .catch(() => setPreview({ error: t.loadError }));
+  }, [params?.token, t.loadError]);
 
   async function accept() {
     setAccepting(true);
@@ -39,25 +43,26 @@ export default function JoinPage() {
       return;
     }
     const body = await res.json().catch(() => null);
-    setError(body?.error ?? "Couldn't accept the invite — try again.");
+    setError(body?.error ?? t.acceptError);
     setAccepting(false);
   }
 
   return (
     <div className="mx-auto max-w-md space-y-5 pt-8 text-center">
       <h1 className="text-3xl font-extrabold tracking-tight">
-        Join the family<span className="text-primary">.</span>
+        {t.title}<span className="text-primary">{t.titleDot}</span>
       </h1>
       {!preview ? (
-        <p className="text-sm text-muted-foreground">Checking the invite…</p>
+        <p className="text-sm text-muted-foreground">{t.checking}</p>
       ) : "error" in preview ? (
         <p className="text-sm text-muted-foreground">{preview.error}</p>
       ) : (
         <>
           <p className="text-[15px] leading-relaxed text-foreground/80">
-            <span className="font-semibold">{preview.invitedBy}</span> invited you to co-parent{" "}
-            <span className="font-semibold">{preview.nickname}</span>&apos;s food journey — same
-            baby, same logs, your own account.
+            <span className="font-semibold">{preview.invitedBy}</span>
+            {t.invitedMid}
+            <span className="font-semibold">{preview.nickname}</span>
+            {t.invitedAfter}
           </p>
           {isPending ? null : session?.user ? (
             <div className="space-y-3">
@@ -66,18 +71,18 @@ export default function JoinPage() {
                 disabled={accepting}
                 onClick={() => void accept()}
               >
-                Accept as {session.user.email}
+                {fmt(t.acceptAs, { email: session.user.email })}
               </Button>
               {error && <p className="text-sm text-destructive">{error}</p>}
             </div>
           ) : (
             <div className="space-y-2 text-sm text-muted-foreground">
               <p>
-                First,{" "}
+                {t.signInFirstBefore}
                 <Link href="/account" className="font-semibold text-primary underline underline-offset-2">
-                  sign in or create your own account
+                  {t.signInFirstLink}
                 </Link>
-                , then reopen this link — it&apos;s good for 72 hours.
+                {t.signInFirstAfter}
               </p>
             </div>
           )}

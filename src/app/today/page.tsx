@@ -2,12 +2,9 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { allFoods } from "../../../content/foods";
-import { allRecipes } from "../../../content/recipes";
 import { correctedAgeMonths } from "@/lib/age";
 import { rankCombos } from "@/lib/combos";
 import { deriveFoodStats } from "@/lib/engine";
-import { ALLERGEN_LABELS, BAND_LABELS } from "@/lib/food-utils";
 import {
   useActiveBaby,
   useActiveCheckIns,
@@ -19,7 +16,11 @@ import {
 import { recommend } from "@/lib/engine";
 import { shouldNudgeBackup, snoozeUntil } from "@/lib/backup-nudge";
 import { pendingCheckIns } from "@/lib/checkins";
-import { foodBySlug } from "../../../content/foods";
+import { fmt, msg } from "@/lib/i18n/config";
+import { useL10nFoods, useL10nRecipes } from "@/lib/i18n/content-client";
+import { allergenLabel, bandLabel, TEXTURE_STAGE_MSGS } from "@/lib/i18n/labels";
+import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
+import { READINESS_SIGNS, todayMsgs } from "@/lib/i18n/messages/today";
 import { CutDiagram, isDiagramVariant } from "@/components/diagrams/CutDiagram";
 import { PushOptIn } from "@/components/PushOptIn";
 import { useAuthEnabled, useSyncStatus } from "@/components/SyncProvider";
@@ -33,21 +34,11 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-/** The 5 readiness signs shown in onboarding (OnboardingWizard.tsx) — we
- * don't store per-sign answers, so the gated state renders them as an
- * unchecked watch list, never as fabricated progress. */
-const READINESS_SIGNS = [
-  "Sits upright with little or no support",
-  "Steady head control",
-  "Brings hands and toys to the mouth",
-  "Watches your food with real interest",
-  "The tongue-thrust reflex has faded (food isn't automatically pushed back out)",
-];
-
 /** Warning kinds that carry safety semantics — the only place terracotta is allowed. */
 const SAFETY_WARNING_KINDS = new Set(["symptom-hold", "hard-block"]);
 
 function ProgressRing({ pct }: { pct: number }) {
+  const t = useMsgs(todayMsgs);
   const c = 2 * Math.PI * 22;
   return (
     <svg
@@ -55,7 +46,7 @@ function ProgressRing({ pct }: { pct: number }) {
       height="52"
       viewBox="0 0 52 52"
       role="img"
-      aria-label={`${pct}% of foods tried`}
+      aria-label={fmt(t.pctFoodsTried, { pct })}
       className="hidden shrink-0 sm:block"
     >
       <circle cx="26" cy="26" r="22" fill="none" strokeWidth="6" className="stroke-border" />
@@ -90,6 +81,10 @@ function BrandMark({ className }: { className?: string }) {
 
 export default function TodayPage() {
   const hydrated = useHydrated();
+  const locale = useLocale();
+  const t = useMsgs(todayMsgs);
+  const { foods: allFoods, foodBySlug } = useL10nFoods();
+  const { recipes: allRecipes } = useL10nRecipes();
   const baby = useActiveBaby();
   const logs = useActiveLogs();
   const overrides = useActiveOverrides();
@@ -106,6 +101,9 @@ export default function TodayPage() {
   const { data: session } = useSession();
   const syncState = useSyncStatus((s) => s.state);
   const now = useMemo(() => new Date(), []);
+  /** Intl locale for dates: zh gets zh-CN; en keeps the browser default so
+   * existing English output stays byte-identical. */
+  const dateLocale = locale === "zh" ? "zh-CN" : undefined;
   /** Day preview: 0 = today, up to 12 weeks out. The engine is pure — feeding
    * it a future date shows that day's picks, plan week, and allergen queue
    * (assuming today's logs, since the future ones don't exist yet). */
@@ -118,8 +116,8 @@ export default function TodayPage() {
   );
   const rec = useMemo(() => {
     if (!baby) return null;
-    return recommend({ baby, logs, overrides, foods: allFoods, today: viewDate, plan });
-  }, [baby, logs, overrides, plan, viewDate]);
+    return recommend({ baby, logs, overrides, foods: allFoods, today: viewDate, plan }, locale);
+  }, [baby, logs, overrides, plan, viewDate, allFoods, locale]);
   const { due: dueCheckIns, upcoming: upcomingCheckIns } = useMemo(
     () => pendingCheckIns(checkIns, now),
     [checkIns, now],
@@ -145,7 +143,7 @@ export default function TodayPage() {
       .map((slug) => foodBySlug.get(slug))
       .filter((f): f is NonNullable<typeof f> => !!f)
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [logs, triedSlugs]);
+  }, [logs, triedSlugs, foodBySlug]);
   /** D3 — top meal combos from the pantry + today's picks. The blocked set
    * mirrors the engine's exclusions so a combo never smuggles in a food the
    * engine would refuse. */
@@ -171,7 +169,7 @@ export default function TodayPage() {
       ageMonths: correctedAgeMonths(baby, viewDate),
       blockedSlugs,
     }).slice(0, 2);
-  }, [baby, rec, logs, safeFoods, viewDate]);
+  }, [baby, rec, logs, safeFoods, viewDate, allFoods, allRecipes, foodBySlug]);
 
   const showAccountCard = authEnabled && !session && logs.length >= 5;
   const showBackupNudge =
@@ -192,18 +190,17 @@ export default function TodayPage() {
       <div className="mx-auto flex max-w-xl flex-col items-center gap-5 pt-12 text-center">
         <BrandMark className="w-14" />
         <h1 className="text-3xl font-extrabold tracking-tight text-balance sm:text-4xl">
-          Let&apos;s meet your baby<span className="text-primary">.</span>
+          {t.meetTitle}<span className="text-primary">{t.meetTitleDot}</span>
         </h1>
         <p className="max-w-md text-base leading-relaxed text-foreground/70">
-          Two minutes of setup and we&apos;ll build a day-by-day plan — whether you&apos;re
-          starting from scratch or already mid-journey.
+          {t.meetLede}
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <Link
             href="/onboarding"
             className={cn(buttonVariants(), "min-h-12 px-7 text-base font-semibold")}
           >
-            We&apos;re starting fresh
+            {t.startFresh}
           </Link>
           <Link
             href="/onboarding/import"
@@ -212,18 +209,18 @@ export default function TodayPage() {
               "min-h-12 border-foreground/50 px-7 text-base font-semibold text-foreground",
             )}
           >
-            We&apos;ve already started
+            {t.alreadyStarted}
           </Link>
         </div>
         <p className="text-[13px] text-muted-foreground">
-          Prefer to look around first?{" "}
+          {t.browseBefore}
           <Link
             href="/foods"
             className="font-semibold text-primary underline-offset-2 hover:underline"
           >
-            Browse all {allFoods.length} foods
-          </Link>{" "}
-          without a profile.
+            {fmt(t.browseFoodsLink, { n: allFoods.length })}
+          </Link>
+          {t.browseAfter}
         </p>
       </div>
     );
@@ -238,14 +235,13 @@ export default function TodayPage() {
       <div className="mx-auto max-w-lg space-y-5">
         <div className="space-y-2">
           <p className="font-data text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-            {baby.nickname} · {age.toFixed(1)} mo corrected
+            {fmt(t.gatedEyebrow, { name: baby.nickname, age: age.toFixed(1) })}
           </p>
           <h1 className="text-3xl font-extrabold tracking-tight">
-            Almost there<span className="text-primary">.</span>
+            {t.almostThere}<span className="text-primary">{t.almostThereDot}</span>
           </h1>
           <p className="text-[15px] leading-relaxed text-foreground/70">
-            Not quite solids time yet — and that&apos;s exactly what today is for. Here&apos;s
-            what to watch for; we&apos;ll flip to food picks the moment the signs line up.
+            {t.gatedLede}
           </p>
         </div>
 
@@ -259,38 +255,35 @@ export default function TodayPage() {
 
         <div className="space-y-3 rounded-2xl bg-card p-5 ring-1 ring-border">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-xl font-bold tracking-tight">Readiness watch list</h2>
+            <h2 className="text-xl font-bold tracking-tight">{t.readinessTitle}</h2>
             <span className="font-data text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
-              5 signs
+              {t.fiveSigns}
             </span>
           </div>
           {READINESS_SIGNS.map((sign) => (
             <div
-              key={sign}
+              key={sign.en}
               className="flex items-center gap-3 rounded-xl border border-dashed border-border px-3.5 py-3"
             >
               <span
                 className="size-[22px] shrink-0 rounded-full border-2 border-border"
                 aria-hidden="true"
               />
-              <span className="text-sm text-foreground/80">{sign}</span>
+              <span className="text-sm text-foreground/80">{msg(sign, locale)}</span>
             </div>
           ))}
           <p className="text-[13px] text-muted-foreground">
-            Not all there yet? Totally normal — most babies show all five around 6 months.
+            {t.notAllThereYet}
           </p>
         </div>
 
         {canSelfSelect && (
           <div className="space-y-3 rounded-2xl bg-secondary p-5 ring-[1.5px] ring-primary/60">
             <h2 className="text-xl font-bold tracking-tight text-secondary-foreground">
-              Starting on your pediatrician&apos;s advice?
+              {t.pedsTitle}
             </h2>
             <p className="text-sm leading-relaxed text-secondary-foreground/90">
-              Plenty of families start solids between 4 and 6 months on their pediatrician&apos;s
-              specific guidance — sometimes before every readiness sign has appeared. If that&apos;s
-              you, start the program today: we&apos;ll keep suggestions to smooth, mashable first
-              foods, and your pediatrician&apos;s advice always comes first.
+              {t.pedsBody}
             </p>
             <Button
               className="min-h-12 w-full text-[15px] font-bold"
@@ -301,50 +294,55 @@ export default function TodayPage() {
                 })
               }
             >
-              Our pediatrician advised us to start — begin today
+              {t.pedsButton}
             </Button>
           </div>
         )}
 
         <p className="text-sm text-muted-foreground">
-          Meanwhile, browse the{" "}
+          {t.meanwhileBefore}
           <Link
             href="/foods"
             className="font-semibold text-primary underline underline-offset-2"
           >
-            food library
-          </Link>{" "}
-          or update the{" "}
+            {t.foodLibraryLink}
+          </Link>
+          {t.meanwhileMid}
           <Link
             href="/onboarding?edit=1"
             className="font-semibold text-primary underline underline-offset-2"
           >
-            readiness checklist
+            {t.readinessChecklistLink}
           </Link>
-          .
+          {t.meanwhileEnd}
         </p>
       </div>
     );
   }
 
   // ——— State A: ready ———
-  const currentStage = TEXTURE_STAGES.find((s) => s.id === rec.textureStage.current);
+  const currentStageMsgs = TEXTURE_STAGE_MSGS[rec.textureStage.current];
   const nextStage =
     TEXTURE_STAGES[TEXTURE_STAGES.findIndex((s) => s.id === rec.textureStage.current) + 1];
   const allergensUnderway = rec.allergenStates.filter((s) => s.status !== "not-started").length;
   const foodsPct = Math.round((triedSlugs.size / allFoods.length) * 100);
   const viewAge = correctedAgeMonths(baby, viewDate);
-  const dateLabel = viewDate.toLocaleDateString(undefined, {
+  const dateLabel = viewDate.toLocaleDateString(dateLocale, {
     weekday: "short",
     month: "short",
     day: "numeric",
   });
-  const dayWord =
+  const longDayLabel = viewDate.toLocaleDateString(dateLocale, {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
+  const heading =
     offsetDays === 0
-      ? "Today"
+      ? fmt(t.todayFor, { name: baby.nickname })
       : offsetDays === 1
-        ? "Tomorrow"
-        : viewDate.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+        ? fmt(t.tomorrowFor, { name: baby.nickname })
+        : fmt(t.dayFor, { day: longDayLabel, name: baby.nickname });
 
   return (
     <div className="space-y-6">
@@ -352,13 +350,16 @@ export default function TodayPage() {
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
             <p className="font-data text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-              {dateLabel} · {viewAge.toFixed(1)} mo{baby.dueDate ? " corrected" : ""} · stage{" "}
-              {rec.textureStage.current}
+              {fmt(baby.dueDate ? t.eyebrowCorrected : t.eyebrow, {
+                date: dateLabel,
+                age: viewAge.toFixed(1),
+                stage: rec.textureStage.current,
+              })}
             </p>
             <span className="flex items-center gap-0.5">
               <button
                 type="button"
-                aria-label="Previous day"
+                aria-label={t.prevDay}
                 disabled={offsetDays === 0}
                 onClick={() => setOffsetDays((d) => Math.max(0, d - 1))}
                 className="flex size-7 items-center justify-center rounded-full border text-sm text-foreground/70 hover:border-primary/60 disabled:opacity-30"
@@ -367,7 +368,7 @@ export default function TodayPage() {
               </button>
               <button
                 type="button"
-                aria-label="Next day"
+                aria-label={t.nextDay}
                 disabled={offsetDays >= MAX_PREVIEW_DAYS}
                 onClick={() => setOffsetDays((d) => Math.min(MAX_PREVIEW_DAYS, d + 1))}
                 className="flex size-7 items-center justify-center rounded-full border text-sm text-foreground/70 hover:border-primary/60 disabled:opacity-30"
@@ -380,13 +381,13 @@ export default function TodayPage() {
                   onClick={() => setOffsetDays(0)}
                   className="font-data ml-1.5 rounded-full bg-secondary px-2.5 py-1 text-[10.5px] uppercase tracking-[0.06em] text-secondary-foreground hover:bg-secondary/70"
                 >
-                  ← back to today
+                  {t.backToToday}
                 </button>
               )}
             </span>
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-            {dayWord} for {baby.nickname}
+            {heading}
           </h1>
         </div>
         <div className="flex items-center gap-3.5">
@@ -394,14 +395,18 @@ export default function TodayPage() {
             {session && (
               <span className="font-data rounded-full bg-secondary px-3 py-1 text-[10.5px] uppercase tracking-[0.08em] text-secondary-foreground">
                 {syncState === "syncing"
-                  ? "syncing…"
+                  ? t.syncing
                   : syncState === "error"
-                    ? "sync retrying"
-                    : "synced ✓"}
+                    ? t.syncRetrying
+                    : t.synced}
               </span>
             )}
             <span className="font-data text-[11px] uppercase tracking-[0.04em] text-foreground/70">
-              {triedSlugs.size} / {allFoods.length} foods · {allergensUnderway} / 9 allergens
+              {fmt(t.foodsAllergensStat, {
+                tried: triedSlugs.size,
+                total: allFoods.length,
+                n: allergensUnderway,
+              })}
             </span>
             <span className="relative block h-2 w-40 overflow-hidden rounded-full bg-border">
               <span
@@ -416,26 +421,26 @@ export default function TodayPage() {
 
       {previewing && (
         <Alert className="border-primary/40 bg-secondary/40">
-          <AlertTitle>Previewing {dayWord.toLowerCase() === "tomorrow" ? "tomorrow" : dayWord}</AlertTitle>
+          <AlertTitle>
+            {offsetDays === 1 ? t.previewingTomorrow : fmt(t.previewingDay, { day: longDayLabel })}
+          </AlertTitle>
           <AlertDescription>
-            Suggestions assume the history you have today — each food you actually log sharpens
-            the days after it. Changes on the{" "}
+            {t.previewBefore}
             <Link href="/plan" className="font-semibold text-primary underline underline-offset-2">
-              plan board
-            </Link>{" "}
-            show up here instantly.
+              {t.planBoardLink}
+            </Link>
+            {t.previewAfter}
           </AlertDescription>
         </Alert>
       )}
 
       {!previewing && showAccountCard && (
         <Alert className="border-primary/50 bg-secondary/50">
-          <AlertTitle>Save {baby.nickname}&apos;s data</AlertTitle>
+          <AlertTitle>{fmt(t.saveDataTitle, { name: baby.nickname })}</AlertTitle>
           <AlertDescription>
-            {logs.length} logs live only on this device. Sign in once and everything follows you
-            to any phone or laptop — free, no tracking.{" "}
+            {fmt(t.accountBody, { n: logs.length })}{" "}
             <Link href="/account" className="font-semibold text-primary underline underline-offset-2">
-              Sign in with Google or email →
+              {t.accountLink}
             </Link>
           </AlertDescription>
         </Alert>
@@ -444,25 +449,24 @@ export default function TodayPage() {
       {!previewing && showBackupNudge && (
         <Alert className="border-honey/50 bg-accent">
           <AlertTitle className="text-accent-foreground">
-            Back up {baby.nickname}&apos;s history
+            {fmt(t.backupTitle, { name: baby.nickname })}
           </AlertTitle>
           <AlertDescription className="flex flex-wrap items-center gap-3 text-accent-foreground/90">
             <span>
-              {logs.length} logs live only on this device. A one-tap export keeps them safe if the
-              browser clears its storage.
+              {fmt(t.backupBody, { n: logs.length })}
             </span>
             <Link
               href="/history"
               className="inline-flex min-h-11 items-center font-semibold underline underline-offset-2"
             >
-              Export now →
+              {t.exportNow}
             </Link>
             <button
               type="button"
               className="inline-flex min-h-11 items-center text-xs underline underline-offset-2"
               onClick={() => snoozeBackupNudge(snoozeUntil(new Date()))}
             >
-              remind me next week
+              {t.remindNextWeek}
             </button>
           </AlertDescription>
         </Alert>
@@ -475,7 +479,7 @@ export default function TodayPage() {
               {dueCheckIns.length > 0 && (
                 <span className="size-2.5 rounded-full bg-honey" aria-hidden="true" />
               )}
-              Check-ins
+              {t.checkIns}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
@@ -485,15 +489,18 @@ export default function TodayPage() {
                 className="flex flex-wrap items-center gap-2 rounded-xl border border-honey/50 bg-card p-3"
               >
                 <span className="font-semibold">
-                  Check for a reaction to {foodBySlug.get(c.foodSlug)?.name ?? c.foodSlug}
+                  {fmt(t.checkReaction, {
+                    food: foodBySlug.get(c.foodSlug)?.name ?? c.foodSlug,
+                  })}
                 </span>
                 <span className="font-data text-xs text-muted-foreground">
-                  due{" "}
-                  {new Date(c.dueAt).toLocaleString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
+                  {fmt(t.dueAt, {
+                    time: new Date(c.dueAt).toLocaleString(dateLocale, {
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    }),
                   })}
                 </span>
                 <span className="ml-auto flex flex-wrap gap-2">
@@ -501,14 +508,14 @@ export default function TodayPage() {
                     href={`/log?checkin=${c.id}`}
                     className="inline-flex min-h-11 items-center rounded-full bg-foreground px-4 text-[13px] font-semibold text-background hover:bg-foreground/90"
                   >
-                    Log what you see
+                    {t.logWhatYouSee}
                   </Link>
                   <button
                     type="button"
                     onClick={() => resolveCheckIn(c.id, "done")}
                     className="inline-flex min-h-11 items-center rounded-full border-[1.5px] border-foreground/60 px-4 text-[13px] font-semibold hover:border-primary hover:text-primary-deep"
                   >
-                    All clear ✓
+                    {t.allClear}
                   </button>
                 </span>
               </div>
@@ -516,19 +523,21 @@ export default function TodayPage() {
             <PushOptIn />
             {upcomingCheckIns.slice(0, 3).map((c) => (
               <p key={c.id} className="text-xs text-muted-foreground">
-                Upcoming: {foodBySlug.get(c.foodSlug)?.name ?? c.foodSlug} check at{" "}
-                {new Date(c.dueAt).toLocaleString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
+                {fmt(t.upcomingCheck, {
+                  food: foodBySlug.get(c.foodSlug)?.name ?? c.foodSlug,
+                  time: new Date(c.dueAt).toLocaleString(dateLocale, {
+                    month: "short",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                  }),
                 })}
                 <button
                   type="button"
                   onClick={() => resolveCheckIn(c.id, "dismissed")}
                   className="ml-2 inline-flex min-h-11 items-center underline underline-offset-2"
                 >
-                  dismiss
+                  {t.dismiss}
                 </button>
               </p>
             ))}
@@ -558,7 +567,7 @@ export default function TodayPage() {
                       href={`/allergens/${w.allergenId}`}
                       className="font-semibold underline underline-offset-2"
                     >
-                      Playbook →
+                      {t.playbook}
                     </Link>
                   )}
                 </AlertDescription>
@@ -570,15 +579,14 @@ export default function TodayPage() {
 
       <section className="space-y-3.5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-2xl font-bold tracking-tight">Today&apos;s picks</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t.todaysPicks}</h2>
           <span className="font-data text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
-            Iron · allergen pace · variety · texture
+            {t.picksCriteria}
           </span>
         </div>
         {attemptCounts.size < 3 && (
           <p className="text-[13px] leading-relaxed text-muted-foreground">
-            Starting gently: one new food at a time, kept going for 2–3 days while you watch —
-            more picks unlock as foods are introduced.
+            {t.gentleStart}
           </p>
         )}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -604,19 +612,19 @@ export default function TodayPage() {
                   </Link>
                   {allergenId ? (
                     <span className="font-data shrink-0 rounded-full bg-accent px-2.5 py-1 text-[10px] uppercase tracking-[0.08em] text-accent-foreground">
-                      Allergen: {ALLERGEN_LABELS[allergenId]}
+                      {fmt(t.allergenBadge, { allergen: allergenLabel(allergenId, locale) })}
                     </span>
                   ) : triedSlugs.has(p.slug) ? (
                     <span className="font-data shrink-0 rounded-full border border-border bg-card px-2.5 py-1 text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
-                      Familiar
+                      {t.familiar}
                     </span>
                   ) : food?.firstFoodPick ? (
                     <span className="font-data shrink-0 rounded-full bg-secondary px-2.5 py-1 text-[10px] uppercase tracking-[0.08em] text-secondary-foreground">
-                      Great first food
+                      {t.greatFirstFood}
                     </span>
                   ) : (
                     <span className="font-data shrink-0 rounded-full bg-secondary px-2.5 py-1 text-[10px] uppercase tracking-[0.08em] text-secondary-foreground">
-                      New food
+                      {t.newFood}
                     </span>
                   )}
                 </div>
@@ -624,6 +632,7 @@ export default function TodayPage() {
                   <div className="flex h-28 items-center justify-center rounded-xl bg-muted">
                     <CutDiagram
                       variant={diagram}
+                      locale={locale}
                       showCaption={false}
                       className="mx-auto w-full max-w-[170px]"
                     />
@@ -633,21 +642,21 @@ export default function TodayPage() {
                   {p.reason}
                 </p>
                 <span className="font-data self-start rounded-full bg-secondary px-2.5 py-1 text-[10px] uppercase tracking-[0.08em] text-secondary-foreground">
-                  {BAND_LABELS[p.suggestedBand]}
-                  {food?.ironRich ? " · iron-rich" : ""}
+                  {bandLabel(p.suggestedBand, locale)}
+                  {food?.ironRich ? t.ironRichSuffix : ""}
                 </span>
                 <div className="flex items-center justify-between gap-2 border-t border-border pt-1.5">
                   <Link
                     href={`/foods/${p.slug}`}
                     className="inline-flex min-h-11 items-center text-sm font-semibold text-primary hover:text-primary-deep"
                   >
-                    How to serve →
+                    {t.howToServe}
                   </Link>
                   <Link
                     href={`/log?food=${p.slug}`}
                     className="inline-flex min-h-11 items-center rounded-full bg-secondary px-4 text-sm font-semibold text-secondary-foreground hover:bg-secondary/70"
                   >
-                    Log it
+                    {t.logIt}
                   </Link>
                 </div>
               </div>
@@ -659,12 +668,15 @@ export default function TodayPage() {
       <section className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-3.5 rounded-2xl bg-card p-5 ring-1 ring-border">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="text-lg font-bold">Allergen plan</h3>
+            <h3 className="text-lg font-bold">{t.allergenPlan}</h3>
             <span className="font-data text-[11px] uppercase tracking-[0.06em] text-foreground/70">
-              {allergensUnderway} of 9 underway
+              {fmt(t.nOf9Underway, { n: allergensUnderway })}
             </span>
           </div>
-          <div className="flex gap-1.5" aria-label={`${allergensUnderway} of 9 allergens underway`}>
+          <div
+            className="flex gap-1.5"
+            aria-label={fmt(t.nOf9AllergensUnderway, { n: allergensUnderway })}
+          >
             {rec.allergenStates.map((s) => (
               <span
                 key={s.allergenId}
@@ -678,13 +690,15 @@ export default function TodayPage() {
           {rec.allergenRail.next ? (
             <div className="space-y-1.5 text-sm">
               <p className="font-semibold">
-                Next up: {ALLERGEN_LABELS[rec.allergenRail.next.allergenId]}
+                {fmt(t.nextUpAllergen, {
+                  allergen: allergenLabel(rec.allergenRail.next.allergenId, locale),
+                })}
                 {rec.allergenRail.next.gated && (
                   <Badge
                     variant="outline"
                     className="ml-2 border-honey/60 bg-accent text-accent-foreground"
                   >
-                    on hold
+                    {t.onHold}
                   </Badge>
                 )}
               </p>
@@ -700,7 +714,7 @@ export default function TodayPage() {
                     href={`/foods/${slug}`}
                     className="mr-4 inline-flex min-h-11 items-center font-semibold text-primary hover:text-primary-deep"
                   >
-                    How to serve →
+                    {t.howToServe}
                   </Link>
                 ))}
               {rec.allergenRail.next.gated && (
@@ -708,13 +722,13 @@ export default function TodayPage() {
                   href="/allergens"
                   className="inline-flex min-h-11 items-center font-semibold text-primary underline underline-offset-2"
                 >
-                  Manage in the allergen tracker →
+                  {t.manageTracker}
                 </Link>
               )}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              All nine common allergens are underway or done — keep them in rotation.
+              {t.allNineUnderway}
             </p>
           )}
           {rec.allergenRail.maintenance.map((m) => (
@@ -732,14 +746,14 @@ export default function TodayPage() {
 
         <div className="flex flex-col gap-3.5 rounded-2xl bg-card p-5 ring-1 ring-border">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="text-lg font-bold">Texture stage</h3>
+            <h3 className="text-lg font-bold">{t.textureStage}</h3>
             <span className="font-data text-[11px] uppercase tracking-[0.06em] text-foreground/70">
-              {currentStage?.typicalAge}
+              {msg(currentStageMsgs.typicalAge, locale)}
             </span>
           </div>
           <p className="text-sm text-foreground/80">
             <span className="font-data font-medium">{rec.textureStage.current}</span> ·{" "}
-            {currentStage?.label}
+            {msg(currentStageMsgs.label, locale)}
           </p>
           {rec.textureStage.nudge ? (
             <div className="space-y-3 rounded-xl border border-primary/50 bg-secondary/40 p-3.5 text-sm leading-relaxed">
@@ -750,14 +764,13 @@ export default function TodayPage() {
                   className="min-h-11 border-primary px-5 font-bold text-primary-deep hover:bg-secondary"
                   onClick={() => setTextureStage(nextStage.id)}
                 >
-                  Move to {nextStage.id} →
+                  {fmt(t.moveTo, { stage: nextStage.id })}
                 </Button>
               )}
             </div>
           ) : (
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Keep practicing at this stage — the app will suggest moving up when the logs show
-              consistent, confident eating.
+              {t.keepPracticing}
             </p>
           )}
         </div>
@@ -765,23 +778,23 @@ export default function TodayPage() {
 
       {combos.length === 0 && (
         <p className="text-[13px] text-muted-foreground">
-          Meal ideas appear here once a few foods are logged safe — in the meantime, browse all{" "}
+          {t.mealIdeasBefore}
           <Link href="/recipes" className="font-semibold text-primary underline underline-offset-2">
-            {allRecipes.length} blender-simple recipes
+            {fmt(t.recipesLink, { n: allRecipes.length })}
           </Link>
-          .
+          {t.mealIdeasAfter}
         </p>
       )}
 
       {combos.length > 0 && (
         <section className="flex flex-col gap-3.5 rounded-2xl bg-card p-5 ring-1 ring-border">
           <div className="flex items-baseline justify-between gap-2">
-            <h2 className="font-sans text-lg font-bold">Make it a meal</h2>
+            <h2 className="font-sans text-lg font-bold">{t.makeItAMeal}</h2>
             <Link
               href="/recipes"
               className="font-data text-[11px] uppercase tracking-[0.06em] text-primary hover:text-primary-deep"
             >
-              All recipes →
+              {t.allRecipesLink}
             </Link>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -799,7 +812,7 @@ export default function TodayPage() {
                       variant={usesPicks.includes(slug) ? "secondary" : "outline"}
                     >
                       {foodBySlug.get(slug)?.name ?? slug}
-                      {usesPicks.includes(slug) && " · today"}
+                      {usesPicks.includes(slug) && t.todayBadgeSuffix}
                     </Badge>
                   ))}
                 </span>
@@ -810,8 +823,7 @@ export default function TodayPage() {
             ))}
           </div>
           <p className="text-[12.5px] text-muted-foreground">
-            Only foods {baby.nickname} has already handled safely (plus today&apos;s picks) make
-            this list.
+            {fmt(t.comboFootnote, { name: baby.nickname })}
           </p>
         </section>
       )}
@@ -819,14 +831,13 @@ export default function TodayPage() {
       {safeFoods.length > 0 && (
         <section className="flex flex-col gap-3.5 rounded-2xl bg-card p-5 ring-1 ring-border">
           <div className="flex items-baseline justify-between gap-2">
-            <h2 className="font-sans text-lg font-bold">Safe so far</h2>
+            <h2 className="font-sans text-lg font-bold">{t.safeSoFar}</h2>
             <span className="font-data text-[11px] uppercase tracking-[0.06em] text-foreground/70">
-              {safeFoods.length} {safeFoods.length === 1 ? "food" : "foods"}
+              {fmt(safeFoods.length === 1 ? t.oneFood : t.manyFoods, { n: safeFoods.length })}
             </span>
           </div>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            Eaten at least once with no reaction logged — {baby.nickname}&apos;s growing pantry.
-            Keep favorites in rotation while the new ones arrive.
+            {fmt(t.safeLede, { name: baby.nickname })}
           </p>
           <div className="flex flex-wrap gap-2">
             {safeFoods.slice(0, 24).map((f) => (
@@ -844,7 +855,7 @@ export default function TodayPage() {
                 href="/foods"
                 className="inline-flex min-h-9 items-center rounded-full border px-3.5 text-sm font-semibold text-primary hover:border-primary/60"
               >
-                +{safeFoods.length - 24} more →
+                {fmt(t.nMore, { n: safeFoods.length - 24 })}
               </Link>
             )}
           </div>
@@ -854,7 +865,7 @@ export default function TodayPage() {
       {rec.retryQueue.length > 0 && (
         <section className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <h2 className="font-data text-[11px] font-normal uppercase tracking-[0.1em] text-muted-foreground">
-            Worth another try →
+            {t.worthAnotherTry}
           </h2>
           {rec.retryQueue.map((r) => {
             const n = attemptCounts.get(r.slug) ?? 0;
@@ -865,12 +876,12 @@ export default function TodayPage() {
                 className="inline-flex min-h-11 items-center rounded-full border border-border bg-card px-4 text-sm font-semibold text-foreground/80 hover:border-primary hover:text-primary-deep"
               >
                 {r.name} · <span className="font-data ml-1">{n}</span>&nbsp;
-                {n === 1 ? "try" : "tries"}
+                {n === 1 ? t.tryOne : t.tryMany}
               </Link>
             );
           })}
           <span className="text-[13px] text-muted-foreground">
-            Refusals are normal — it can take 8–15 relaxed offers before a food clicks.
+            {t.refusalsNormal}
           </span>
         </section>
       )}
@@ -883,7 +894,7 @@ export default function TodayPage() {
             "h-14 px-9 text-base font-bold shadow-lg shadow-primary/30",
           )}
         >
-          + Quick log
+          {t.quickLog}
         </Link>
       </div>
     </div>

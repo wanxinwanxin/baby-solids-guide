@@ -9,22 +9,18 @@ import {
 } from "@/components/diagrams/CutDiagram";
 import { Reveal } from "@/components/landing/Reveal";
 import { buttonVariants } from "@/components/ui/button";
+import { fmt, msg, pick } from "@/lib/i18n/config";
+import {
+  LANDING_BAND_CAPTIONS,
+  LANDING_BAND_LABELS,
+  LANDING_QUESTION_CARDS,
+  landingMsgs,
+} from "@/lib/i18n/messages/landing";
+import { getLocale } from "@/lib/i18n/server";
+import { localizeFood, localizeGuides } from "@/lib/l10n";
 import { cn } from "@/lib/utils";
 
 const GITHUB_URL = "https://github.com/wanxinwanxin/baby-solids-guide";
-
-const BAND_LABELS: Record<string, string> = {
-  "6-8m": "6–8 MO",
-  "9-12m": "9–12 MO",
-  "12-24m": "12–24 MO",
-};
-
-/** One-line band captions for the banana story (mockup 03). */
-const BAND_CAPTIONS: Record<string, string> = {
-  "6-8m": "Half a banana in its own peel handle — grippy, food-safe, nothing to cut.",
-  "9-12m": "Split along its seams, chopped to pinky-nail pieces for the new pincer grasp.",
-  "12-24m": "Offered whole — taking measured bites is the skill itself now.",
-};
 
 /**
  * The 12–24m banana is served whole / in large hand-held pieces and carries no
@@ -32,24 +28,6 @@ const BAND_CAPTIONS: Record<string, string> = {
  * parametric stand-in.
  */
 const FALLBACK_VARIANT: DiagramVariant = "batons";
-
-const QUESTION_CARDS = [
-  {
-    eyebrow: "01 · TEXTURE-FIRST",
-    title: "What does “safe” actually look like?",
-    body: "Every food comes with a precise safe form for each age — and a physical pass/fail test, like the squish test, so you know it's right.",
-  },
-  {
-    eyebrow: "02 · ADAPTS DAILY",
-    title: "What should we try today?",
-    body: "Log what your baby tried and how it went. Tomorrow's suggestions account for iron, allergen pacing, variety, and texture progress.",
-  },
-  {
-    eyebrow: "03 · ALLERGY-AWARE",
-    title: "How do we do allergens safely?",
-    body: "Risk-based allergen schedules from NIAID guidance, one new allergen at a time, and clear playbooks for every kind of reaction.",
-  },
-];
 
 /** Receipt chips link straight to the primary sources they name. */
 const RECEIPTS = [
@@ -70,16 +48,20 @@ const ctaOutline = cn(
   "h-12 border-foreground/75 px-7 text-base text-foreground",
 );
 
-export default function LandingPage() {
-  const banana = foodBySlug.get("banana");
-  if (!banana) throw new Error("Landing page expects a banana entry in content/foods");
+export default async function LandingPage() {
+  const locale = await getLocale();
+  const t = pick(landingMsgs, locale);
+  const rawBanana = foodBySlug.get("banana");
+  if (!rawBanana) throw new Error("Landing page expects a banana entry in content/foods");
+  const banana = localizeFood(rawBanana, locale);
   const heroSpec = banana.prepSpecs[0];
   const heroVariant = isDiagramVariant(heroSpec.cutDiagram)
     ? heroSpec.cutDiagram
     : FALLBACK_VARIANT;
   const sourceCount = Object.keys(SOURCES).length;
-  const learnGuides = FEATURED_GUIDE_SLUGS.flatMap(
-    (slug) => allGuides.find((g) => g.slug === slug) ?? [],
+  const learnGuides = localizeGuides(
+    FEATURED_GUIDE_SLUGS.flatMap((slug) => allGuides.find((g) => g.slug === slug) ?? []),
+    locale,
   );
 
   return (
@@ -89,41 +71,39 @@ export default function LandingPage() {
         <div className="flex flex-col gap-6">
           <span className="inline-flex items-center gap-2 self-start whitespace-nowrap rounded-full bg-secondary px-3.5 py-1.5 font-data text-[10px] tracking-[0.1em] text-secondary-foreground sm:text-[11px]">
             <span aria-hidden className="size-1.5 rounded-full bg-primary" />
-            FREE · NO ADS · DATA STAYS ON YOUR DEVICE
+            {t.badge}
           </span>
           <h1 className="text-5xl font-extrabold leading-[1.02] tracking-tight sm:text-6xl">
-            Know exactly what to serve, and how<span className="text-primary">.</span>
+            {t.heroTitle}<span className="text-primary">{t.heroTitleDot}</span>
           </h1>
           <p className="max-w-xl text-pretty text-lg leading-relaxed text-muted-foreground">
-            Exact safe textures for every food, daily recommendations that adapt to your baby,
-            and allergy playbooks built on NIAID, AAP, CDC, and WHO guidance — with a citation
-            behind every claim.
+            {t.heroLede}
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link href="/onboarding" className={ctaPrimary}>
-              We&apos;re starting fresh
+              {t.ctaFresh}
             </Link>
             <Link href="/onboarding/import" className={ctaOutline}>
-              We&apos;ve already started
+              {t.ctaStarted}
             </Link>
           </div>
           <div className="mt-1 grid grid-cols-3 gap-4 border-t pt-5">
             <div className="flex flex-col gap-1">
               <span className="font-data text-2xl font-bold sm:text-3xl">{allFoods.length}</span>
               <span className="font-data text-[9px] tracking-[0.08em] text-muted-foreground sm:text-[10px]">
-                FOODS, ALL FREE
+                {t.statFoods}
               </span>
             </div>
             <div className="flex flex-col gap-1">
               <span className="font-data text-2xl font-bold sm:text-3xl">{sourceCount}</span>
               <span className="font-data text-[9px] tracking-[0.08em] text-muted-foreground sm:text-[10px]">
-                FREE PRIMARY SOURCES
+                {t.statSources}
               </span>
             </div>
             <div className="flex flex-col gap-1">
               <span className="font-data text-2xl font-bold sm:text-3xl">100%</span>
               <span className="font-data text-[9px] tracking-[0.08em] text-muted-foreground sm:text-[10px]">
-                FREE &amp; OPEN SOURCE
+                {t.statOpenSource}
               </span>
             </div>
           </div>
@@ -134,15 +114,15 @@ export default function LandingPage() {
             <div className="flex items-center justify-between gap-3">
               <span className="font-heading text-xl font-bold">{banana.name}</span>
               <span className="whitespace-nowrap rounded-full bg-secondary px-2.5 py-1 font-data text-[10px] tracking-[0.12em] text-secondary-foreground">
-                {BAND_LABELS[heroSpec.band]}
+                {msg(LANDING_BAND_LABELS[heroSpec.band], locale)}
               </span>
             </div>
             <div className="mt-3 flex items-center justify-center rounded-xl bg-muted px-3 py-4">
-              <CutDiagram variant={heroVariant} showCaption={false} className="flex w-full justify-center" />
+              <CutDiagram variant={heroVariant} locale={locale} showCaption={false} className="flex w-full justify-center" />
             </div>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               <span className="font-data text-[9.5px] tracking-[0.12em] text-primary-deep">
-                PASS/FAIL ·{" "}
+                {t.passFail}{" "}
               </span>
               {heroSpec.passFailTest}
             </p>
@@ -152,16 +132,16 @@ export default function LandingPage() {
               scopes dark tokens to this card so every color stays tokenized. */}
           <div className="dark -mt-1 w-full max-w-[340px] -rotate-[1.6deg] self-start rounded-2xl bg-card p-5 text-foreground shadow-xl">
             <span className="font-data text-[10px] tracking-[0.12em] text-secondary-foreground">
-              TODAY FOR JUNI · 6.4 MO
+              {t.mockEyebrow}
             </span>
             <p className="mt-2 font-heading text-xl font-bold leading-snug">
-              Salmon, first fish — serve early in the day.
+              {t.mockHeadline}
             </p>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Iron-rich pick · fish allergen №3 of 9 · watch for 2 hours after.
+              {t.mockMeta}
             </p>
             <span className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-              + Log it in two taps
+              {t.mockCta}
             </span>
           </div>
         </div>
@@ -170,12 +150,13 @@ export default function LandingPage() {
       {/* One food, three ages */}
       <section className="flex flex-col gap-7">
         <h2 className="max-w-2xl text-3xl font-extrabold sm:text-4xl">
-          One food, three ages — the diagram grows with your baby
+          {t.threeAgesTitle}
         </h2>
         <div className="grid gap-5 sm:grid-cols-3">
           {banana.prepSpecs.map((spec, i) => {
             const variant = isDiagramVariant(spec.cutDiagram) ? spec.cutDiagram : FALLBACK_VARIANT;
             const highlighted = i === 0;
+            const caption = LANDING_BAND_CAPTIONS[spec.band];
             return (
               <Reveal key={spec.band} delayMs={i * 120} className="h-full">
                 <div
@@ -192,13 +173,13 @@ export default function LandingPage() {
                         : "bg-secondary text-secondary-foreground",
                     )}
                   >
-                    {BAND_LABELS[spec.band]}
+                    {msg(LANDING_BAND_LABELS[spec.band], locale)}
                   </span>
                   <div className="flex items-center justify-center rounded-xl bg-muted p-3">
-                    <CutDiagram variant={variant} showCaption={false} className="flex w-full justify-center" />
+                    <CutDiagram variant={variant} locale={locale} showCaption={false} className="flex w-full justify-center" />
                   </div>
                   <p className="text-sm leading-relaxed text-muted-foreground">
-                    {BAND_CAPTIONS[spec.band] ?? spec.form}
+                    {caption ? msg(caption, locale) : spec.form}
                   </p>
                 </div>
               </Reveal>
@@ -209,13 +190,13 @@ export default function LandingPage() {
 
       {/* Three questions */}
       <section className="grid gap-5 sm:grid-cols-3">
-        {QUESTION_CARDS.map((q) => (
-          <div key={q.eyebrow} className="flex flex-col gap-2.5 rounded-2xl bg-muted p-6">
+        {LANDING_QUESTION_CARDS.map((q) => (
+          <div key={q.eyebrow.en} className="flex flex-col gap-2.5 rounded-2xl bg-muted p-6">
             <span className="font-data text-[10.5px] tracking-[0.12em] text-primary-deep">
-              {q.eyebrow}
+              {msg(q.eyebrow, locale)}
             </span>
-            <h3 className="font-heading text-xl font-bold">{q.title}</h3>
-            <p className="text-sm leading-relaxed text-muted-foreground">{q.body}</p>
+            <h3 className="font-heading text-xl font-bold">{msg(q.title, locale)}</h3>
+            <p className="text-sm leading-relaxed text-muted-foreground">{msg(q.body, locale)}</p>
           </div>
         ))}
       </section>
@@ -223,9 +204,9 @@ export default function LandingPage() {
       {/* Learn strip */}
       <section className="flex flex-col gap-6">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 className="text-3xl font-extrabold sm:text-4xl">New to solids? Start here</h2>
+          <h2 className="text-3xl font-extrabold sm:text-4xl">{t.learnTitle}</h2>
           <Link href="/learn" className="text-sm font-semibold text-primary hover:text-primary-deep">
-            All <span className="font-data">{allGuides.length}</span> chapters →
+            {t.allChaptersBefore}<span className="font-data">{allGuides.length}</span>{t.allChaptersAfter}
           </Link>
         </div>
         <div className="grid gap-5 sm:grid-cols-3">
@@ -240,14 +221,14 @@ export default function LandingPage() {
                 {g.summary}
               </p>
               <span className="font-data text-[10.5px] tracking-[0.1em] text-primary-deep">
-                {g.minRead} MIN READ
+                {fmt(t.minRead, { n: g.minRead })}
               </span>
             </Link>
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-2 border-t pt-5">
           <span className="mr-1 font-data text-[10.5px] tracking-[0.12em] text-muted-foreground">
-            EVERY CLAIM CARRIES A RECEIPT →
+            {t.receiptsLabel}
           </span>
           {RECEIPTS.map((r) => (
             <a
@@ -266,7 +247,7 @@ export default function LandingPage() {
             rel="noopener noreferrer"
             className="whitespace-nowrap rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground transition-colors hover:bg-secondary/80"
           >
-            Open source ↗
+            {t.openSource}
           </a>
         </div>
       </section>
@@ -274,10 +255,9 @@ export default function LandingPage() {
       {/* Dark CTA band — `dark` class scopes dark tokens to this panel. */}
       <section className="dark flex flex-col gap-6 rounded-3xl bg-card px-7 py-10 text-foreground sm:px-10 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-col gap-2">
-          <h2 className="text-3xl font-extrabold sm:text-4xl">Meet us where you are.</h2>
+          <h2 className="text-3xl font-extrabold sm:text-4xl">{t.ctaBandTitle}</h2>
           <p className="max-w-xl text-pretty text-muted-foreground">
-            A two-minute setup, whether it&apos;s day one or month four. No account, no paywall —
-            ever.
+            {t.ctaBandBody}
           </p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row md:shrink-0">
@@ -285,7 +265,7 @@ export default function LandingPage() {
             href="/onboarding"
             className={cn(buttonVariants({ size: "lg" }), "h-12 px-7 text-base font-bold")}
           >
-            We&apos;re starting fresh
+            {t.ctaFresh}
           </Link>
           <Link
             href="/onboarding/import"
@@ -294,7 +274,7 @@ export default function LandingPage() {
               "h-12 px-7 text-base dark:border-primary dark:bg-transparent dark:hover:bg-primary/10",
             )}
           >
-            We&apos;ve already started
+            {t.ctaStarted}
           </Link>
         </div>
       </section>

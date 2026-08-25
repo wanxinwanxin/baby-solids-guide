@@ -4,7 +4,11 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { AgeBand, FoodCategory } from "@/content-schema/food";
 import { deriveFoodStats } from "@/lib/engine";
-import { ALLERGEN_LABELS, CATEGORY_LABELS, type SlimFood } from "@/lib/food-utils";
+import { ALLERGEN_LABELS, type SlimFood } from "@/lib/food-utils";
+import { fmt, msg } from "@/lib/i18n/config";
+import { allergenLabel, CATEGORY_MSGS, categoryLabel } from "@/lib/i18n/labels";
+import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
+import { BROWSER_BAND_MSGS, foodBrowserMsgs } from "@/lib/i18n/messages/foods";
 import { useActiveLogs, useHydrated } from "@/lib/hooks";
 import { CutDiagram, isDiagramVariant } from "@/components/diagrams/CutDiagram";
 import { Badge } from "@/components/ui/badge";
@@ -22,25 +26,11 @@ type Filter =
   | "untried"
   | FoodCategory;
 
-const SHOW_FILTERS: { id: Filter; label: string }[] = [
-  { id: "first-picks", label: "Great first foods" },
-  { id: "iron", label: "Iron-rich" },
-  { id: "allergen", label: `${Object.keys(ALLERGEN_LABELS).length} common allergens` },
-  { id: "omega3", label: "Omega-3" },
-  { id: "vitaminC", label: "Vitamin C" },
-];
-
-const CATEGORY_FILTERS = (Object.entries(CATEGORY_LABELS) as [FoodCategory, string][]).map(
-  ([id, label]) => ({ id: id as Filter, label }),
-);
+const CATEGORY_IDS = Object.keys(CATEGORY_MSGS) as FoodCategory[];
 
 /** A food belongs to a band once its age gate has opened by the band's end. */
 const BAND_CAP: Record<AgeBand, number> = { "6-8m": 8, "9-12m": 12, "12-24m": 24 };
-const BAND_CHIPS: { id: AgeBand; label: string }[] = [
-  { id: "6-8m", label: "6–8 mo" },
-  { id: "9-12m", label: "9–12 mo" },
-  { id: "12-24m", label: "12–24 mo" },
-];
+const BAND_IDS: AgeBand[] = ["6-8m", "9-12m", "12-24m"];
 
 function Chip({
   selected,
@@ -86,6 +76,16 @@ export function FoodBrowser({ foods }: { foods: SlimFood[] }) {
   const [band, setBand] = useState<AgeBand | null>(null);
   const hydrated = useHydrated();
   const logs = useActiveLogs();
+  const t = useMsgs(foodBrowserMsgs);
+  const locale = useLocale();
+
+  const showFilters: { id: Filter; label: string }[] = [
+    { id: "first-picks", label: t.greatFirstFoods },
+    { id: "iron", label: t.ironRich },
+    { id: "allergen", label: fmt(t.commonAllergens, { n: Object.keys(ALLERGEN_LABELS).length }) },
+    { id: "omega3", label: t.omega3 },
+    { id: "vitaminC", label: t.vitaminC },
+  ];
 
   /** Per-food tried/safe state from the active baby's logs (empty for guests
    * with no history — the chips still work, they just match nothing). */
@@ -140,29 +140,29 @@ export function FoodBrowser({ foods }: { foods: SlimFood[] }) {
         </svg>
         <Input
           type="search"
-          placeholder='Search foods — try "salmon" or "sweet potato"'
+          placeholder={t.searchPlaceholder}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          aria-label="Search foods"
+          aria-label={t.searchLabel}
           className="h-14 rounded-full border-[1.5px] border-foreground bg-card pr-6 pl-12 text-base shadow-sm md:text-base"
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filters">
-        <GroupLabel>BAND</GroupLabel>
-        {BAND_CHIPS.map((b) => (
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t.filtersLabel}>
+        <GroupLabel>{t.bandGroup}</GroupLabel>
+        {BAND_IDS.map((b) => (
           <Chip
-            key={b.id}
+            key={b}
             fill="primary"
-            selected={band === b.id}
-            onClick={() => setBand((cur) => (cur === b.id ? null : b.id))}
+            selected={band === b}
+            onClick={() => setBand((cur) => (cur === b ? null : b))}
           >
-            {b.label}
+            {msg(BROWSER_BAND_MSGS[b], locale)}
           </Chip>
         ))}
         <span aria-hidden="true" className="mx-1 hidden h-5 w-px bg-border sm:inline-block" />
-        <GroupLabel>SHOW</GroupLabel>
-        {SHOW_FILTERS.map((f) => (
+        <GroupLabel>{t.showGroup}</GroupLabel>
+        {showFilters.map((f) => (
           <Chip
             key={f.id}
             selected={filter === f.id}
@@ -174,38 +174,38 @@ export function FoodBrowser({ foods }: { foods: SlimFood[] }) {
         {hydrated && triedState.tried.size > 0 && (
           <>
             <span aria-hidden="true" className="mx-1 hidden h-5 w-px bg-border sm:inline-block" />
-            <GroupLabel>YOURS</GroupLabel>
+            <GroupLabel>{t.yoursGroup}</GroupLabel>
             <Chip
               fill="primary"
               selected={filter === "safe"}
               onClick={() => setFilter((cur) => (cur === "safe" ? "all" : "safe"))}
             >
-              Safe so far
+              {t.safeSoFar}
             </Chip>
             <Chip
               fill="primary"
               selected={filter === "untried"}
               onClick={() => setFilter((cur) => (cur === "untried" ? "all" : "untried"))}
             >
-              Not yet tried
+              {t.notYetTried}
             </Chip>
           </>
         )}
         <span aria-hidden="true" className="mx-1 hidden h-5 w-px bg-border sm:inline-block" />
-        <GroupLabel>CATEGORY</GroupLabel>
-        {CATEGORY_FILTERS.map((f) => (
+        <GroupLabel>{t.categoryGroup}</GroupLabel>
+        {CATEGORY_IDS.map((id) => (
           <Chip
-            key={f.id}
-            selected={filter === f.id}
-            onClick={() => setFilter((cur) => (cur === f.id ? "all" : f.id))}
+            key={id}
+            selected={filter === id}
+            onClick={() => setFilter((cur) => (cur === id ? "all" : id))}
           >
-            {f.label}
+            {categoryLabel(id, locale)}
           </Chip>
         ))}
       </div>
 
       <p className="font-data text-[11.5px] tracking-[0.08em] text-muted-foreground">
-        {visible.length} FOODS · SORTED A–Z
+        {fmt(t.resultCount, { n: visible.length })}
       </p>
 
       <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -219,6 +219,7 @@ export function FoodBrowser({ foods }: { foods: SlimFood[] }) {
                 {isDiagramVariant(f.cutDiagram) ? (
                   <CutDiagram
                     variant={f.cutDiagram}
+                    locale={locale}
                     showCaption={false}
                     className="flex h-full w-full items-center justify-center [&_svg]:h-full [&_svg]:max-w-[180px]"
                   />
@@ -229,24 +230,26 @@ export function FoodBrowser({ foods }: { foods: SlimFood[] }) {
               <div className="flex items-baseline justify-between gap-2">
                 <span className="font-heading text-lg leading-tight font-bold">{f.name}</span>
                 <span className="font-data text-[10.5px] text-muted-foreground whitespace-nowrap">
-                  {f.minAgeMonths}m+
+                  {fmt(t.monthsPlus, { n: f.minAgeMonths })}
                 </span>
               </div>
               <p className="line-clamp-2 flex-1 text-[13px] leading-snug text-muted-foreground">{f.hint}</p>
               <div className="flex flex-wrap gap-1.5">
-                {f.ironRich && <Badge variant="secondary">Iron-rich</Badge>}
+                {f.ironRich && <Badge variant="secondary">{t.ironRich}</Badge>}
                 {f.commonAllergen && (
                   <Badge className="border-transparent bg-accent text-accent-foreground">
-                    Allergen: {f.commonAllergen}
+                    {fmt(t.allergenBadge, {
+                      a: locale === "en" ? f.commonAllergen : allergenLabel(f.commonAllergen, locale),
+                    })}
                   </Badge>
                 )}
                 {f.chokingRisk !== "low" && (
                   <Badge variant="outline" className="border-honey/50 text-honey-text">
-                    {f.chokingRisk === "high" ? "High choking risk" : "Choking care"}
+                    {f.chokingRisk === "high" ? t.highChokingRisk : t.chokingCare}
                   </Badge>
                 )}
-                {f.firstFoodPick && <Badge variant="secondary">Great first food</Badge>}
-                <Badge variant="outline">{CATEGORY_LABELS[f.category]}</Badge>
+                {f.firstFoodPick && <Badge variant="secondary">{t.greatFirstFood}</Badge>}
+                <Badge variant="outline">{categoryLabel(f.category, locale)}</Badge>
               </div>
             </Link>
           </li>

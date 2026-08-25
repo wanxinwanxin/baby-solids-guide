@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMsgs } from "@/lib/i18n/LocaleProvider";
+import { familyCardMsgs } from "@/lib/i18n/messages/family";
 
 type FamilyBaby = {
   babyId: string;
@@ -17,6 +19,7 @@ type FamilyBaby = {
  * baby, invite a co-parent (owner only), remove a member (owner only).
  */
 export function FamilyCard({ myUserId }: { myUserId: string }) {
+  const t = useMsgs(familyCardMsgs);
   const [babies, setBabies] = useState<FamilyBaby[] | null>(null);
   const [inviteUrls, setInviteUrls] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState<string | null>(null);
@@ -66,13 +69,10 @@ export function FamilyCard({ myUserId }: { myUserId: string }) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">Family</CardTitle>
+        <CardTitle className="text-base">{t.family}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
-        <p className="text-muted-foreground">
-          Co-parents sign in with their own account and see the same baby — every log flows both
-          ways. Co-parents have full access, including editing and deleting.
-        </p>
+        <p className="text-muted-foreground">{t.explainer}</p>
         {babies.map((b) => (
           <div key={b.babyId} className="space-y-2.5 rounded-xl border p-3.5">
             <p className="font-semibold">{b.nickname}</p>
@@ -81,7 +81,7 @@ export function FamilyCard({ myUserId }: { myUserId: string }) {
                 <li key={m.userId} className="flex flex-wrap items-center gap-2">
                   <span className="min-w-0 break-all">{m.email}</span>
                   <Badge variant={m.role === "owner" ? "secondary" : "outline"}>{m.role}</Badge>
-                  {m.userId === myUserId && <Badge variant="outline">you</Badge>}
+                  {m.userId === myUserId && <Badge variant="outline">{t.you}</Badge>}
                   {b.myRole === "owner" && m.userId !== myUserId && (
                     <button
                       type="button"
@@ -89,7 +89,7 @@ export function FamilyCard({ myUserId }: { myUserId: string }) {
                       onClick={() => void removeMember(b.babyId, m.userId)}
                       className="text-xs text-muted-foreground underline underline-offset-2 hover:text-destructive"
                     >
-                      remove
+                      {t.remove}
                     </button>
                   )}
                 </li>
@@ -98,21 +98,19 @@ export function FamilyCard({ myUserId }: { myUserId: string }) {
             {b.myRole === "owner" &&
               (inviteUrls[b.babyId] ? (
                 <div className="space-y-1.5">
-                  <p className="text-xs text-muted-foreground">
-                    Send this link to your co-parent — it works for 72 hours:
-                  </p>
+                  <p className="text-xs text-muted-foreground">{t.sendLink}</p>
                   <div className="flex flex-wrap items-center gap-2">
                     <code className="min-w-0 flex-1 break-all rounded-lg bg-muted px-2.5 py-1.5 text-xs">
                       {inviteUrls[b.babyId]}
                     </code>
                     <Button variant="outline" size="sm" onClick={() => void copy(b.babyId)}>
-                      {copied === b.babyId ? "Copied ✓" : "Copy"}
+                      {copied === b.babyId ? t.copied : t.copy}
                     </Button>
                   </div>
                 </div>
               ) : (
                 <Button variant="outline" size="sm" disabled={busy} onClick={() => void invite(b.babyId)}>
-                  Invite a co-parent
+                  {t.invite}
                 </Button>
               ))}
           </div>

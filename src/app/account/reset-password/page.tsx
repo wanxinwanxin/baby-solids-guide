@@ -6,8 +6,11 @@ import { Suspense, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useMsgs } from "@/lib/i18n/LocaleProvider";
+import { resetPasswordMsgs } from "@/lib/i18n/messages/account";
 
 function ResetPasswordForm() {
+  const t = useMsgs(resetPasswordMsgs);
   const params = useSearchParams();
   const token = params.get("token");
   const linkError = params.get("error");
@@ -19,9 +22,9 @@ function ResetPasswordForm() {
   if (linkError || !token) {
     return (
       <p className="text-sm text-muted-foreground">
-        This reset link is invalid or has expired.{" "}
+        {t.linkInvalid}
         <Link href="/account" className="text-primary underline underline-offset-2">
-          Request a new one from the sign-in page.
+          {t.linkInvalidLink}
         </Link>
       </p>
     );
@@ -30,9 +33,9 @@ function ResetPasswordForm() {
   if (done) {
     return (
       <p className="text-sm">
-        Password updated.{" "}
+        {t.updated}
         <Link href="/account" className="text-primary underline underline-offset-2">
-          Sign in with it now →
+          {t.updatedLink}
         </Link>
       </p>
     );
@@ -48,14 +51,14 @@ function ResetPasswordForm() {
         void authClient
           .resetPassword({ newPassword: password, token })
           .then(({ error: err }) => {
-            if (err) setError(err.message ?? "Couldn't reset the password — the link may have expired.");
+            if (err) setError(err.message ?? t.resetFailed);
             else setDone(true);
             setBusy(false);
           });
       }}
     >
       <label className="block space-y-1 text-sm">
-        <span className="font-medium">New password</span>
+        <span className="font-medium">{t.newPasswordLabel}</span>
         <Input
           type="password"
           value={password}
@@ -67,16 +70,17 @@ function ResetPasswordForm() {
       </label>
       {error && <p className="text-sm text-destructive">{error}</p>}
       <Button type="submit" disabled={busy} className="w-full">
-        Set new password
+        {t.submit}
       </Button>
     </form>
   );
 }
 
 export default function ResetPasswordPage() {
+  const t = useMsgs(resetPasswordMsgs);
   return (
     <div className="mx-auto max-w-md space-y-5">
-      <h1 className="text-2xl font-bold">Reset password</h1>
+      <h1 className="text-2xl font-bold">{t.title}</h1>
       <Suspense fallback={null}>
         <ResetPasswordForm />
       </Suspense>

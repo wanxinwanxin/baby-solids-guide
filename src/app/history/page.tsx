@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
-import { foodBySlug } from "../../../content/foods";
 import { useActiveBaby, useActiveLogs, useHydrated } from "@/lib/hooks";
+import { fmt, msg } from "@/lib/i18n/config";
+import { useL10nFoods } from "@/lib/i18n/content-client";
+import { symptomLabel } from "@/lib/i18n/labels";
+import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
+import { AMOUNT_MSGS, BAND_ID_MSGS, historyMsgs } from "@/lib/i18n/messages/history";
 import { useGuideStore } from "@/lib/storage/store";
-import { SYMPTOM_LABELS } from "@/lib/storage/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +20,9 @@ export default function HistoryPage() {
   const baby = useActiveBaby();
   const logs = useActiveLogs();
   const { deleteLog, exportJson, importJson, reset } = useGuideStore();
+  const locale = useLocale();
+  const t = useMsgs(historyMsgs);
+  const { foodBySlug } = useL10nFoods();
   const fileRef = useRef<HTMLInputElement>(null);
   const [importMessage, setImportMessage] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -52,7 +58,9 @@ export default function HistoryPage() {
     const result = importJson(text);
     setImportMessage(
       result.ok
-        ? `Imported ${result.logsImported} log(s)${result.skipped.length ? ` — skipped ${result.skipped.length} invalid row(s)` : ""}.`
+        ? result.skipped.length
+          ? fmt(t.importedSkipped, { n: result.logsImported, m: result.skipped.length })
+          : fmt(t.imported, { n: result.logsImported })
         : result.error,
     );
   }
@@ -60,20 +68,20 @@ export default function HistoryPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">History</h1>
+        <h1 className="text-2xl font-bold">{t.title}</h1>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={downloadExport} disabled={!baby && logs.length === 0}>
-            Export JSON
+            {t.exportJson}
           </Button>
           <Button variant="outline" onClick={() => fileRef.current?.click()}>
-            Import JSON
+            {t.importJson}
           </Button>
           <input
             ref={fileRef}
             type="file"
             accept="application/json,.json"
             className="hidden"
-            aria-label="Import backup file"
+            aria-label={t.importFileAria}
             onChange={(e) => {
               const f = e.target.files?.[0];
               if (f) void handleImportFile(f);
@@ -91,31 +99,31 @@ export default function HistoryPage() {
 
       {baby && (
         <p className="text-sm text-muted-foreground">
-          {baby.nickname} · {logs.length} logs ·{" "}
+          {fmt(t.nameLogs, { name: baby.nickname, n: logs.length })} ·{" "}
           <Link href="/onboarding?edit=1" className="underline underline-offset-2">
-            edit profile
+            {t.editProfile}
           </Link>{" "}
           ·{" "}
           <Link href="/onboarding?add=1" className="underline underline-offset-2">
-            add another baby
+            {t.addAnotherBaby}
           </Link>
         </p>
       )}
 
       {logs.length === 0 ? (
         <Alert>
-          <AlertTitle>No logs yet</AlertTitle>
+          <AlertTitle>{t.noLogsTitle}</AlertTitle>
           <AlertDescription>
             <Link href="/log" className="underline underline-offset-2">
-              Log your first food →
+              {t.logFirstFood}
             </Link>{" "}
-            Or import a backup with the button above.
+            {t.orImport}
           </AlertDescription>
         </Alert>
       ) : (
         <>
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold text-muted-foreground">Most-logged foods</h2>
+            <h2 className="text-sm font-semibold text-muted-foreground">{t.mostLogged}</h2>
             <div className="flex flex-wrap gap-2">
               {foodCounts.map(([slug, n]) => (
                 <Badge key={slug} variant="outline">
@@ -139,15 +147,18 @@ export default function HistoryPage() {
                             {foodBySlug.get(log.foodSlug)?.name ?? log.foodSlug}
                           </Link>{" "}
                           <span className="text-muted-foreground">
-                            · ate {log.amountEaten} · {log.prepBandUsed}
+                            {fmt(t.ateLine, {
+                              amount: msg(AMOUNT_MSGS[log.amountEaten], locale),
+                              band: msg(BAND_ID_MSGS[log.prepBandUsed], locale),
+                            })}
                           </span>
                         </div>
                         {(log.symptoms.length > 0 || log.gagging) && (
                           <div className="flex flex-wrap gap-1">
-                            {log.gagging && <Badge variant="outline">gagging</Badge>}
+                            {log.gagging && <Badge variant="outline">{t.gagging}</Badge>}
                             {log.symptoms.map((s) => (
                               <Badge key={s} variant="outline" className="border-red-300 text-red-700 dark:text-red-400">
-                                {SYMPTOM_LABELS[s]}
+                                {symptomLabel(s, locale)}
                               </Badge>
                             ))}
                           </div>
@@ -157,9 +168,9 @@ export default function HistoryPage() {
                         type="button"
                         onClick={() => deleteLog(log.id)}
                         className="text-xs text-muted-foreground underline-offset-2 hover:underline"
-                        aria-label={`Delete log of ${log.foodSlug} on ${log.date}`}
+                        aria-label={fmt(t.deleteLogAria, { food: log.foodSlug, date: log.date })}
                       >
-                        delete
+                        {t.deleteBtn}
                       </button>
                     </li>
                   ))}
@@ -173,7 +184,7 @@ export default function HistoryPage() {
       <section className="border-t pt-4">
         {confirmReset ? (
           <div className="flex items-center gap-3 text-sm">
-            <span>Delete the profile and all logs from this device?</span>
+            <span>{t.confirmDelete}</span>
             <Button
               variant="destructive"
               size="sm"
@@ -182,10 +193,10 @@ export default function HistoryPage() {
                 setConfirmReset(false);
               }}
             >
-              Yes, delete everything
+              {t.yesDeleteEverything}
             </Button>
             <Button variant="outline" size="sm" onClick={() => setConfirmReset(false)}>
-              Cancel
+              {t.cancel}
             </Button>
           </div>
         ) : (
@@ -194,7 +205,7 @@ export default function HistoryPage() {
             onClick={() => setConfirmReset(true)}
             className="text-xs text-muted-foreground underline-offset-2 hover:underline"
           >
-            Delete all data on this device
+            {t.deleteAllData}
           </button>
         )}
       </section>

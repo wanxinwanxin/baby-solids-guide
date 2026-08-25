@@ -15,8 +15,11 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from"@dnd-kit/core";
-import { allFoods, foodBySlug } from"../../../content/foods";
 import { useActiveBaby, useActiveLogs, useActiveOverrides, useActivePlan, useHydrated } from"@/lib/hooks";
+import { fmt } from"@/lib/i18n/config";
+import { useL10nFoods } from"@/lib/i18n/content-client";
+import { useLocale, useMsgs } from"@/lib/i18n/LocaleProvider";
+import { planMsgs } from"@/lib/i18n/messages/plan";
 import { generatePlan, PLAN_WEEKS, validatePlan, type PlanWarning } from"@/lib/planner";
 import { planWeekIndex } from"@/lib/engine";
 import { newId, useGuideStore } from"@/lib/storage/store";
@@ -27,20 +30,18 @@ import { Button } from"@/components/ui/button";
 import { Input } from"@/components/ui/input";
 import { cn } from"@/lib/utils";
 
-function chipLabel(slug: string): string {
-  const food = foodBySlug.get(slug);
-  return `${food?.emoji ? `${food.emoji} ` : ""}${food?.name ?? slug}`;
-}
-
 function PlannedChip({
   entry,
+  label,
   warnings,
   onRemove,
 }: {
   entry: PlanEntry;
+  label: string;
   warnings: PlanWarning[];
   onRemove: () => void;
 }) {
+  const t = useMsgs(planMsgs);
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: entry.id });
   const worst = warnings.find((w) => w.blocking) ?? warnings[0];
   return (
@@ -58,15 +59,19 @@ function PlannedChip({
         {...listeners}
         {...attributes}
         className="cursor-grab touch-none"
-        aria-label={`Move ${chipLabel(entry.foodSlug)}${worst ? ` — warning: ${worst.message}` : ""}`}
+        aria-label={
+          worst
+            ? fmt(t.moveChipWarning, { label, message: worst.message })
+            : fmt(t.moveChip, { label })
+        }
       >
-        {chipLabel(entry.foodSlug)}
+        {label}
         {worst && <span aria-hidden> {worst.blocking ? "⛔" : "⚠️"}</span>}
       </button>
       <button
         type="button"
         onClick={onRemove}
-        aria-label={`Remove ${chipLabel(entry.foodSlug)} from plan`}
+        aria-label={fmt(t.removeFromPlan, { label })}
         className="rounded-full px-1.5 text-muted-foreground hover:text-foreground"
       >
         ✕
@@ -81,6 +86,7 @@ function WeekLane({
   isCurrent,
   entries,
   warningsByEntry,
+  chipLabel,
   onRemove,
 }: {
   weekIndex: number;
@@ -88,8 +94,10 @@ function WeekLane({
   isCurrent: boolean;
   entries: PlanEntry[];
   warningsByEntry: Map<string, PlanWarning[]>;
+  chipLabel: (slug: string) => string;
   onRemove: (entryId: string) => void;
 }) {
+  const t = useMsgs(planMsgs);
   const { setNodeRef, isOver } = useDroppable({ id: `week-${weekIndex}` });
   return (
     <div
@@ -102,14 +110,15 @@ function WeekLane({
     >
       <div className="mb-2 flex items-baseline justify-between">
         <span className="text-sm font-semibold">{label}</span>
-        {isCurrent && <span className="text-xs text-primary">this week</span>}
+        {isCurrent && <span className="text-xs text-primary">{t.thisWeekBadge}</span>}
       </div>
       <div className="flex min-h-9 flex-wrap gap-1.5">
-        {entries.length === 0 && <span className="text-xs text-muted-foreground">drop foods here</span>}
+        {entries.length === 0 && <span className="text-xs text-muted-foreground">{t.dropFoodsHere}</span>}
         {entries.map((e) => (
           <PlannedChip
             key={e.id}
             entry={e}
+            label={chipLabel(e.foodSlug)}
             warnings={warningsByEntry.get(e.id) ?? []}
             onRemove={() => onRemove(e.id)}
           />
@@ -120,6 +129,9 @@ function WeekLane({
 }
 
 export function PlanBoard() {
+  const t = useMsgs(planMsgs);
+  const locale = useLocale();
+  const { foods, foodBySlug } = useL10nFoods();
   const hydrated = useHydrated();
   const baby = useActiveBaby();
   const logs = useActiveLogs();
@@ -141,8 +153,8 @@ export function PlanBoard() {
   const today = useMemo(() => new Date(), []);
 
   const warnings = useMemo(
-    () => (baby && plan ? validatePlan({ plan, baby, foods: allFoods, logs, overrides, today }) : []),
-    [baby, plan, logs, overrides, today],
+    () => (baby && plan ? validatePlan({ plan, baby, foods, logs, overrides, today }, locale) : []),
+    [baby, plan, foods, logs, overrides, today, locale],
   );
   const warningsByEntry = useMemo(() => {
     const map = new Map<string, PlanWarning[]>();
@@ -155,11 +167,11 @@ export function PlanBoard() {
   if (!baby) {
     return (
       <Alert>
-        <AlertTitle>Set up a profile to plan</AlertTitle>
+        <AlertTitle>{t.setupTitle}</AlertTitle>
         <AlertDescription>
-          The planner uses your baby&apos;s age and allergy profile to sanity-check every week.{" "}
+          {t.setupBody}{" "}
           <Link href="/onboarding"className="underline underline-offset-2">
-            Start here →
+            {t.setupLink}
           </Link>
         </AlertDescription>
       </Alert>
@@ -169,7 +181,11 @@ export function PlanBoard() {
   const currentWeek = plan ? planWeekIndex(plan, today) : 0;
   const effectiveTargetWeek = targetWeek ?? Math.min(Math.max(currentWeek, 0), PLAN_WEEKS - 1);
   const plannedSlugs = new Set(plan?.entries.map((e) => e.foodSlug) ?? []);
-  const trayFoods = allFoods
+  const chipLabel = (slug: string): string => {
+    const food = foodBySlug.get(slug);
+    return `${food?.emoji ? `${food.emoji} ` : ""}${food?.name ?? slug}`;
+  };
+  const trayFoods = foods
     .filter((f) => !plannedSlugs.has(f.slug))
     .filter((f) => !query || f.name.toLowerCase().includes(query.toLowerCase()))
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -214,16 +230,20 @@ export function PlanBoard() {
   }
 
   function suggest() {
-    const suggested = generatePlan({ baby: baby!, foods: allFoods, logs, overrides, today });
+    const suggested = generatePlan({ baby: baby!, foods, logs, overrides, today });
     setPlan(suggested);
   }
 
   const weekLabel = (i: number) => {
-    if (!plan) return `Week ${i + 1}`;
+    if (!plan) return fmt(t.weekN, { n: i + 1 });
     const start = new Date(new Date(`${plan.anchorMonday}T00:00:00Z`).getTime() + i * 7 * 86400000);
     return i === currentWeek
-      ? "This week"
-      : start.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+      ? t.thisWeek
+      : start.toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", {
+          month: "short",
+          day: "numeric",
+          timeZone: "UTC",
+        });
   };
 
   const draggingLabel = dragging
@@ -235,15 +255,15 @@ export function PlanBoard() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Introduction plan</h1>
+        <h1 className="text-2xl font-bold">{t.title}</h1>
         <div className="flex gap-2">
           <Button variant="outline"onClick={suggest}>
-            {plan?.entries.length ? "Re-suggest plan" : "Suggest a plan"}
+            {plan?.entries.length ? t.resuggestPlan : t.suggestPlan}
           </Button>
           {plan &&
             (confirmClear ? (
               <span className="flex items-center gap-2 text-sm">
-                Clear everything?
+                {t.clearConfirm}
                 <Button
                   variant="destructive"
                   size="sm"
@@ -252,36 +272,31 @@ export function PlanBoard() {
                     setConfirmClear(false);
                   }}
                 >
-                  Yes
+                  {t.yes}
                 </Button>
                 <Button variant="outline"size="sm"onClick={() => setConfirmClear(false)}>
-                  No
+                  {t.no}
                 </Button>
               </span>
             ) : (
               <Button variant="ghost"onClick={() => setConfirmClear(true)}>
-                Clear plan
+                {t.clearPlan}
               </Button>
             ))}
         </div>
       </div>
 
       <p className="max-w-2xl text-sm text-muted-foreground">
-        Two rules are science: iron-rich foods early, and common allergens one at a time (then kept
-        in rotation). Beyond that, the order is genuinely yours — drag foods around, or tap a food
-        below to add it to the selected week. The board warns, it never dictates.{" "}
+        {t.intro}{" "}
         <Link href="/learn/ordering"className="underline underline-offset-2">
-          Does order matter? →
+          {t.introLink}
         </Link>
       </p>
 
       {!plan && (
         <Alert className="border-primary/40">
-          <AlertTitle>No plan yet</AlertTitle>
-          <AlertDescription>
-            &quot;Suggest a plan&quot; builds a 12-week starting point from {baby.nickname}&apos;s
-            age, allergy profile, and what you&apos;ve already logged — every bit of it editable.
-          </AlertDescription>
+          <AlertTitle>{t.noPlanTitle}</AlertTitle>
+          <AlertDescription>{fmt(t.noPlanBody, { name: baby.nickname })}</AlertDescription>
         </Alert>
       )}
 
@@ -296,6 +311,7 @@ export function PlanBoard() {
                 isCurrent={i === currentWeek}
                 entries={plan.entries.filter((e) => e.weekIndex === i)}
                 warningsByEntry={warningsByEntry}
+                chipLabel={chipLabel}
                 onRemove={removeEntry}
               />
             ))}
@@ -304,7 +320,7 @@ export function PlanBoard() {
 
         {warnings.length > 0 && (
           <Alert className="border-amber-400">
-            <AlertTitle>Worth a look</AlertTitle>
+            <AlertTitle>{t.worthALook}</AlertTitle>
             <AlertDescription>
               <ul className="mt-1 space-y-1">
                 {warnings.map((w) => (
@@ -319,6 +335,7 @@ export function PlanBoard() {
 
         <TrayArea
           trayFoods={trayFoods.map((f) => f.slug)}
+          chipLabel={chipLabel}
           query={query}
           setQuery={setQuery}
           effectiveTargetWeek={effectiveTargetWeek}
@@ -341,7 +358,7 @@ export function PlanBoard() {
   );
 }
 
-function TrayChip({ slug, onAdd }: { slug: string; onAdd: () => void }) {
+function TrayChip({ slug, label, onAdd }: { slug: string; label: string; onAdd: () => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: `tray-${slug}` });
   return (
     <button
@@ -355,13 +372,14 @@ function TrayChip({ slug, onAdd }: { slug: string; onAdd: () => void }) {
         isDragging && "opacity-40",
       )}
     >
-      {chipLabel(slug)}
+      {label}
     </button>
   );
 }
 
 function TrayArea({
   trayFoods,
+  chipLabel,
   query,
   setQuery,
   effectiveTargetWeek,
@@ -372,6 +390,7 @@ function TrayArea({
   onStartEmpty,
 }: {
   trayFoods: string[];
+  chipLabel: (slug: string) => string;
   query: string;
   setQuery: (q: string) => void;
   effectiveTargetWeek: number;
@@ -381,6 +400,7 @@ function TrayArea({
   planExists: boolean;
   onStartEmpty: () => void;
 }) {
+  const t = useMsgs(planMsgs);
   const { setNodeRef, isOver } = useDroppable({ id: "tray" });
   return (
     <section
@@ -388,23 +408,23 @@ function TrayArea({
       className={cn("space-y-3 rounded-lg border p-4", isOver && "border-red-300 ring-2 ring-red-100")}
     >
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-sm font-semibold">Unplanned foods</h2>
+        <h2 className="text-sm font-semibold">{t.unplannedFoods}</h2>
         <Input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search…"
-          aria-label="Search unplanned foods"
+          placeholder={t.searchPlaceholder}
+          aria-label={t.searchAria}
           className="h-8 max-w-45"
         />
         {planExists ? (
           <label className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
-            Tap adds to
+            {t.tapAddsTo}
             <select
               value={effectiveTargetWeek}
               onChange={(e) => setTargetWeek(Number(e.target.value))}
               className="rounded-md border bg-background px-2 py-1 text-xs"
-              aria-label="Week that tapped foods are added to"
+              aria-label={t.weekSelectAria}
             >
               {Array.from({ length: 12 }, (_, i) => (
                 <option key={i} value={i}>
@@ -415,17 +435,14 @@ function TrayArea({
           </label>
         ) : (
           <button type="button"onClick={onStartEmpty} className="ml-auto text-xs underline underline-offset-2">
-            start with an empty board
+            {t.startEmpty}
           </button>
         )}
       </div>
-      <p className="text-xs text-muted-foreground">
-        Drag onto a week, or tap to add to the selected week. Drop a planned food back here to
-        remove it.
-      </p>
+      <p className="text-xs text-muted-foreground">{t.trayHint}</p>
       <div className="flex max-h-56 flex-wrap gap-2 overflow-y-auto">
         {trayFoods.map((slug) => (
-          <TrayChip key={slug} slug={slug} onAdd={() => onAdd(slug)} />
+          <TrayChip key={slug} slug={slug} label={chipLabel(slug)} onAdd={() => onAdd(slug)} />
         ))}
       </div>
     </section>

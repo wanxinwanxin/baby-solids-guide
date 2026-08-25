@@ -4,6 +4,7 @@ import { useState } from"react";
 import type { Food } from"@/content-schema/food";
 import {
   CHECKIN_PRESETS,
+  checkinPresetLabel,
   dueAtForPreset,
   googleCalendarUrl,
   icsForCheckIns,
@@ -11,7 +12,10 @@ import {
 import { useSession } from"@/lib/auth-client";
 import { newId, useGuideStore } from"@/lib/storage/store";
 import type { BabyProfile, CheckInPreset } from"@/lib/storage/types";
-import { allergenPrograms } from"../../../content/allergens";
+import { fmt, msg } from"@/lib/i18n/config";
+import { useLocale, useMsgs } from"@/lib/i18n/LocaleProvider";
+import { useL10nAllergens } from"@/lib/i18n/content-client";
+import { checkInOfferMsgs, FALLBACK_REACTION_SIGNS } from"@/lib/i18n/messages/log";
 import { Button } from"@/components/ui/button";
 import { cn } from"@/lib/utils";
 
@@ -23,12 +27,15 @@ import { cn } from"@/lib/utils";
 export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProfile; logId: string }) {
   const addCheckIns = useGuideStore((s) => s.addCheckIns);
   const { data: session } = useSession();
+  const locale = useLocale();
+  const t = useMsgs(checkInOfferMsgs);
+  const allergens = useL10nAllergens();
   const [selected, setSelected] = useState<Set<CheckInPreset>>(new Set(["2h"]));
   const [scheduled, setScheduled] = useState<{ dueAts: string[] } | null>(null);
 
   const reactionSigns = food.commonAllergen
-    ? (allergenPrograms.find((p) => p.id === food.commonAllergen)?.reactionSigns ?? [])
-    : ["hives or rash", "vomiting", "swelling", "unusual sleepiness"];
+    ? (allergens.find((p) => p.id === food.commonAllergen)?.reactionSigns ?? [])
+    : FALLBACK_REACTION_SIGNS.map((m) => msg(m, locale));
 
   function toggle(preset: CheckInPreset) {
     const next = new Set(selected);
@@ -61,8 +68,10 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
         body: JSON.stringify({
           reminders: dueAts.map((dueAt) => ({
             kind: "check-in",
-            title: `Check ${baby.nickname} — ${food.name}`,
-            body: `Watch for: ${reactionSigns.slice(0, 3).join("; ")}. Tap to log what you see.`,
+            title: fmt(t.pushTitle, { nickname: baby.nickname, food: food.name }),
+            body: fmt(t.pushBody, {
+              signs: reactionSigns.slice(0, 3).join(locale === "en" ? "; " : "；"),
+            }),
             url: "/today",
             dueAt,
           })),
@@ -74,13 +83,16 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
 
   function downloadIcs() {
     if (!scheduled) return;
-    const ics = icsForCheckIns({
-      foodName: food.name,
-      babyNickname: baby.nickname,
-      dueAts: scheduled.dueAts,
-      reactionSigns,
-      now: new Date(),
-    });
+    const ics = icsForCheckIns(
+      {
+        foodName: food.name,
+        babyNickname: baby.nickname,
+        dueAts: scheduled.dueAts,
+        reactionSigns,
+        now: new Date(),
+      },
+      locale,
+    );
     const blob = new Blob([ics], { type: "text/calendar" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -94,29 +106,33 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
     return (
       <div className="space-y-3 rounded-lg border border-primary/40 p-4 text-sm">
         <p className="font-medium">
-          ✓ {scheduled.dueAts.length} check-in{scheduled.dueAts.length === 1 ? "" : "s"} scheduled —
-          they&apos;ll wait for you on the Today screen.
+          {fmt(scheduled.dueAts.length === 1 ? t.scheduledOne : t.scheduledMany, {
+            n: scheduled.dueAts.length,
+          })}
         </p>
         <p className="text-muted-foreground">
-          Closing the browser? Put them in your calendar so nothing slips:
+          {t.putInCalendar}
         </p>
         <div className="flex flex-wrap gap-2">
           {scheduled.dueAts.map((dueAt) => (
             <a
               key={dueAt}
-              href={googleCalendarUrl({
-                foodName: food.name,
-                babyNickname: baby.nickname,
-                dueAt,
-                reactionSigns,
-                appUrl: typeof window !== "undefined" ? window.location.origin : "",
-              })}
+              href={googleCalendarUrl(
+                {
+                  foodName: food.name,
+                  babyNickname: baby.nickname,
+                  dueAt,
+                  reactionSigns,
+                  appUrl: typeof window !== "undefined" ? window.location.origin : "",
+                },
+                locale,
+              )}
               target="_blank"
               rel="noopener noreferrer"
               className="rounded-md border px-3 py-1.5 text-xs hover:border-primary/60"
             >
-              📅 Google Calendar (
-              {new Date(dueAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+              📅 {t.googleCalendar} (
+              {new Date(dueAt).toLocaleString(locale === "zh" ? "zh-CN" : undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
               )
             </a>
           ))}
@@ -125,7 +141,7 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
             onClick={downloadIcs}
             className="rounded-md border px-3 py-1.5 text-xs hover:border-primary/60"
           >
-            ⬇ .ics for Apple/Outlook
+            {t.icsButton}
           </button>
         </div>
       </div>
@@ -136,8 +152,8 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
     <div className="space-y-3 rounded-lg border p-4 text-sm">
       <p className="font-medium">
         {food.commonAllergen
-          ? `${food.name} is a common allergen — want a reminder to check for symptoms?`
-          : "Want a reminder to check on how this went down?"}
+          ? fmt(t.allergenPrompt, { food: food.name })
+          : t.genericPrompt}
       </p>
       <div className="flex flex-wrap gap-2">
         {CHECKIN_PRESETS.map((p) => (
@@ -151,7 +167,7 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
               selected.has(p.id) ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/60",
             )}
           >
-            {p.label}
+            {checkinPresetLabel(p.id, locale)}
           </button>
         ))}
       </div>
@@ -161,7 +177,7 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
         onClick={schedule}
         className="bg-primary text-primary-foreground hover:bg-primary/85"
       >
-        Schedule check-in{selected.size === 1 ? "" : "s"}
+        {selected.size === 1 ? t.scheduleOne : t.scheduleMany}
       </Button>
     </div>
   );

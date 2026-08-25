@@ -3,35 +3,29 @@
 import Link from"next/link";
 import { useRouter, useSearchParams } from"next/navigation";
 import { useMemo, useState } from"react";
-import { allFoods, foodBySlug } from"../../../content/foods";
 import type { AgeBand } from"@/content-schema/food";
-import { BAND_LABELS, bandForAgeMonths, todayIso } from"@/lib/food-utils";
+import { bandForAgeMonths, todayIso } from"@/lib/food-utils";
 import { correctedAgeMonths } from"@/lib/age";
 import { onsetForElapsed } from"@/lib/checkins";
 import { useActiveBaby, useActiveCheckIns, useHydrated } from"@/lib/hooks";
 import { newId, useGuideStore } from"@/lib/storage/store";
 import { CheckInOffer } from"./CheckInOffer";
 import type { AmountEaten, Enjoyment, SymptomId } from"@/lib/storage/types";
-import { SYMPTOM_IDS, SYMPTOM_LABELS } from"@/lib/storage/types";
+import { SYMPTOM_IDS } from"@/lib/storage/types";
 import { triage, type TriageResult } from"@/lib/triage";
+import { fmt, msg } from"@/lib/i18n/config";
+import { useLocale, useMsgs } from"@/lib/i18n/LocaleProvider";
+import { allergenLabel, bandLabel, symptomLabel } from"@/lib/i18n/labels";
+import { useL10nFoods } from"@/lib/i18n/content-client";
+import { AMOUNT_MSGS, ENJOYMENT_MSGS, logFormMsgs } from"@/lib/i18n/messages/log";
 import { EmergencyDialog } from"@/components/EmergencyDialog";
 import { Alert, AlertDescription, AlertTitle } from"@/components/ui/alert";
 import { Button } from"@/components/ui/button";
 import { Input } from"@/components/ui/input";
 import { cn } from"@/lib/utils";
 
-const AMOUNTS: { id: AmountEaten; label: string }[] = [
-  { id: "none", label: "None" },
-  { id: "taste", label: "A taste" },
-  { id: "some", label: "Some" },
-  { id: "lots", label: "Lots!" },
-];
-const ENJOYMENT: { id: Enjoyment; label: string }[] = [
-  { id: "loved", label: "😍 Loved" },
-  { id: "neutral", label: "😐 Neutral" },
-  { id: "disliked", label: "😖 Disliked" },
-  { id: "refused", label: "🙅 Refused" },
-];
+const AMOUNTS: AmountEaten[] = ["none", "taste", "some", "lots"];
+const ENJOYMENT: Enjoyment[] = ["loved", "neutral", "disliked", "refused"];
 
 function Chip({
   active,
@@ -61,6 +55,9 @@ export function LogForm() {
   const router = useRouter();
   const params = useSearchParams();
   const baby = useActiveBaby();
+  const locale = useLocale();
+  const t = useMsgs(logFormMsgs);
+  const { foods, foodBySlug } = useL10nFoods();
   const addLog = useGuideStore((s) => s.addLog);
   const resolveCheckIn = useGuideStore((s) => s.resolveCheckIn);
   const checkIns = useActiveCheckIns();
@@ -92,21 +89,21 @@ export function LogForm() {
   const matches = useMemo(() => {
     const q = foodQuery.trim().toLowerCase();
     if (!q) return [];
-    return allFoods
+    return foods
       .filter((f) => f.name.toLowerCase().includes(q) || f.slug.includes(q))
       .slice(0, 8);
-  }, [foodQuery]);
+  }, [foodQuery, foods]);
 
   if (!hydrated) return null;
 
   if (!baby) {
     return (
       <Alert>
-        <AlertTitle>Set up your baby&apos;s profile first</AlertTitle>
+        <AlertTitle>{t.setupTitle}</AlertTitle>
         <AlertDescription>
-          Logging needs a profile so recommendations can adapt.{" "}
+          {t.setupBody}{" "}
           <Link href="/onboarding"className="underline underline-offset-2">
-            Start here →
+            {t.startHere}
           </Link>
         </AlertDescription>
       </Alert>
@@ -120,8 +117,8 @@ export function LogForm() {
     setSymptoms(nextSymptoms);
     // The emergency screen interrupts the moment a red-flag symptom is
     // selected — before the log is saved (ROADMAP §9.2).
-    const t = triage(nextSymptoms);
-    if (t.severity === "emergency") setEmergency(t);
+    const result = triage(nextSymptoms, locale);
+    if (result.severity === "emergency") setEmergency(result);
   }
 
   function save() {
@@ -143,11 +140,11 @@ export function LogForm() {
           : undefined,
     });
     if (activeCheckIn) resolveCheckIn(activeCheckIn.id, "done");
-    const t = triage(symptoms);
-    if (t.severity === "none") {
+    const result = triage(symptoms, locale);
+    if (result.severity === "none") {
       setSavedClean({ logId: id });
     } else {
-      setSaved(t);
+      setSaved(result);
     }
   }
 
@@ -155,15 +152,15 @@ export function LogForm() {
     return (
       <div className="mx-auto max-w-lg space-y-4">
         <Alert className="border-primary/40">
-          <AlertTitle className="text-base">Logged — nice work. 🎉</AlertTitle>
+          <AlertTitle className="text-base">{t.loggedNice}</AlertTitle>
           <AlertDescription>
-            {food.name} is in the book for {baby.nickname}.
+            {fmt(t.inTheBook, { food: food.name, name: baby.nickname })}
           </AlertDescription>
         </Alert>
         {!activeCheckIn && <CheckInOffer food={food} baby={baby} logId={savedClean.logId} />}
         <div className="flex gap-3">
           <Button onClick={() => router.push("/today")} className="bg-primary text-primary-foreground hover:bg-primary/85">
-            Back to Today
+            {t.backToToday}
           </Button>
           <Button
             variant="outline"
@@ -175,7 +172,7 @@ export function LogForm() {
               setGagging(false);
             }}
           >
-            Log another food
+            {t.logAnother}
           </Button>
         </div>
       </div>
@@ -201,16 +198,19 @@ export function LogForm() {
         </Alert>
         {saved.pausesAllergen && food?.commonAllergen && (
           <p className="text-sm text-muted-foreground">
-            The {food.commonAllergen} group is now paused in your plan.{" "}
+            {fmt(t.allergenPaused, {
+              allergen:
+                locale === "en" ? food.commonAllergen : allergenLabel(food.commonAllergen, locale),
+            })}{" "}
             <Link href={`/allergens/${food.commonAllergen}`} className="underline underline-offset-2">
-              See the reaction playbook →
+              {t.reactionPlaybook}
             </Link>
           </p>
         )}
         <div className="flex gap-3">
-          <Button onClick={() => router.push("/today")}>Back to Today</Button>
+          <Button onClick={() => router.push("/today")}>{t.backToToday}</Button>
           <Link href="/safety"className="self-center text-sm underline underline-offset-2">
-            Emergency guide
+            {t.emergencyGuide}
           </Link>
         </div>
       </div>
@@ -222,17 +222,17 @@ export function LogForm() {
       {emergency && <EmergencyDialog result={emergency} onAcknowledge={() => setEmergency(null)} />}
 
       <div className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-bold">{activeCheckIn ? "Check-in" : "Log a food"}</h1>
+        <h1 className="text-2xl font-bold">{activeCheckIn ? t.checkInTitle : t.logAFood}</h1>
         <Link href="/safety"className="text-xs text-red-700 underline underline-offset-2 dark:text-red-400">
-          Worried right now? Emergency guide
+          {t.worriedNow}
         </Link>
       </div>
 
       {activeCheckIn && food && (
         <Alert className="border-amber-400">
-          <AlertTitle>How does {baby.nickname} look after {food.name}?</AlertTitle>
+          <AlertTitle>{fmt(t.howLooks, { name: baby.nickname, food: food.name })}</AlertTitle>
           <AlertDescription className="flex flex-wrap items-center gap-3">
-            <span>Tick anything you&apos;re seeing below, or give the all-clear.</span>
+            <span>{t.tickAnything}</span>
             <Button
               size="sm"
               variant="outline"
@@ -241,7 +241,7 @@ export function LogForm() {
                 router.push("/today");
               }}
             >
-              All clear — no symptoms ✓
+              {t.allClear}
             </Button>
           </AlertDescription>
         </Alert>
@@ -249,7 +249,7 @@ export function LogForm() {
 
       {/* 1. Food */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold">Food</h2>
+        <h2 className="text-sm font-semibold">{t.foodSection}</h2>
         {food ? (
           <div className="flex items-center gap-3">
             <span className="rounded-lg border border-primary bg-secondary px-4 py-2 font-medium">
@@ -264,7 +264,7 @@ export function LogForm() {
                   setBand(null);
                 }}
               >
-                change
+                {t.change}
               </button>
             )}
           </div>
@@ -272,10 +272,10 @@ export function LogForm() {
           <div className="space-y-2">
             <Input
               autoFocus
-              placeholder="Type to search (e.g. carrot)…"
+              placeholder={t.searchPlaceholder}
               value={foodQuery}
               onChange={(e) => setFoodQuery(e.target.value)}
-              aria-label="Search food to log"
+              aria-label={t.searchAria}
             />
             <div className="flex flex-wrap gap-2">
               {matches.map((f) => (
@@ -292,7 +292,7 @@ export function LogForm() {
         <>
           {/* 2. How was it served */}
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold">Prep used</h2>
+            <h2 className="text-sm font-semibold">{t.prepUsed}</h2>
             <div className="flex flex-wrap gap-2">
               {food.prepSpecs.map((p) => (
                 <Chip
@@ -300,7 +300,7 @@ export function LogForm() {
                   active={(band ?? defaultBand) === p.band}
                   onClick={() => setBand(p.band)}
                 >
-                  {BAND_LABELS[p.band]}
+                  {bandLabel(p.band, locale)}
                 </Chip>
               ))}
             </div>
@@ -308,11 +308,11 @@ export function LogForm() {
 
           {/* 3. Amount */}
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold">How much went in?</h2>
+            <h2 className="text-sm font-semibold">{t.howMuch}</h2>
             <div className="flex flex-wrap gap-2">
               {AMOUNTS.map((a) => (
-                <Chip key={a.id} active={amount === a.id} onClick={() => setAmount(a.id)}>
-                  {a.label}
+                <Chip key={a} active={amount === a} onClick={() => setAmount(a)}>
+                  {msg(AMOUNT_MSGS[a], locale)}
                 </Chip>
               ))}
             </div>
@@ -320,11 +320,11 @@ export function LogForm() {
 
           {/* 4. Reaction */}
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold">How did it go?</h2>
+            <h2 className="text-sm font-semibold">{t.howDidItGo}</h2>
             <div className="flex flex-wrap gap-2">
               {ENJOYMENT.map((e) => (
-                <Chip key={e.id} active={enjoyment === e.id} onClick={() => setEnjoyment(e.id)}>
-                  {e.label}
+                <Chip key={e} active={enjoyment === e} onClick={() => setEnjoyment(e)}>
+                  {msg(ENJOYMENT_MSGS[e], locale)}
                 </Chip>
               ))}
             </div>
@@ -335,11 +335,11 @@ export function LogForm() {
                 onChange={(e) => setGagging(e.target.checked)}
                 className="size-4 accent-primary"
               />
-              Some gagging (normal reflex — see{" "}
+              {t.gaggingBefore}
               <Link href="/safety"className="underline underline-offset-2">
-                gagging vs. choking
+                {t.gaggingLink}
               </Link>
-              )
+              {t.gaggingAfter}
             </label>
           </section>
 
@@ -351,7 +351,7 @@ export function LogForm() {
               className="text-sm font-semibold underline-offset-2 hover:underline"
               aria-expanded={showSymptoms || !!activeCheckIn}
             >
-              {showSymptoms || activeCheckIn ? "▾" : "▸"} Any symptoms? (rash, hives, vomiting…)
+              {showSymptoms || activeCheckIn ? "▾" : "▸"} {t.anySymptoms}
             </button>
             {(showSymptoms || !!activeCheckIn) && (
               <div className="space-y-1.5 rounded-lg border p-3">
@@ -363,7 +363,7 @@ export function LogForm() {
                       onChange={() => toggleSymptom(id)}
                       className="size-4 accent-red-700"
                     />
-                    {SYMPTOM_LABELS[id]}
+                    {symptomLabel(id, locale)}
                   </label>
                 ))}
               </div>
@@ -372,7 +372,7 @@ export function LogForm() {
 
           <div className="flex items-center gap-3">
             <label className="text-sm text-muted-foreground">
-              Date{" "}
+              {t.dateLabel}{" "}
               <input
                 type="date"
                 value={date}
@@ -386,7 +386,7 @@ export function LogForm() {
               size="lg"
               className="ml-auto bg-primary text-primary-foreground hover:bg-primary/85"
             >
-              Save log
+              {t.saveLog}
             </Button>
           </div>
         </>

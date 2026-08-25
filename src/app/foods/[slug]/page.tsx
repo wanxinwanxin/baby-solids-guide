@@ -4,7 +4,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { allFoods, foodBySlug } from "../../../../content/foods";
 import { allRecipes } from "../../../../content/recipes";
-import { ALLERGEN_LABELS, CATEGORY_LABELS, NUTRIENT_LABELS } from "@/lib/food-utils";
+import { fmt, msg, pick } from "@/lib/i18n/config";
+import { getLocale } from "@/lib/i18n/server";
+import { allergenLabel, categoryLabel, nutrientLabel } from "@/lib/i18n/labels";
+import { foodDetailMsgs } from "@/lib/i18n/messages/food-detail";
+import { localizeFood, localizeRecipes } from "@/lib/l10n";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -20,10 +24,12 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const food = foodBySlug.get(slug);
-  if (!food) return {};
+  const base = foodBySlug.get(slug);
+  if (!base) return {};
+  const locale = await getLocale();
+  const food = localizeFood(base, locale);
   return {
-    title: `${food.name} for babies — safe texture by age`,
+    title: fmt(msg(foodDetailMsgs.metaTitle, locale), { name: food.name }),
     description: food.prepSpecs[0].form,
   };
 }
@@ -43,12 +49,22 @@ function SectionHeading({ children }: { children: ReactNode }) {
 
 export default async function FoodPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const food = foodBySlug.get(slug);
-  if (!food) notFound();
+  const base = foodBySlug.get(slug);
+  if (!base) notFound();
 
-  const lname = food.name.toLowerCase();
-  const categoryLabel = CATEGORY_LABELS[food.category];
-  const recipesWithFood = allRecipes
+  const locale = await getLocale();
+  const t = pick(foodDetailMsgs, locale);
+  const food = localizeFood(base, locale);
+
+  /** English question headings use the lowercased name; zh uses the localized name as-is. */
+  const foodRef = locale === "en" ? food.name.toLowerCase() : food.name;
+  /** Localized display name for another food, by slug. */
+  const foodName = (s: string) => {
+    const f = foodBySlug.get(s);
+    return f ? localizeFood(f, locale).name : s;
+  };
+  const category = categoryLabel(food.category, locale);
+  const recipesWithFood = localizeRecipes(allRecipes, locale)
     .filter((r) => r.foods.includes(food.slug))
     .sort((a, b) => a.name.localeCompare(b.name))
     .slice(0, 8);
@@ -57,17 +73,17 @@ export default async function FoodPage({ params }: { params: Promise<{ slug: str
     <article className="space-y-10">
       <header className="space-y-4">
         <nav
-          aria-label="Breadcrumb"
+          aria-label={t.breadcrumbLabel}
           className="font-data text-[11.5px] tracking-[0.1em] text-muted-foreground uppercase"
         >
           <ol className="flex flex-wrap items-center gap-1.5">
             <li>
               <Link href="/foods" className="transition-colors hover:text-foreground">
-                Foods
+                {t.breadcrumbFoods}
               </Link>
             </li>
             <li aria-hidden="true">/</li>
-            <li>{categoryLabel}</li>
+            <li>{category}</li>
             <li aria-hidden="true">/</li>
             <li aria-current="page" className="text-foreground">
               {food.name}
@@ -77,42 +93,41 @@ export default async function FoodPage({ params }: { params: Promise<{ slug: str
 
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">{food.name}</h1>
-          <Badge className="border-transparent bg-accent text-accent-foreground">{categoryLabel}</Badge>
-          {food.firstFoodPick && <Badge variant="secondary">Great first food</Badge>}
+          <Badge className="border-transparent bg-accent text-accent-foreground">{category}</Badge>
+          {food.firstFoodPick && <Badge variant="secondary">{t.greatFirstFood}</Badge>}
         </div>
 
         <div className="overflow-x-auto rounded-2xl border bg-card">
           <dl className="flex w-max min-w-full divide-x divide-border">
-            <Fact label="AGE">{food.minAgeMonths} months +</Fact>
-            <Fact label="COMMON ALLERGEN">
-              {food.commonAllergen ? ALLERGEN_LABELS[food.commonAllergen] : "No"}
+            <Fact label={t.factAge}>{fmt(t.monthsPlus, { n: food.minAgeMonths })}</Fact>
+            <Fact label={t.factAllergen}>
+              {food.commonAllergen ? allergenLabel(food.commonAllergen, locale) : t.no}
             </Fact>
-            <Fact label="CHOKING RISK">
+            <Fact label={t.factChoking}>
               {food.chokingRisk === "low" ? (
                 <>
-                  Low <span className="font-medium text-muted-foreground">· prep still matters</span>
+                  {t.chokingLow} <span className="font-medium text-muted-foreground">{t.chokingLowNote}</span>
                 </>
               ) : food.chokingRisk === "moderate" ? (
-                <span className="text-accent-foreground">Moderate</span>
+                <span className="text-accent-foreground">{t.chokingModerate}</span>
               ) : (
-                <span className="text-accent-foreground">High — prep is the fix</span>
+                <span className="text-accent-foreground">{t.chokingHigh}</span>
               )}
             </Fact>
-            <Fact label="IRON">{food.ironRich ? "Iron-rich" : "Not iron-rich"}</Fact>
-            <Fact label="GOOD FOR">
-              {food.nutrients ? food.nutrients.map((n) => NUTRIENT_LABELS[n]).join(" · ") : "—"}
+            <Fact label={t.factIron}>{food.ironRich ? t.ironRich : t.notIronRich}</Fact>
+            <Fact label={t.factGoodFor}>
+              {food.nutrients ? food.nutrients.map((n) => nutrientLabel(n, locale)).join(" · ") : "—"}
             </Fact>
           </dl>
         </div>
       </header>
 
       <section className="space-y-3">
-        <SectionHeading>When can babies have {lname}?</SectionHeading>
+        <SectionHeading>{fmt(t.whenHeading, { name: foodRef })}</SectionHeading>
         <p className="max-w-[62ch] text-pretty leading-relaxed text-foreground/80">
-          From {food.minAgeMonths} months (corrected age)
-          {food.firstFoodPick
-            ? " — and it’s one of our curated great first foods."
-            : ", in the age-right form below."}
+          {fmt(food.firstFoodPick ? t.fromMonthsFirstPick : t.fromMonthsDefault, {
+            n: food.minAgeMonths,
+          })}
         </p>
         {food.nutritionHighlights.length > 0 && (
           <ul className="max-w-[62ch] space-y-1.5">
@@ -127,28 +142,27 @@ export default async function FoodPage({ params }: { params: Promise<{ slug: str
       </section>
 
       <section className="space-y-4">
-        <SectionHeading>How do I serve it at each age?</SectionHeading>
+        <SectionHeading>{t.serveHeading}</SectionHeading>
         <PrepBands prepSpecs={food.prepSpecs} servingGuidance={food.servingGuidance} />
       </section>
 
       <section className="space-y-3">
-        <SectionHeading>How do I get the texture right?</SectionHeading>
+        <SectionHeading>{t.textureHeading}</SectionHeading>
         <ul className="max-w-[62ch] space-y-2">
-          {food.tips.map((t) => (
-            <li key={t} className="flex gap-2.5 text-sm leading-relaxed text-foreground/80">
+          {food.tips.map((tip) => (
+            <li key={tip} className="flex gap-2.5 text-sm leading-relaxed text-foreground/80">
               <span aria-hidden="true" className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
-              {t}
+              {tip}
             </li>
           ))}
         </ul>
       </section>
 
       <section className="space-y-3">
-        <SectionHeading>Is {lname} a choking hazard?</SectionHeading>
+        <SectionHeading>{fmt(t.chokingHeading, { name: foodRef })}</SectionHeading>
         {food.chokingRisk === "low" ? (
           <p className="max-w-[62ch] leading-relaxed text-foreground/80">
-            {food.chokingNotes ??
-              "Low risk in the forms above — shape and texture do the safety work. Any food can be a hazard served the wrong way, so match the form to your baby’s age."}
+            {food.chokingNotes ?? t.chokingFallback}
           </p>
         ) : (
           <div
@@ -165,7 +179,7 @@ export default async function FoodPage({ params }: { params: Promise<{ slug: str
                 food.chokingRisk === "high" ? "text-destructive" : "text-accent-foreground",
               )}
             >
-              {food.chokingRisk === "high" ? "High choking risk — prep matters" : "Choking care"}
+              {food.chokingRisk === "high" ? t.highChokingTitle : t.chokingCareTitle}
             </p>
             <p
               className={cn(
@@ -181,18 +195,18 @@ export default async function FoodPage({ params }: { params: Promise<{ slug: str
 
       {food.commonAllergen && (
         <section className="space-y-3">
-          <SectionHeading>Is {lname} a common allergen?</SectionHeading>
+          <SectionHeading>{fmt(t.allergenHeading, { name: foodRef })}</SectionHeading>
           <div className="max-w-[62ch] space-y-1.5 rounded-xl border border-honey/30 bg-accent px-5 py-4">
             <p className="text-sm font-bold text-accent-foreground">
-              Common allergen: {ALLERGEN_LABELS[food.commonAllergen]}
+              {fmt(t.commonAllergenLabel, { a: allergenLabel(food.commonAllergen, locale) })}
             </p>
             <p className="text-sm leading-relaxed text-accent-foreground">
-              Yes — introduce it early in the day, alongside familiar foods, and watch for 2 hours.{" "}
+              {t.allergenBody}{" "}
               <Link
                 href={`/allergens/${food.commonAllergen}`}
                 className="font-semibold underline underline-offset-2"
               >
-                See the {ALLERGEN_LABELS[food.commonAllergen]} introduction program →
+                {fmt(t.allergenLink, { a: allergenLabel(food.commonAllergen, locale) })}
               </Link>
             </p>
           </div>
@@ -201,7 +215,7 @@ export default async function FoodPage({ params }: { params: Promise<{ slug: str
 
       {food.watchOuts && food.watchOuts.length > 0 && (
         <section className="space-y-3">
-          <SectionHeading>Anything to watch for?</SectionHeading>
+          <SectionHeading>{t.watchHeading}</SectionHeading>
           <div className="max-w-[62ch] space-y-2.5 rounded-xl border border-honey/30 bg-accent px-5 py-4">
             {food.watchOuts.map((w) => (
               <p key={w} className="flex items-start gap-3 text-sm leading-relaxed text-accent-foreground">
@@ -215,31 +229,31 @@ export default async function FoodPage({ params }: { params: Promise<{ slug: str
 
       {food.nutrients && (
         <section className="space-y-3">
-          <SectionHeading>What nutrients does it bring?</SectionHeading>
+          <SectionHeading>{t.nutrientsHeading}</SectionHeading>
           <div className="flex flex-wrap gap-1.5">
             {food.nutrients.map((n) => (
               <Badge key={n} variant="secondary">
-                {NUTRIENT_LABELS[n]}
+                {nutrientLabel(n, locale)}
               </Badge>
             ))}
           </div>
           {food.nutrients.includes("iron") && (
             <p className="max-w-[62ch] text-sm leading-relaxed text-foreground/80">
-              <span className="font-semibold text-foreground">Iron tip: </span>
-              vitamin C boosts iron absorption — pair with{" "}
+              <span className="font-semibold text-foreground">{t.ironTipLabel}</span>
+              {t.ironTipBody}
               {allFoods
                 .filter((f) => f.nutrients?.includes("vitaminC") && f.slug !== food.slug)
                 .sort((a, b) => a.slug.localeCompare(b.slug))
                 .slice(0, 3)
                 .map((f, i) => (
                   <span key={f.slug}>
-                    {i > 0 && ", "}
+                    {i > 0 && t.listSep}
                     <Link href={`/foods/${f.slug}`} className="underline underline-offset-2">
-                      {f.name.toLowerCase()}
+                      {locale === "en" ? foodName(f.slug).toLowerCase() : foodName(f.slug)}
                     </Link>
                   </span>
                 ))}
-              .
+              {t.sentenceEnd}
             </p>
           )}
         </section>
@@ -247,7 +261,7 @@ export default async function FoodPage({ params }: { params: Promise<{ slug: str
 
       {food.flavorPairings.length > 0 && (
         <section className="space-y-3">
-          <SectionHeading>What does it go with?</SectionHeading>
+          <SectionHeading>{t.pairingsHeading}</SectionHeading>
           <ul className="flex flex-wrap gap-2">
             {food.flavorPairings.map((p) => (
               <li key={p}>
@@ -255,7 +269,7 @@ export default async function FoodPage({ params }: { params: Promise<{ slug: str
                   href={`/foods/${p}`}
                   className="inline-flex items-center rounded-full border bg-card px-4.5 py-2 text-sm font-semibold text-foreground/80 transition-colors hover:border-primary hover:text-foreground"
                 >
-                  {foodBySlug.get(p)?.name ?? p}
+                  {foodName(p)}
                 </Link>
               </li>
             ))}
@@ -265,7 +279,7 @@ export default async function FoodPage({ params }: { params: Promise<{ slug: str
 
       {recipesWithFood.length > 0 && (
         <section className="space-y-3">
-          <SectionHeading>Recipes that use it</SectionHeading>
+          <SectionHeading>{t.recipesHeading}</SectionHeading>
           <ul className="flex flex-wrap gap-2">
             {recipesWithFood.map((r) => (
               <li key={r.slug}>
@@ -275,7 +289,7 @@ export default async function FoodPage({ params }: { params: Promise<{ slug: str
                 >
                   {r.name}
                   {r.ironPairing && (
-                    <span className="font-data text-[10px] text-secondary-foreground">IRON+C</span>
+                    <span className="font-data text-[10px] text-secondary-foreground">{t.ironCTag}</span>
                   )}
                 </Link>
               </li>
@@ -292,13 +306,13 @@ export default async function FoodPage({ params }: { params: Promise<{ slug: str
             "h-13 px-8 text-base font-bold shadow-lg shadow-primary/25",
           )}
         >
-          + Log {lname}
+          {fmt(t.logCta, { name: foodRef })}
         </Link>
       </div>
 
       <footer className="space-y-3 border-t pt-6">
         <p className="font-data text-[11px] tracking-[0.12em] text-muted-foreground">
-          RECEIPTS — EVERY CLAIM TRACES TO A FREE PRIMARY SOURCE
+          {t.receiptsLabel}
         </p>
         <ul className="flex flex-wrap gap-2">
           {food.sources.map((s) => (
@@ -316,8 +330,7 @@ export default async function FoodPage({ params }: { params: Promise<{ slug: str
           ))}
         </ul>
         <p className="text-xs text-muted-foreground">
-          Educational guidance, not medical advice. Every baby develops differently — when in
-          doubt, ask your pediatrician.
+          {t.disclaimer}
         </p>
       </footer>
     </article>

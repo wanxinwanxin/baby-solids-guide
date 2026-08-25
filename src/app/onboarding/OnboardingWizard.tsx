@@ -5,23 +5,19 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { todayIso } from "@/lib/food-utils";
 import { useActiveBaby, useHydrated } from "@/lib/hooks";
+import { fmt, msg } from "@/lib/i18n/config";
+import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
+import { onboardingMsgs, READINESS_SIGN_MSGS } from "@/lib/i18n/messages/onboarding";
 import { newId, useGuideStore } from "@/lib/storage/store";
 import type { BabyProfile, EczemaSeverity, FeedingStyle } from "@/lib/storage/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-const READINESS_SIGNS = [
-  "Sits upright with little or no support",
-  "Steady head control",
-  "Brings hands and toys to the mouth",
-  "Watches your food with real interest",
-  "The tongue-thrust reflex has faded (food isn't automatically pushed back out)",
-];
-
 function StepSegments({ step, total }: { step: number; total: number }) {
+  const t = useMsgs(onboardingMsgs);
   return (
-    <div className="flex gap-1.5" aria-label={`Step ${step + 1} of ${total}`}>
+    <div className="flex gap-1.5" aria-label={fmt(t.stepAria, { step: step + 1, total })}>
       {Array.from({ length: total }, (_, i) => (
         <span
           key={i}
@@ -189,6 +185,8 @@ function ConfettiSettle() {
 
 export function OnboardingWizard() {
   const hydrated = useHydrated();
+  const locale = useLocale();
+  const t = useMsgs(onboardingMsgs);
   const router = useRouter();
   const params = useSearchParams();
   const editing = params.get("edit") === "1";
@@ -211,7 +209,7 @@ export function OnboardingWizard() {
     baby?.allergyRisk.familyHistoryAtopy ?? null,
   );
   const [signs, setSigns] = useState<boolean[]>(
-    READINESS_SIGNS.map(() => !!baby?.readiness.confirmedAt),
+    READINESS_SIGN_MSGS.map(() => !!baby?.readiness.confirmedAt),
   );
   const [earlyStartApproved, setEarlyStartApproved] = useState(
     baby?.readiness.earlyStartApproved ?? false,
@@ -220,11 +218,12 @@ export function OnboardingWizard() {
 
   if (!hydrated) return null;
 
+  const readinessSigns = READINESS_SIGN_MSGS.map((m) => msg(m, locale));
   const allSigns = signs.every(Boolean);
   const signCount = signs.filter(Boolean).length;
-  const signTotal = READINESS_SIGNS.length;
+  const signTotal = readinessSigns.length;
   const readyVerdict = allSigns || earlyStartApproved;
-  const watchingFor = READINESS_SIGNS.filter((_, i) => !signs[i]);
+  const watchingFor = readinessSigns.filter((_, i) => !signs[i]);
 
   function buildProfile(): BabyProfile {
     return {
@@ -262,18 +261,18 @@ export function OnboardingWizard() {
   const steps = [
     // 0 — basics
     <section key="basics" className="space-y-5">
-      <h2 className="text-2xl font-extrabold">About your baby</h2>
+      <h2 className="text-2xl font-extrabold">{t.aboutTitle}</h2>
       <label className="block space-y-1.5 text-sm">
-        <span className="font-semibold">Name or nickname</span>
+        <span className="font-semibold">{t.nameLabel}</span>
         <Input
           className="h-12 rounded-xl px-4 text-[15px]"
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
-          placeholder="e.g. Mango"
+          placeholder={t.namePlaceholder}
         />
       </label>
       <label className="block space-y-1.5 text-sm">
-        <span className="font-semibold">Birth date</span>
+        <span className="font-semibold">{t.birthDateLabel}</span>
         <Input
           className="font-data h-12 rounded-xl px-4 text-[15px]"
           type="date"
@@ -283,11 +282,11 @@ export function OnboardingWizard() {
         />
       </label>
       <CheckRow checked={wasPremature} onChange={setWasPremature}>
-        Born more than 3 weeks early
+        {t.prematureCheck}
       </CheckRow>
       {wasPremature && (
         <label className="block space-y-1.5 text-sm">
-          <span className="font-semibold">Original due date</span>
+          <span className="font-semibold">{t.dueDateLabel}</span>
           <Input
             className="font-data h-12 rounded-xl px-4 text-[15px]"
             type="date"
@@ -295,80 +294,76 @@ export function OnboardingWizard() {
             onChange={(e) => setDueDate(e.target.value)}
           />
           <span className="block text-xs leading-relaxed text-muted-foreground">
-            We&apos;ll use corrected age for every recommendation — standard practice for babies
-            born early.
+            {t.correctedAgeNote}
           </span>
         </label>
       )}
       <div className="space-y-2">
-        <span className="text-sm font-semibold">How do you want to feed?</span>
-        <Choice value="purees" current={feedingStyle} onSelect={setFeedingStyle} label="Purées & mashes first" description="Spoon-led, moving to finger foods over time" />
-        <Choice value="baby-led" current={feedingStyle} onSelect={setFeedingStyle} label="Baby-led (finger foods)" description="Soft graspable pieces from the start" />
-        <Choice value="mixed" current={feedingStyle} onSelect={setFeedingStyle} label="A mix of both" description="We'll show both preps — most families land here" />
+        <span className="text-sm font-semibold">{t.feedHow}</span>
+        <Choice value="purees" current={feedingStyle} onSelect={setFeedingStyle} label={t.pureesLabel} description={t.pureesDesc} />
+        <Choice value="baby-led" current={feedingStyle} onSelect={setFeedingStyle} label={t.babyLedLabel} description={t.babyLedDesc} />
+        <Choice value="mixed" current={feedingStyle} onSelect={setFeedingStyle} label={t.mixedLabel} description={t.mixedDesc} />
       </div>
       <Button
         className="h-12 w-full text-[15px] font-bold"
         disabled={!birthDate || !feedingStyle}
         onClick={() => setStep(1)}
       >
-        Next: allergy questions<span aria-hidden="true"> →</span>
+        {t.nextAllergy}<span aria-hidden="true"> →</span>
       </Button>
     </section>,
 
     // 1 — allergy risk quiz
     <section key="risk" className="space-y-5">
       <div className="space-y-2">
-        <h2 className="text-2xl font-extrabold">Three quick allergy questions</h2>
+        <h2 className="text-2xl font-extrabold">{t.riskTitle}</h2>
         <p className="text-sm text-muted-foreground">
-          These set the allergen introduction plan (based on the NIAID guidelines).
+          {t.riskLede}
         </p>
       </div>
       <div className="space-y-2">
-        <span className="text-sm font-semibold">Does your baby have eczema?</span>
+        <span className="text-sm font-semibold">{t.eczemaQ}</span>
         <div className="grid grid-cols-3 gap-2">
-          <Choice center value="none" current={eczema} onSelect={setEczema} label="No" />
-          <Choice center value="mild-moderate" current={eczema} onSelect={setEczema} label="Mild to moderate" />
-          <Choice center value="severe" current={eczema} onSelect={setEczema} label="Severe" />
+          <Choice center value="none" current={eczema} onSelect={setEczema} label={t.no} />
+          <Choice center value="mild-moderate" current={eczema} onSelect={setEczema} label={t.mildModerate} />
+          <Choice center value="severe" current={eczema} onSelect={setEczema} label={t.severe} />
         </div>
         <p className="text-xs leading-relaxed text-muted-foreground">
-          Mild–moderate: occasional patches, managed with moisturizer or mild treatment. Severe:
-          persistent or widespread, needs prescription treatment.
+          {t.eczemaHelp}
         </p>
       </div>
       <div className="space-y-2">
-        <span className="text-sm font-semibold">Any diagnosed food allergy already?</span>
+        <span className="text-sm font-semibold">{t.allergyQ}</span>
         <div className="grid grid-cols-2 gap-2">
-          <Choice center value="no" current={existingFoodAllergy === null ? null : existingFoodAllergy ? "yes" : "no"} onSelect={() => setExistingFoodAllergy(false)} label="No" />
-          <Choice center value="yes" current={existingFoodAllergy === null ? null : existingFoodAllergy ? "yes" : "no"} onSelect={() => setExistingFoodAllergy(true)} label="Yes" />
+          <Choice center value="no" current={existingFoodAllergy === null ? null : existingFoodAllergy ? "yes" : "no"} onSelect={() => setExistingFoodAllergy(false)} label={t.no} />
+          <Choice center value="yes" current={existingFoodAllergy === null ? null : existingFoodAllergy ? "yes" : "no"} onSelect={() => setExistingFoodAllergy(true)} label={t.yes} />
         </div>
       </div>
       <div className="space-y-2">
-        <span className="text-sm font-semibold">Parent or sibling with food allergy, eczema, or asthma?</span>
+        <span className="text-sm font-semibold">{t.familyQ}</span>
         <div className="grid grid-cols-2 gap-2">
-          <Choice center value="no" current={familyHistoryAtopy === null ? null : familyHistoryAtopy ? "yes" : "no"} onSelect={() => setFamilyHistoryAtopy(false)} label="No" />
-          <Choice center value="yes" current={familyHistoryAtopy === null ? null : familyHistoryAtopy ? "yes" : "no"} onSelect={() => setFamilyHistoryAtopy(true)} label="Yes" />
+          <Choice center value="no" current={familyHistoryAtopy === null ? null : familyHistoryAtopy ? "yes" : "no"} onSelect={() => setFamilyHistoryAtopy(false)} label={t.no} />
+          <Choice center value="yes" current={familyHistoryAtopy === null ? null : familyHistoryAtopy ? "yes" : "no"} onSelect={() => setFamilyHistoryAtopy(true)} label={t.yes} />
         </div>
       </div>
       {(eczema === "severe" || existingFoodAllergy) && (
         <div className="flex items-start gap-2.5 rounded-xl border border-honey/40 bg-accent p-4">
           <span aria-hidden="true" className="mt-1.5 size-2 shrink-0 rounded-full bg-honey" />
           <p className="text-[13px] leading-relaxed text-accent-foreground">
-            This puts your baby in the higher-risk group for peanut allergy. We&apos;ll hold peanut
-            until you confirm your pediatrician or allergist has cleared it — worth asking about at
-            the 4- or 6-month visit.
+            {t.highRiskNote}
           </p>
         </div>
       )}
       <div className="flex gap-2.5">
         <Button variant="outline" className="h-12 px-6 text-[15px] font-semibold" onClick={() => setStep(0)}>
-          <span aria-hidden="true">← </span>Back
+          <span aria-hidden="true">← </span>{t.back}
         </Button>
         <Button
           className="h-12 flex-1 text-[15px] font-bold"
           disabled={eczema === null || existingFoodAllergy === null || familyHistoryAtopy === null}
           onClick={() => setStep(2)}
         >
-          Next: readiness<span aria-hidden="true"> →</span>
+          {t.nextReadiness}<span aria-hidden="true"> →</span>
         </Button>
       </div>
     </section>,
@@ -376,13 +371,13 @@ export function OnboardingWizard() {
     // 2 — readiness quiz
     <section key="readiness" className="space-y-5">
       <div className="space-y-2">
-        <h2 className="text-2xl font-extrabold">Is {nickname || "your baby"} showing the readiness signs?</h2>
+        <h2 className="text-2xl font-extrabold">{fmt(t.readinessTitle, { name: nickname || t.yourBaby })}</h2>
         <p className="text-sm text-muted-foreground">
-          Most babies show all of these around 6 months. Check what you&apos;re seeing:
+          {t.readinessLede}
         </p>
       </div>
       <div className="space-y-2">
-        {READINESS_SIGNS.map((sign, i) => (
+        {readinessSigns.map((sign, i) => (
           <CheckRow
             key={sign}
             checked={signs[i]}
@@ -394,35 +389,30 @@ export function OnboardingWizard() {
       </div>
       {!allSigns && (
         <p className="text-sm leading-relaxed text-muted-foreground">
-          Not all there yet? Totally normal — save the profile anyway and we&apos;ll show you what
-          to watch for instead of food picks. Or, if your pediatrician told you to start, check the
-          box below and the program unlocks today.
+          {t.notAllYet}
         </p>
       )}
       <CheckRow checked={earlyStartApproved} onChange={setEarlyStartApproved} alignTop dashed>
-        <span className="font-semibold">We&apos;re starting on our pediatrician&apos;s specific advice.</span>{" "}
+        <span className="font-semibold">{t.earlyStartTitle}</span>{" "}
         <span className="text-muted-foreground">
-          This unlocks the program from 4 months, even before every readiness sign appears —
-          pediatrician-guided programs often start early.
+          {t.earlyStartDesc}
         </span>
       </CheckRow>
       <div className="flex gap-2.5">
         <Button variant="outline" className="h-12 px-6 text-[15px] font-semibold" onClick={() => setStep(1)}>
-          <span aria-hidden="true">← </span>Back
+          <span aria-hidden="true">← </span>{t.back}
         </Button>
         <Button className="h-12 flex-1 text-[15px] font-bold" onClick={() => setStep(3)}>
-          Next: one last thing<span aria-hidden="true"> →</span>
+          {t.nextLastThing}<span aria-hidden="true"> →</span>
         </Button>
       </div>
     </section>,
 
     // 3 — disclaimer + verdict + branch
     <section key="finish" className="space-y-5">
-      <h2 className="text-2xl font-extrabold">One last thing</h2>
+      <h2 className="text-2xl font-extrabold">{t.finishTitle}</h2>
       <CheckRow checked={disclaimer} onChange={setDisclaimer} alignTop>
-        I understand OpenSolids is a free educational guide, not medical advice, and that my
-        pediatrician&apos;s guidance comes first. All data stays on this device unless I export
-        it.
+        {t.disclaimer}
       </CheckRow>
 
       {disclaimer &&
@@ -431,43 +421,32 @@ export function OnboardingWizard() {
             <ConfettiSettle />
             <div className="relative space-y-3">
               <p className="font-data text-[11px] tracking-[0.14em] text-secondary uppercase dark:text-secondary-foreground">
-                Readiness verdict · {signCount} of {signTotal} signs
+                {fmt(t.verdictEyebrow, { count: signCount, total: signTotal })}
               </p>
               <h3 className="font-heading text-4xl leading-[1.05] font-extrabold tracking-tight text-background dark:text-foreground">
-                It&apos;s time<span className="text-chart-3">.</span>
+                {t.itsTime}<span className="text-chart-3">{t.itsTimeDot}</span>
               </h3>
               <p className="text-[15px] leading-relaxed text-background/80 dark:text-foreground/80">
-                {allSigns ? (
-                  <>
-                    {nickname || "Your baby"} is showing all {signTotal} readiness signs. Tomorrow
-                    morning is a perfectly good day one — your first week is built around
-                    iron-rich, one-ingredient starts.
-                  </>
-                ) : (
-                  <>
-                    You&apos;re starting on your pediatrician&apos;s specific advice — the plan
-                    unlocks today, and we&apos;ll keep picks to smooth, mashable first foods.
-                  </>
-                )}
+                {allSigns
+                  ? fmt(t.allSignsBody, { name: nickname || t.yourBabyCap, total: signTotal })
+                  : t.earlyStartBody}
               </p>
             </div>
           </div>
         ) : (
           <div className="space-y-4 rounded-2xl border border-border bg-background p-6 shadow-xl shadow-foreground/10 sm:p-8">
             <p className="font-data text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
-              Readiness verdict · {signCount} of {signTotal} signs
+              {fmt(t.verdictEyebrow, { count: signCount, total: signTotal })}
             </p>
             <h3 className="font-heading text-3xl leading-tight font-extrabold tracking-tight">
-              Not yet — and that&apos;s normal<span className="text-primary">.</span>
+              {t.notYetTitle}<span className="text-primary">{t.notYetDot}</span>
             </h3>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              {nickname || "Your baby"} isn&apos;t showing all the signs, so we won&apos;t suggest
-              foods yet. We&apos;ll show you exactly what to watch for, and the plan flips on the
-              day the signs line up.
+              {fmt(t.notYetBody, { name: nickname || t.yourBabyCap })}
             </p>
             <div className="flex flex-col gap-2.5 rounded-xl border border-border bg-card p-4">
               <p className="font-data text-[10px] tracking-[0.12em] text-muted-foreground uppercase">
-                Watching for
+                {t.watchingFor}
               </p>
               {watchingFor.map((sign) => (
                 <p key={sign} className="text-sm text-foreground/75">
@@ -483,14 +462,13 @@ export function OnboardingWizard() {
               className="flex w-full flex-col gap-1.5 rounded-xl border-[1.5px] border-primary bg-secondary p-4 text-left transition-colors hover:bg-secondary/70"
             >
               <span className="text-sm font-bold text-secondary-foreground">
-                Starting on your pediatrician&apos;s advice?
+                {t.pedAdviceQ}
               </span>
               <span className="block text-[13px] leading-relaxed text-foreground/80">
-                That unlocks the program from 4 months — we&apos;ll keep picks to smooth, mashable
-                first foods.
+                {t.pedAdviceDesc}
               </span>
               <span className="text-sm font-bold text-secondary-foreground">
-                Begin today<span aria-hidden="true"> →</span>
+                {t.beginToday}<span aria-hidden="true"> →</span>
               </span>
             </button>
           </div>
@@ -502,7 +480,7 @@ export function OnboardingWizard() {
           disabled={!disclaimer}
           onClick={() => finish("today")}
         >
-          {editing || adding ? "Save profile" : "Start fresh → see today's plan"}
+          {editing || adding ? t.saveProfile : t.startFresh}
         </Button>
         {!editing && !adding && (
           <Button
@@ -511,7 +489,7 @@ export function OnboardingWizard() {
             disabled={!disclaimer}
             onClick={() => finish("import")}
           >
-            We&apos;ve already started → import
+            {t.alreadyStarted}
           </Button>
         )}
         <Button
@@ -519,7 +497,7 @@ export function OnboardingWizard() {
           className="h-11 w-full text-sm text-muted-foreground"
           onClick={() => setStep(2)}
         >
-          <span aria-hidden="true">← </span>Back
+          <span aria-hidden="true">← </span>{t.back}
         </Button>
       </div>
     </section>,
@@ -528,17 +506,17 @@ export function OnboardingWizard() {
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <h1 className="text-3xl font-extrabold">
-        {editing ? "Edit profile" : adding ? "Add another baby" : "Let's set up your plan"}
+        {editing ? t.h1Edit : adding ? t.h1Add : t.h1Setup}
       </h1>
       <div className="rounded-2xl border border-border bg-card p-5 shadow-xl shadow-foreground/10 sm:p-8">
         <div className="mb-5 space-y-2.5">
           <div className="flex items-center justify-between gap-3">
             <span className="font-data text-[11px] tracking-[0.14em] text-muted-foreground">
-              STEP {step + 1} OF {steps.length}
+              {fmt(t.stepOf, { step: step + 1, total: steps.length })}
             </span>
             {step === 0 && (
               <span className="font-data text-[11px] tracking-[0.02em] text-muted-foreground">
-                ~2 MIN TOTAL
+                {t.twoMin}
               </span>
             )}
           </div>
@@ -547,11 +525,11 @@ export function OnboardingWizard() {
         {steps[step]}
       </div>
       <p className="text-xs text-muted-foreground">
-        Prefer to look around first?{" "}
+        {t.browseBefore}{" "}
         <Link href="/foods" className="font-medium text-primary underline underline-offset-2">
-          Browse the food library
+          {t.browseLink}
         </Link>{" "}
-        without a profile.
+        {t.browseAfter}
       </p>
     </div>
   );

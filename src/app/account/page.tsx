@@ -11,16 +11,13 @@ import { Button } from"@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from"@/components/ui/card";
 import { Input } from"@/components/ui/input";
 import { cn } from"@/lib/utils";
-
-const STATUS_LABEL = {
-  off: "",
-  idle: "",
-  syncing: "syncing…",
-  synced: "synced ✓",
-  error: "sync error — will retry",
-} as const;
+import { msg } from"@/lib/i18n/config";
+import { useLocale, useMsgs } from"@/lib/i18n/LocaleProvider";
+import { accountMsgs, SYNC_STATUS_LABELS } from"@/lib/i18n/messages/account";
 
 export default function AccountPage() {
+  const t = useMsgs(accountMsgs);
+  const locale = useLocale();
   const hydrated = useHydrated();
   const enabled = useAuthEnabled();
   const { data: session, isPending } = useSession();
@@ -39,15 +36,15 @@ export default function AccountPage() {
   if (!enabled) {
     return (
       <div className="mx-auto max-w-md space-y-4">
-        <h1 className="text-2xl font-bold">Account</h1>
+        <h1 className="text-2xl font-bold">{t.title}</h1>
         <Alert>
-          <AlertTitle>Sync isn&apos;t configured in this deployment</AlertTitle>
+          <AlertTitle>{t.noSyncTitle}</AlertTitle>
           <AlertDescription>
-            Your data still lives safely on this device, and you can{" "}
+            {t.noSyncBefore}
             <Link href="/history"className="underline underline-offset-2">
-              export a backup
-            </Link>{" "}
-            any time.
+              {t.noSyncLink}
+            </Link>
+            {t.noSyncAfter}
           </AlertDescription>
         </Alert>
       </div>
@@ -63,13 +60,13 @@ export default function AccountPage() {
         ? signIn.email({ email, password })
         : signUp.email({ email, password, name: email.split("@")[0] });
     const { error: err } = await action;
-    if (err) setError(err.message ?? "Something went wrong — try again.");
+    if (err) setError(err.message ?? t.genericError);
     setBusy(false);
   }
 
   async function requestReset() {
     if (!email) {
-      setError("Enter your email above first, then tap the reset link again.");
+      setError(t.resetNeedEmail);
       return;
     }
     setBusy(true);
@@ -79,8 +76,8 @@ export default function AccountPage() {
       email,
       redirectTo: "/account/reset-password",
     });
-    if (err) setError(err.message ?? "Couldn't send the reset email — try again.");
-    else setNotice("If that address has an account, a reset link is on its way.");
+    if (err) setError(err.message ?? t.resetSendError);
+    else setNotice(t.resetSent);
     setBusy(false);
   }
 
@@ -109,24 +106,21 @@ export default function AccountPage() {
     return (
       <div className="mx-auto max-w-md space-y-5">
         <div className="flex items-baseline justify-between">
-          <h1 className="text-2xl font-bold">Account</h1>
-          <span className="text-xs text-primary">{STATUS_LABEL[syncState]}</span>
+          <h1 className="text-2xl font-bold">{t.title}</h1>
+          <span className="text-xs text-primary">{msg(SYNC_STATUS_LABELS[syncState], locale)}</span>
         </div>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">{session.user.email}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <p className="text-muted-foreground">
-              Your babies&apos; profiles and logs sync to this account and follow you to any
-              device. Nothing else is stored — no analytics, no tracking.
-            </p>
+            <p className="text-muted-foreground">{t.syncedExplainer}</p>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline"size="sm"onClick={downloadServerData}>
-                Download my data from the server
+                {t.downloadData}
               </Button>
               <Button variant="outline"size="sm"onClick={() => void signOut()}>
-                Sign out
+                {t.signOut}
               </Button>
             </div>
           </CardContent>
@@ -135,16 +129,13 @@ export default function AccountPage() {
         <div className="border-t pt-4">
           {confirmDelete ? (
             <div className="space-y-2 text-sm">
-              <p>
-                Delete the account and ALL server-side data? Data on this device stays until you
-                clear it from History.
-              </p>
+              <p>{t.deleteConfirmBody}</p>
               <div className="flex gap-2">
                 <Button variant="destructive"size="sm"onClick={deleteAccount}>
-                  Yes, delete my account
+                  {t.deleteYes}
                 </Button>
                 <Button variant="outline"size="sm"onClick={() => setConfirmDelete(false)}>
-                  Cancel
+                  {t.cancel}
                 </Button>
               </div>
             </div>
@@ -154,7 +145,7 @@ export default function AccountPage() {
               onClick={() => setConfirmDelete(true)}
               className="text-xs text-muted-foreground underline-offset-2 hover:underline"
             >
-              Delete account and server data
+              {t.deleteLink}
             </button>
           )}
         </div>
@@ -164,11 +155,8 @@ export default function AccountPage() {
 
   return (
     <div className="mx-auto max-w-md space-y-5">
-      <h1 className="text-2xl font-bold">Save your data</h1>
-      <p className="text-sm text-muted-foreground">
-        An account keeps {`your baby's`} history safe across devices and browser cleanups. Free,
-        no ads, no tracking — and guest mode keeps working if you skip this.
-      </p>
+      <h1 className="text-2xl font-bold">{t.saveTitle}</h1>
+      <p className="text-sm text-muted-foreground">{t.saveLede}</p>
 
       <div className="flex gap-1 rounded-lg border p-1"role="tablist">
         {(["sign-in", "sign-up"] as const).map((m) => (
@@ -183,7 +171,7 @@ export default function AccountPage() {
               mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground",
             )}
           >
-            {m === "sign-in" ? "Sign in" : "Create account"}
+            {m === "sign-in" ? t.tabSignIn : t.tabCreate}
           </button>
         ))}
       </div>
@@ -196,11 +184,11 @@ export default function AccountPage() {
         }}
       >
         <label className="block space-y-1 text-sm">
-          <span className="font-medium">Email</span>
+          <span className="font-medium">{t.emailLabel}</span>
           <Input type="email"value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
         </label>
         <label className="block space-y-1 text-sm">
-          <span className="font-medium">Password</span>
+          <span className="font-medium">{t.passwordLabel}</span>
           <Input
             type="password"
             value={password}
@@ -217,7 +205,7 @@ export default function AccountPage() {
           disabled={busy || isPending}
           className="w-full bg-primary text-primary-foreground hover:bg-primary/85"
         >
-          {mode === "sign-in" ? "Sign in" : "Create account"}
+          {mode === "sign-in" ? t.tabSignIn : t.tabCreate}
         </Button>
         {mode === "sign-in" && (
           <button
@@ -225,22 +213,20 @@ export default function AccountPage() {
             onClick={() => void requestReset()}
             className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
           >
-            Forgot password? Email me a reset link
+            {t.forgotPassword}
           </button>
         )}
       </form>
 
       <GoogleButton />
 
-      <p className="text-xs text-muted-foreground">
-        On first sign-in, everything on this device is uploaded and merged with anything already
-        in the account — nothing is lost in either direction.
-      </p>
+      <p className="text-xs text-muted-foreground">{t.firstSignInNote}</p>
     </div>
   );
 }
 
 function GoogleButton() {
+  const t = useMsgs(accountMsgs);
   const [google, setGoogle] = useState(false);
   useState(() => {
     fetch("/api/auth/status")
@@ -255,7 +241,7 @@ function GoogleButton() {
       className="w-full"
       onClick={() => void signIn.social({ provider: "google" })}
     >
-      Continue with Google
+      {t.continueGoogle}
     </Button>
   );
 }

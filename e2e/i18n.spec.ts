@@ -9,7 +9,7 @@ test("language toggle switches the whole app to Simplified Chinese and back", as
 
   // <html lang>, nav chrome, page copy, and content all flip.
   await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
-  await expect(page.getByRole("link", { name: "食谱" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "食谱", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: /种食物/ })).toBeVisible();
 
   // Localized content: food names render in Chinese, and search matches both languages.

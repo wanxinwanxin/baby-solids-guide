@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from"react";
 import { useSession } from"@/lib/auth-client";
+import { useMsgs } from"@/lib/i18n/LocaleProvider";
+import { pushOptInMsgs } from"@/lib/i18n/messages/push-opt-in";
 
 function urlBase64ToUint8Array(base64: string): Uint8Array {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
@@ -14,6 +16,7 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
  * browser permission dialog only appears after an explicit tap.
  */
 export function PushOptIn() {
+  const t = useMsgs(pushOptInMsgs);
   const { data: session } = useSession();
   const [state, setState] = useState<"unknown" | "unsupported" | "off" | "on" | "denied">("unknown");
 
@@ -49,7 +52,7 @@ export function PushOptIn() {
 
   if (!session || state === "unknown" || state === "unsupported" || state === "denied") return null;
   if (state === "on") {
-    return <p className="text-xs text-muted-foreground">📳 Phone notifications are on for check-ins.</p>;
+    return <p className="text-xs text-muted-foreground">{t.on}</p>;
   }
 
   async function enable() {
@@ -82,7 +85,7 @@ export function PushOptIn() {
       onClick={() => void enable()}
       className="text-xs text-primary underline underline-offset-2"
     >
-      📳 Get check-ins as phone notifications, even with the app closed →
+      {t.enable}
     </button>
   );
 }

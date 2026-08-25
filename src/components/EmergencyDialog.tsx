@@ -1,6 +1,8 @@
 "use client";
 
 import type { TriageResult } from "@/lib/triage";
+import { useMsgs } from "@/lib/i18n/LocaleProvider";
+import { emergencyMsgs } from "@/lib/i18n/messages/emergency";
 
 /**
  * Full-screen emergency interrupt (ROADMAP §2.2, §8.4). Deliberately not a
@@ -13,6 +15,7 @@ export function EmergencyDialog({
   result: TriageResult;
   onAcknowledge: () => void;
 }) {
+  const t = useMsgs(emergencyMsgs);
   return (
     <div
       role="alertdialog"
@@ -27,14 +30,14 @@ export function EmergencyDialog({
         ))}
       </ul>
       <a href="tel:911" className="rounded-xl bg-white px-8 py-4 text-2xl font-bold text-red-700">
-        Call 911
+        {t.call911}
       </a>
       <button
         type="button"
         onClick={onAcknowledge}
         className="mt-4 rounded-md border border-white/60 px-4 py-2 text-sm underline-offset-2 hover:underline"
       >
-        I understand — continue
+        {t.acknowledge}
       </button>
     </div>
   );
