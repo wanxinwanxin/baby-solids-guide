@@ -19,12 +19,12 @@ import { cn } from "@/lib/utils";
 const PRIMARY = [
   { href: "/today", label: "Today" },
   { href: "/foods", label: "Foods" },
+  { href: "/recipes", label: "Recipes" },
   { href: "/plan", label: "Plan" },
   { href: "/learn", label: "Learn" },
 ];
 
 const MORE = [
-  { href: "/recipes", label: "Recipes" },
   { href: "/allergens", label: "Allergens" },
   { href: "/history", label: "History" },
   { href: "/insights", label: "Insights" },

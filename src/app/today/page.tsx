@@ -575,6 +575,12 @@ export default function TodayPage() {
             Iron · allergen pace · variety · texture
           </span>
         </div>
+        {attemptCounts.size < 3 && (
+          <p className="text-[13px] leading-relaxed text-muted-foreground">
+            Starting gently: one new food at a time, kept going for 2–3 days while you watch —
+            more picks unlock as foods are introduced.
+          </p>
+        )}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {rec.todaysPicks.map((p) => {
             const food = foodBySlug.get(p.slug);
@@ -756,6 +762,16 @@ export default function TodayPage() {
           )}
         </div>
       </section>
+
+      {combos.length === 0 && (
+        <p className="text-[13px] text-muted-foreground">
+          Meal ideas appear here once a few foods are logged safe — in the meantime, browse all{" "}
+          <Link href="/recipes" className="font-semibold text-primary underline underline-offset-2">
+            {allRecipes.length} blender-simple recipes
+          </Link>
+          .
+        </p>
+      )}
 
       {combos.length > 0 && (
         <section className="flex flex-col gap-3.5 rounded-2xl bg-card p-5 ring-1 ring-border">

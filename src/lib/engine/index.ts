@@ -76,6 +76,25 @@ export type EngineInput = {
   plan?: Plan | null;
 };
 
+/**
+ * Deterministic string hash for the R12 day rotation: FNV-1a plus a final
+ * avalanche. (djb2 is affine per appended character, so strings sharing a
+ * suffix keep their relative order — no rotation. The avalanche fixes that.)
+ */
+function dayHash(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  h ^= h >>> 15;
+  h = Math.imul(h, 2246822519);
+  h ^= h >>> 13;
+  h = Math.imul(h, 3266489917);
+  h ^= h >>> 16;
+  return h >>> 0;
+}
+
 /** Allergen order implied by a plan: first-appearance week, ties broken by the default order. */
 export function allergenOrderFromPlan(plan: Plan, foods: Food[]): AllergenId[] {
   const allergenOfFood = new Map(foods.map((f) => [f.slug, f.commonAllergen]));
@@ -538,15 +557,51 @@ export function recommend(input: EngineInput): Recommendation {
       suggestedBand: bandForAge(food, age),
     });
   }
+  // ——— R12: day-keyed rotation ———
+  // The final tie-break hashes slug + calendar day instead of plain slug
+  // order, so equal-priority foods rotate day to day (no seven identical
+  // days in a row) while staying fully deterministic for a given date.
+  const dayKey = isoDay(today);
   const isFirstPick = new Map(foods.map((f) => [f.slug, f.firstFoodPick]));
   scored.sort(
     (a, b) =>
       b.score - a.score ||
       (stats.get(a.slug)?.exposures ?? 0) - (stats.get(b.slug)?.exposures ?? 0) ||
       Number(isFirstPick.get(b.slug) ?? false) - Number(isFirstPick.get(a.slug) ?? false) ||
+      dayHash(`${dayKey}:${a.slug}`) - dayHash(`${dayKey}:${b.slug}`) ||
       a.slug.localeCompare(b.slug),
   );
-  const todaysPicks = scored.slice(0, 3);
+
+  // ——— R11: gentle start ———
+  // One food at a time until introductions accumulate: 0 foods introduced →
+  // 1 pick, 1–2 → 2 picks, 3+ → the full 3. While ramping, the food most
+  // recently eaten (within 3 days, not on hold) is pinned first — repeat it
+  // a couple of days while watching before adding the next.
+  const distinctIntroduced = new Set(logs.map((l) => l.foodSlug)).size;
+  const pickCount = distinctIntroduced === 0 ? 1 : distinctIntroduced <= 2 ? 2 : 3;
+  let todaysPicks = scored.slice(0, pickCount);
+  if (distinctIntroduced >= 1 && distinctIntroduced <= 2) {
+    const lastEaten = [...logs]
+      .filter((l) => l.amountEaten !== "none")
+      .sort((a, b) => b.date.localeCompare(a.date))[0];
+    const pinFood = lastEaten ? foods.find((f) => f.slug === lastEaten.foodSlug) : undefined;
+    if (
+      lastEaten &&
+      pinFood &&
+      !excludedSlugs.has(pinFood.slug) &&
+      daysBetween(lastEaten.date, today) <= 3
+    ) {
+      const attempts = stats.get(pinFood.slug)?.attempts ?? 1;
+      const pinned: ScoredFood = {
+        slug: pinFood.slug,
+        name: pinFood.name,
+        score: scored.find((s) => s.slug === pinFood.slug)?.score ?? 1,
+        suggestedBand: bandForAge(pinFood, age),
+        reason: `Offered ${attempts} time(s) — keep ${pinFood.name.toLowerCase()} going for 2–3 days while you watch, before adding the next new food.`,
+      };
+      todaysPicks = [pinned, ...scored.filter((s) => s.slug !== pinFood.slug)].slice(0, pickCount);
+    }
+  }
 
   // ——— R4 texture progression ———
   const stageIdx = TEXTURE_STAGES.findIndex((s) => s.id === baby.textureStage);

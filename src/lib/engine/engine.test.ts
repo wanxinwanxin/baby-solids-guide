@@ -217,9 +217,12 @@ describe("recommendation engine — the 10 mandatory cases (ROADMAP §7.3)", () 
       ],
     });
     const foods = [honey, makeFood({ slug: "carrot", name: "Carrot" })];
-    const young = run({ baby: makeBaby({ birthDate: birthDateForAgeMonths(11.9) }), foods });
+    // A carrot log unlocks a second pick slot (R11), so honey's eligibility
+    // is what decides whether it appears.
+    const logs = [makeLog({ foodSlug: "carrot", date: daysAgo(1) })];
+    const young = run({ baby: makeBaby({ birthDate: birthDateForAgeMonths(11.9) }), foods, logs });
     expect(young.todaysPicks.map((p) => p.slug)).not.toContain("honey");
-    const older = run({ baby: makeBaby({ birthDate: birthDateForAgeMonths(12.1) }), foods });
+    const older = run({ baby: makeBaby({ birthDate: birthDateForAgeMonths(12.1) }), foods, logs });
     expect(older.todaysPicks.map((p) => p.slug)).toContain("honey");
   });
 
@@ -245,19 +248,62 @@ describe("recommendation engine — the 10 mandatory cases (ROADMAP §7.3)", () 
     expect(entry!.reason).toMatch(/different prep|8–15/);
   });
 
-  it("10. determinism: equal scores tie-break by exposures then slug; identical runs are identical", () => {
+  it("10. determinism: identical runs are identical (same input ⇒ same output)", () => {
     const logs = [makeLog({ foodSlug: "banana", date: daysAgo(2) })];
     const a = run({ logs });
     const b = run({ logs });
     expect(a).toEqual(b);
-    // banana and apple share category/scores otherwise; banana has 1 exposure → apple sorts first
-    const fruitOrder = a.todaysPicks
-      .concat(run({ logs }).todaysPicks)
-      .map((p) => p.slug)
-      .filter((s) => s === "apple" || s === "banana");
-    if (fruitOrder.includes("apple") && fruitOrder.includes("banana")) {
-      expect(fruitOrder.indexOf("apple")).toBeLessThan(fruitOrder.indexOf("banana"));
+  });
+});
+
+describe("R11 gentle start + R12 day rotation", () => {
+  it("R11: pick count ramps 1 → 2 → 3 as foods are introduced", () => {
+    expect(run({ logs: [] }).todaysPicks).toHaveLength(1);
+    const one = [makeLog({ foodSlug: "banana", date: daysAgo(1) })];
+    expect(run({ logs: one }).todaysPicks).toHaveLength(2);
+    const three = [
+      makeLog({ foodSlug: "banana", date: daysAgo(3) }),
+      makeLog({ foodSlug: "apple", date: daysAgo(2) }),
+      makeLog({ foodSlug: "broccoli", date: daysAgo(1) }),
+    ];
+    expect(run({ logs: three }).todaysPicks).toHaveLength(3);
+  });
+
+  it("R11: the food just introduced is pinned first while ramping — keep offering it", () => {
+    const logs = [makeLog({ foodSlug: "banana", date: daysAgo(1) })];
+    const rec = run({ logs });
+    expect(rec.todaysPicks[0].slug).toBe("banana");
+    expect(rec.todaysPicks[0].reason).toMatch(/keep banana going/i);
+    // A refused food is never pinned (retry spacing owns re-offers).
+    const refused = [
+      makeLog({ foodSlug: "banana", date: daysAgo(1), amountEaten: "none", enjoyment: "refused" }),
+    ];
+    expect(run({ logs: refused }).todaysPicks.map((p) => p.slug)).not.toContain("banana");
+    // A stale introduction (>3 days ago) is not pinned either.
+    const stale = [makeLog({ foodSlug: "banana", date: daysAgo(5) })];
+    expect(run({ logs: stale }).todaysPicks[0]?.reason ?? "").not.toMatch(/keep banana going/i);
+  });
+
+  it("R12: picks vary across the days of a week but are identical for the same date", () => {
+    // Many equal-priority untried foods → the rotation has room to work.
+    const foods = Array.from({ length: 10 }, (_, i) =>
+      makeFood({ slug: `veg-${i}`, name: `Veg ${i}` }),
+    );
+    const logs = [
+      makeLog({ foodSlug: "veg-0", date: daysAgo(9) }),
+      makeLog({ foodSlug: "veg-1", date: daysAgo(9) }),
+      makeLog({ foodSlug: "veg-2", date: daysAgo(9) }),
+    ];
+    const seen = new Set<string>();
+    for (let d = 0; d < 7; d++) {
+      const day = new Date(TODAY.getTime() + d * DAY);
+      const rec = recommend({ baby: makeBaby(), logs, overrides: [], foods, today: day });
+      rec.todaysPicks.forEach((p) => seen.add(p.slug));
+      const again = recommend({ baby: makeBaby(), logs, overrides: [], foods, today: day });
+      expect(again.todaysPicks.map((p) => p.slug)).toEqual(rec.todaysPicks.map((p) => p.slug));
     }
+    // Across a week the rotation surfaces more foods than one fixed trio.
+    expect(seen.size).toBeGreaterThan(3);
   });
 });
 
