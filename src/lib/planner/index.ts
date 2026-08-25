@@ -161,6 +161,29 @@ export const PREFERRED_VEHICLES: Record<AllergenId, string> = {
   shellfish: "shrimp",
 };
 
+/**
+ * How the order of non-allergen foods is decided, in the order it reads on
+ * the board:
+ *  1. Iron leads. Stores laid down in the womb run out around six months,
+ *     so the opening foods are iron-rich; the pull fades once a few are in
+ *     rather than dragging every iron-rich food to the front.
+ *  2. Curated first-food picks, whose textures are the easiest to get right.
+ *  3. Category rotation, so the plan reads as a varied diet instead of an
+ *     alphabetical run through one food group.
+ * Ties break on slug, keeping the whole thing deterministic.
+ */
+const IRON_LEAD_PICKS = 6;
+const RECENT_CATEGORY_MEMORY = 4;
+
+function generalScore(food: Food, position: number, recent: string[]): number {
+  let score = 0;
+  if (food.ironRich) score += position < IRON_LEAD_PICKS ? 6 : 1;
+  if (food.firstFoodPick) score += position < IRON_LEAD_PICKS ? 2 : 1;
+  const seenAt = recent.indexOf(food.category);
+  if (seenAt !== -1) score -= recent.length - seenAt;
+  return score;
+}
+
 export type GeneratePlanInput = {
   baby: BabyProfile;
   foods: Food[];
@@ -171,9 +194,10 @@ export type GeneratePlanInput = {
 };
 
 /**
- * Suggested plan: weeks 0–1 seed iron-rich + first-pick foods; one new
- * allergen per week from week 1 (respecting risk gates); variety spread
- * across categories; already-tried foods are skipped.
+ * Suggested plan: iron-rich foods open the first week, one new allergen
+ * lands per week from week 1 (respecting risk gates), and the rest rotates
+ * through the food groups. Already-tried foods are skipped, and every pick
+ * is spaced by its observation window.
  */
 export function generatePlan(input: GeneratePlanInput): Plan {
   const { baby, foods, logs, overrides, today, weeks = PLAN_WEEKS } = input;
@@ -195,21 +219,14 @@ export function generatePlan(input: GeneratePlanInput): Plan {
     return true;
   });
 
-  // Non-allergen candidates, deterministic priority: iron → first picks → slug.
-  const generalPool = foods
-    .filter((f) => !excluded(f) && f.commonAllergen === null)
-    .sort(
-      (a, b) =>
-        Number(b.ironRich) - Number(a.ironRich) ||
-        Number(b.firstFoodPick) - Number(a.firstFoodPick) ||
-        a.slug.localeCompare(b.slug),
-    );
+  const generalPool = foods.filter((f) => !excluded(f) && f.commonAllergen === null);
 
   // Walk the calendar day by day rather than filling week buckets: each
   // pick consumes its own observation window, so the number of foods a week
   // holds falls out of the spacing instead of being assumed.
   const entries: PlanEntry[] = [];
   const used = new Set<string>();
+  const recentCategories: string[] = []; // most recent first
   const horizon = weeks * 7;
   let allergenIdx = 0;
   let lastAllergenWeek = -1;
@@ -238,13 +255,28 @@ export function generatePlan(input: GeneratePlanInput): Plan {
       }
     }
 
-    chosen ??= generalPool.find(
-      (f) =>
-        !used.has(f.slug) &&
-        age >= f.minAgeMonths &&
-        // Keep high-choking-risk foods out of the very first weeks.
-        !(f.chokingRisk === "high" && week < 2),
-    );
+    if (!chosen) {
+      // Slug order first, so the strict > below keeps the alphabetically
+      // first food among equal scores and the plan stays deterministic.
+      const eligible = generalPool
+        .filter(
+          (f) =>
+            !used.has(f.slug) &&
+            age >= f.minAgeMonths &&
+            // Keep high-choking-risk foods out of the very first weeks.
+            !(f.chokingRisk === "high" && week < 2),
+        )
+        .sort((a, b) => a.slug.localeCompare(b.slug));
+      for (const candidate of eligible) {
+        if (
+          !chosen ||
+          generalScore(candidate, entries.length, recentCategories) >
+            generalScore(chosen, entries.length, recentCategories)
+        ) {
+          chosen = candidate;
+        }
+      }
+    }
 
     if (!chosen) {
       day += 1; // nothing eligible yet — the age gate may open tomorrow
@@ -259,6 +291,8 @@ export function generatePlan(input: GeneratePlanInput): Plan {
       weekIndex: Math.floor(day / 7),
     });
     used.add(chosen.slug);
+    recentCategories.unshift(chosen.category);
+    recentCategories.length = Math.min(recentCategories.length, RECENT_CATEGORY_MEMORY);
     day += INTRO_SPACING_DAYS;
   }
 
