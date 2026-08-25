@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { Food } from "@/content-schema/food";
 import type { Recipe } from "@/content-schema/recipe";
-import { rankCombos } from "./combos";
+import type { ExposureLog } from "@/lib/storage/types";
+import { establishedSlugs, rankCombos } from "./combos";
 
 const food = (slug: string, flavorPairings: string[] = []): [string, Food] => [
   slug,
@@ -77,5 +78,66 @@ describe("rankCombos (D3)", () => {
     const one = rankCombos({ ...base, recipes }).map((r) => r.recipe.slug);
     const two = rankCombos({ ...base, recipes }).map((r) => r.recipe.slug);
     expect(one).toEqual(two);
+  });
+});
+
+describe("controlled introduction", () => {
+  it("rejects a combo that would introduce two unproven foods at once", () => {
+    const recipes = [recipe({ slug: "two-new", foods: ["lentils", "salmon", "banana"] })];
+    const out = rankCombos({ ...base, recipes, todaysPickSlugs: ["lentils", "salmon"] });
+    expect(out).toEqual([]);
+  });
+
+  it("rejects a combo pairing a new food with a companion that is not established yet", () => {
+    const recipes = [recipe({ slug: "fresh-companion", foods: ["lentils", "banana"] })];
+    const out = rankCombos({
+      ...base,
+      recipes,
+      establishedSlugs: new Set(["broccoli"]), // banana eaten, but only recently
+    });
+    expect(out).toEqual([]);
+  });
+
+  it("accepts a new food alongside established companions", () => {
+    const recipes = [recipe({ slug: "one-new", foods: ["lentils", "banana"] })];
+    const out = rankCombos({
+      ...base,
+      recipes,
+      establishedSlugs: new Set(["banana", "peanut-butter", "broccoli"]),
+    });
+    expect(out.map((r) => r.recipe.slug)).toEqual(["one-new"]);
+  });
+
+  it("leaves all-established combos alone regardless of the companion rule", () => {
+    const recipes = [recipe({ slug: "all-known", foods: ["banana", "peanut-butter"] })];
+    const out = rankCombos({ ...base, recipes, establishedSlugs: new Set<string>() });
+    expect(out.map((r) => r.recipe.slug)).toEqual(["all-known"]);
+  });
+});
+
+describe("establishedSlugs", () => {
+  const NOW = new Date("2026-08-25T12:00:00Z");
+  const log = (foodSlug: string, date: string, symptoms: string[] = []): ExposureLog =>
+    ({ foodSlug, date, amountEaten: "some", symptoms }) as unknown as ExposureLog;
+
+  it("counts a food only once it has been eaten for long enough", () => {
+    const out = establishedSlugs([log("banana", "2026-08-01"), log("pear", "2026-08-24")], NOW);
+    expect([...out]).toEqual(["banana"]);
+  });
+
+  it("uses the first exposure, not the most recent one", () => {
+    const out = establishedSlugs([log("banana", "2026-08-01"), log("banana", "2026-08-24")], NOW);
+    expect(out.has("banana")).toBe(true);
+  });
+
+  it("drops a food that ever caused allergen-pausing symptoms", () => {
+    const out = establishedSlugs([log("banana", "2026-08-01", ["hives-widespread"])], NOW);
+    expect(out.has("banana")).toBe(false);
+  });
+
+  it("ignores offers the baby refused outright", () => {
+    const refused = { foodSlug: "pear", date: "2026-08-01", amountEaten: "none", symptoms: [] };
+    const out = establishedSlugs([refused as unknown as ExposureLog], NOW);
+    expect(out.has("pear")).toBe(false);
   });
 });

@@ -1,6 +1,35 @@
 import type { Food } from "@/content-schema/food";
 import type { Recipe } from "@/content-schema/recipe";
 import { bandForAgeMonths } from "@/lib/food-utils";
+import { COMPANION_ESTABLISHED_DAYS } from "@/lib/planner";
+import { triage } from "@/lib/triage";
+import type { ExposureLog } from "@/lib/storage/types";
+
+/**
+ * Foods settled enough to partner a brand-new food: eaten at least once,
+ * never with allergen-pausing symptoms, and first eaten long enough ago
+ * that a reaction today points at the new food rather than at this one.
+ */
+export function establishedSlugs(
+  logs: ExposureLog[],
+  now: Date,
+  minDays: number = COMPANION_ESTABLISHED_DAYS,
+): Set<string> {
+  const firstEaten = new Map<string, string>();
+  const paused = new Set<string>();
+  for (const log of logs) {
+    if (triage(log.symptoms).pausesAllergen) paused.add(log.foodSlug);
+    if (log.amountEaten === "none") continue;
+    const prev = firstEaten.get(log.foodSlug);
+    if (!prev || log.date < prev) firstEaten.set(log.foodSlug, log.date);
+  }
+  const cutoff = new Date(now.getTime() - minDays * 86400000).toISOString().slice(0, 10);
+  const established = new Set<string>();
+  for (const [slug, date] of firstEaten) {
+    if (!paused.has(slug) && date <= cutoff) established.add(slug);
+  }
+  return established;
+}
 
 /**
  * Part III D3 — combo suggester. Pure and deterministic, engine-style:
@@ -31,8 +60,15 @@ export function rankCombos(input: {
   todaysPickSlugs: string[];
   ageMonths: number;
   blockedSlugs: Set<string>;
+  /**
+   * Foods old enough to be companions during an introduction (see
+   * `establishedSlugs`). Defaults to `safeSlugs`, which keeps the looser
+   * pre-controlled-introduction behaviour for callers that don't supply it.
+   */
+  establishedSlugs?: Set<string>;
 }): RankedCombo[] {
   const { recipes, foods, safeSlugs, todaysPickSlugs, ageMonths, blockedSlugs } = input;
+  const established = input.establishedSlugs ?? safeSlugs;
   const band = bandForAgeMonths(ageMonths);
   const picks = new Set(todaysPickSlugs);
 
@@ -41,6 +77,15 @@ export function rankCombos(input: {
     if (!recipe.bands.includes(band)) continue;
     if (recipe.foods.some((slug) => blockedSlugs.has(slug))) continue;
     if (!recipe.foods.every((slug) => safeSlugs.has(slug) || picks.has(slug))) continue;
+
+    // A controlled introduction: at most one unproven food on the plate, and
+    // everything beside it already established, so a reaction has exactly one
+    // plausible cause.
+    const unproven = recipe.foods.filter((slug) => !safeSlugs.has(slug));
+    if (unproven.length > 1) continue;
+    if (unproven.length === 1 && !recipe.foods.every((slug) => slug === unproven[0] || established.has(slug))) {
+      continue;
+    }
 
     const usesPicks = recipe.foods.filter((slug) => picks.has(slug));
     let score = 0;
