@@ -523,6 +523,7 @@ export function PlanBoard() {
                   size="sm"
                   onClick={() => {
                     clearPlan(baby.id);
+                    setStartedEmpty(false); // clearing also drops the empty-board intent
                     setConfirmClear(false);
                   }}
                 >
