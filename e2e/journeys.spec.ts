@@ -65,6 +65,70 @@ test.describe("fresh-start journey", () => {
   });
 });
 
+test.describe("onboarding says why it won't continue", () => {
+  test("an empty step never dead-ends silently", async ({ page }) => {
+    await page.goto("/onboarding");
+    const next = page.getByRole("button", { name: "Next: allergy questions" });
+
+    // The button stays live — pressing it explains what's outstanding.
+    await expect(next).toBeEnabled();
+    await next.click();
+    await expect(page.getByText("Before you continue:")).toBeVisible();
+    await expect(page.getByText(/Add a birth date/)).toBeVisible();
+    await expect(page.getByText(/Pick how you'd like to feed/)).toBeVisible();
+    await expect(page.getByRole("heading", { name: "About your baby" })).toBeVisible();
+
+    await page.getByLabel("Birth date").fill(isoDaysAgo(213));
+    await page.getByRole("button", { name: "A mix of both" }).click();
+    await next.click();
+    await expect(page.getByRole("heading", { name: /allergy questions/ })).toBeVisible();
+  });
+
+  test("a future birth date is refused with a reason", async ({ page }) => {
+    await page.goto("/onboarding");
+    await page.getByLabel("Birth date").fill(isoDaysAgo(-30));
+    await page.getByRole("button", { name: "A mix of both" }).click();
+    await page.getByRole("button", { name: "Next: allergy questions" }).click();
+    await expect(page.getByText(/birth date is in the future/)).toBeVisible();
+  });
+
+  test("a newborn is told when solids start, not just blocked", async ({ page }) => {
+    await page.goto("/onboarding");
+    await page.getByLabel("Name or nickname").fill("Qingzhou");
+    await page.getByLabel("Birth date").fill(isoDaysAgo(29));
+    await expect(page.getByText(/Qingzhou is 4 weeks old today/)).toBeVisible();
+    await expect(page.getByText("Too early for solids — and that's fine")).toBeVisible();
+    await expect(page.getByText(/food picks turn on around/)).toBeVisible();
+    // Under 4 months there is no override to offer — 4 months is the hard floor.
+    await expect(page.getByText(/pediatrician's specific advice/)).toHaveCount(0);
+
+    // …and the profile is still allowed through.
+    await page.getByRole("button", { name: "A mix of both" }).click();
+    await page.getByRole("button", { name: "Next: allergy questions" }).click();
+    await expect(page.getByRole("heading", { name: /allergy questions/ })).toBeVisible();
+  });
+
+  test("4–6 months surfaces the pediatrician override inline", async ({ page }) => {
+    await page.goto("/onboarding");
+    await page.getByLabel("Birth date").fill(isoDaysAgo(150)); // ~4.9 months
+    await expect(page.getByText("In the pediatrician-guided window")).toBeVisible();
+    const override = page.getByRole("checkbox", { name: /pediatrician's specific advice/ });
+    await expect(override).toBeVisible();
+    await override.check();
+
+    await page.getByRole("button", { name: "A mix of both" }).click();
+    await page.getByRole("button", { name: "Next: allergy questions" }).click();
+    for (const label of ["No"]) {
+      await page.getByRole("button", { name: label, exact: true }).nth(0).click();
+      await page.getByRole("button", { name: label, exact: true }).nth(1).click();
+      await page.getByRole("button", { name: label, exact: true }).nth(2).click();
+    }
+    await page.getByRole("button", { name: "Next: readiness" }).click();
+    // The step-2 checkbox reflects the choice already made on step 0.
+    await expect(page.getByRole("checkbox", { name: /pediatrician's specific advice/ })).toBeChecked();
+  });
+});
+
 test.describe("allergy history at onboarding", () => {
   const HOLD_OFF = { name: "What are you holding off on?" };
   const DIAGNOSED = { name: "Which one(s)?" };

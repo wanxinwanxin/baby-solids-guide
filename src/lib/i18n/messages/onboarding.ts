@@ -35,6 +35,66 @@ export const onboardingMsgs = {
   },
   nextAllergy: { en: "Next: allergy questions", zh: "下一步：过敏问题" },
 
+  // Step 0 — birth-date feedback. Nothing here blocks except a future date:
+  // a too-young baby still gets a profile, and Today explains the wait.
+  /** Live echo under the birth date — the fastest way to spot a mistyped year. */
+  babyIsAge: { en: "{name} is {age}.", zh: "{name}{age}。" },
+  ageWeeks: { en: "{n} weeks old today", zh: "今天{n}周大" },
+  ageMonths: { en: "{n} months old today", zh: "今天{n}个月大" },
+  ageWeeksCorrected: { en: "{n} weeks corrected today", zh: "今天矫正{n}周" },
+  ageMonthsCorrected: { en: "{n} months corrected today", zh: "今天矫正{n}个月" },
+  tooYoungTitle: { en: "Too early for solids — and that's fine", zh: "现在开始辅食还太早——这很正常" },
+  tooYoungBody: {
+    en: "Milk or formula is all {name} needs right now. Set the profile up anyway: we'll show you what to watch for, and food picks turn on around {date}.",
+    zh: "现在{name}只需要母乳或配方奶。你还是可以先建好档案：我们会告诉你该观察什么，食物推荐会在 {date} 前后开启。",
+  },
+  earlyWindowTitle: { en: "In the pediatrician-guided window", zh: "处于医生指导可提前开始的阶段" },
+  earlyWindowBody: {
+    en: "Most babies start at 6 months — for {name}, around {date}. Between 4 and 6 months we only unlock the plan if your pediatrician has told you to start.",
+    zh: "大多数宝宝在 6 个月开始——对{name}来说大约是 {date}。在 4 到 6 个月之间，只有当儿科医生明确让你开始时，我们才会解锁计划。",
+  },
+  whenToStartLink: { en: "Read: when to start solids", zh: "延伸阅读：什么时候开始辅食" },
+
+  // Shared "why is this button not doing anything" panel.
+  fixBeforeNext: { en: "Before you continue:", zh: "继续之前，还差：" },
+  needBirthDate: {
+    en: "Add a birth date — every recommendation is keyed to your baby's age.",
+    zh: "请填写出生日期——所有推荐都以宝宝的月龄为准。",
+  },
+  needFullBirthDate: {
+    en: "The birth date looks incomplete — fill in the month, day and year.",
+    zh: "出生日期填写不完整——请把年、月、日都填上。",
+  },
+  birthDateFuture: {
+    en: "That birth date is in the future. If you're expecting, come back once your baby has arrived.",
+    zh: "这个出生日期在未来。如果还没出生，等宝宝出生后再回来。",
+  },
+  needDueDate: {
+    en: "Add the original due date, or uncheck “born more than 3 weeks early”.",
+    zh: "请填写原预产期，或取消勾选“早产超过 3 周”。",
+  },
+  dueDateBeforeBirth: {
+    en: "The due date should come after the birth date for a baby born early.",
+    zh: "早产宝宝的预产期应该晚于出生日期。",
+  },
+  needFeedingStyle: {
+    en: "Pick how you'd like to feed — you can change this any time.",
+    zh: "请选择你想怎么喂——之后随时可以修改。",
+  },
+  needEczema: { en: "Answer the eczema question.", zh: "请回答湿疹的问题。" },
+  needAllergyAnswer: {
+    en: "Answer whether there's a diagnosed food allergy.",
+    zh: "请回答是否已确诊食物过敏。",
+  },
+  needFamilyAnswer: {
+    en: "Answer the family history question.",
+    zh: "请回答家族史的问题。",
+  },
+  needDisclaimer: {
+    en: "Tick the box above to confirm you've read this.",
+    zh: "请勾选上面的方框，确认你已阅读。",
+  },
+
   // Step 1 — allergy risk quiz
   riskTitle: { en: "A few quick allergy questions", zh: "几个简短的过敏问题" },
   riskLede: {

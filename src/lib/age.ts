@@ -29,3 +29,19 @@ export function correctedAgeMonths(
   if (daysEarly <= 0) return chrono;
   return chrono - daysEarly / DAYS_PER_MONTH;
 }
+
+/**
+ * The calendar date on which corrected age reaches `months` — the inverse of
+ * `correctedAgeMonths`. Used to answer "so when *can* we start?", so a family
+ * that is told to wait is also told what they are waiting for.
+ */
+export function dateAtCorrectedAge(
+  baby: { birthDate: string; dueDate?: string },
+  months: number,
+): Date {
+  const birth = toUtcDate(baby.birthDate);
+  const daysEarly = baby.dueDate
+    ? Math.max(0, (toUtcDate(baby.dueDate).getTime() - birth.getTime()) / MS_PER_DAY)
+    : 0;
+  return new Date(birth.getTime() + (months * DAYS_PER_MONTH + daysEarly) * MS_PER_DAY);
+}

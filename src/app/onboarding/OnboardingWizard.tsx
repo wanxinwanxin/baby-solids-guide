@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useId, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { ALLERGEN_IDS, type AllergenId } from "@/content-schema/food";
+import { correctedAgeMonths, dateAtCorrectedAge } from "@/lib/age";
+import { EARLY_START_MONTHS, READY_MONTHS } from "@/lib/engine";
 import { todayIso } from "@/lib/food-utils";
 import { useActiveBaby, useHydrated } from "@/lib/hooks";
 import { fmt, msg } from "@/lib/i18n/config";
@@ -194,6 +196,33 @@ function AllergenPicker({
   );
 }
 
+/**
+ * Why the button you just pressed didn't move. We render this instead of
+ * disabling the control: a greyed-out button with no explanation is the one
+ * thing a tired parent can't debug, and it was the first thing a real tester
+ * hit (an incomplete date segment reads as "no date" to the browser).
+ */
+function Blockers({ id, items, show }: { id: string; items: string[]; show: boolean }) {
+  const t = useMsgs(onboardingMsgs);
+  return (
+    <div id={id} aria-live="polite">
+      {show && items.length > 0 && (
+        <div className="flex items-start gap-2.5 rounded-xl border border-honey/40 bg-accent p-4">
+          <span aria-hidden="true" className="mt-1.5 size-2 shrink-0 rounded-full bg-honey" />
+          <div className="space-y-1 text-[13px] leading-relaxed text-accent-foreground">
+            <p className="font-semibold">{t.fixBeforeNext}</p>
+            <ul className="space-y-0.5">
+              {items.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* One-time ~400ms confetti settle on the "It's time." verdict — pure CSS,
    guarded by prefers-reduced-motion (design/DESIGN-NOTES.md motion budget). */
 const CONFETTI: Array<{
@@ -311,6 +340,17 @@ function WizardForm({
   );
   const [disclaimer, setDisclaimer] = useState(!!baby?.disclaimerAcknowledgedAt);
 
+  /**
+   * A native date input reports an empty string for a half-typed date, so
+   * `birthDate` alone can't tell "haven't started" from "month and day but no
+   * year" — `validity.badInput` can, and that distinction is the difference
+   * between a useful message and a useless one.
+   */
+  const [birthDateIncomplete, setBirthDateIncomplete] = useState(false);
+  /** Reasons are held back until the parent actually presses the button. */
+  const [attempted, setAttempted] = useState(false);
+  const blockerId = useId();
+
   const readinessSigns = READINESS_SIGN_MSGS.map((m) => msg(m, locale));
   const allSigns = signs.every(Boolean);
   const signCount = signs.filter(Boolean).length;
@@ -322,6 +362,67 @@ function WizardForm({
 
   function toggle(list: AllergenId[], id: AllergenId): AllergenId[] {
     return list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
+  }
+
+  // ——— Birth-date feedback ———
+  const now = useMemo(() => new Date(), []);
+  const effectiveDueDate = wasPremature && dueDate ? dueDate : undefined;
+  const ageMonths =
+    birthDate && (!effectiveDueDate || effectiveDueDate >= birthDate)
+      ? correctedAgeMonths({ birthDate, dueDate: effectiveDueDate }, now)
+      : null;
+  const readyOn =
+    birthDate && ageMonths !== null
+      ? dateAtCorrectedAge({ birthDate, dueDate: effectiveDueDate }, READY_MONTHS)
+      : null;
+  const readyOnLabel = readyOn
+    ? readyOn.toLocaleDateString(locale === "zh" ? "zh-CN" : undefined, {
+        month: "long",
+        day: "numeric",
+        timeZone: "UTC",
+        ...(readyOn.getUTCFullYear() === now.getUTCFullYear() ? {} : { year: "numeric" }),
+      })
+    : "";
+
+  /** Weeks read better than "0.9 months" for the newborns who land here by mistake. */
+  function ageLabel(months: number): string {
+    if (months < 3) {
+      const weeks = Math.round((months * 30.4375) / 7);
+      return fmt(effectiveDueDate ? t.ageWeeksCorrected : t.ageWeeks, { n: weeks });
+    }
+    return fmt(effectiveDueDate ? t.ageMonthsCorrected : t.ageMonths, { n: months.toFixed(1) });
+  }
+
+  /**
+   * Only a date we genuinely cannot compute an age from stops the wizard. Being
+   * too young is explained, never blocked — the profile is still worth having,
+   * and Today already renders the wait with its reasons and the pediatrician
+   * override.
+   */
+  const step0Blockers: string[] = [];
+  if (!birthDate) step0Blockers.push(birthDateIncomplete ? t.needFullBirthDate : t.needBirthDate);
+  else if (birthDate > todayIso()) step0Blockers.push(t.birthDateFuture);
+  if (wasPremature && !dueDate) step0Blockers.push(t.needDueDate);
+  else if (wasPremature && birthDate && dueDate && dueDate < birthDate) {
+    step0Blockers.push(t.dueDateBeforeBirth);
+  }
+  if (!feedingStyle) step0Blockers.push(t.needFeedingStyle);
+
+  const step1Blockers: string[] = [];
+  if (eczema === null) step1Blockers.push(t.needEczema);
+  if (existingFoodAllergy === null) step1Blockers.push(t.needAllergyAnswer);
+  if (familyHistoryAtopy === null) step1Blockers.push(t.needFamilyAnswer);
+
+  const step3Blockers = disclaimer ? [] : [t.needDisclaimer];
+
+  /** Advance only when nothing is outstanding; otherwise reveal what is. */
+  function go(next: number, blockers: string[]) {
+    if (blockers.length > 0) {
+      setAttempted(true);
+      return;
+    }
+    setAttempted(false);
+    setStep(next);
   }
 
   function buildProfile(): BabyProfile {
@@ -398,8 +499,17 @@ function WizardForm({
           type="date"
           value={birthDate}
           max={todayIso()}
-          onChange={(e) => setBirthDate(e.target.value)}
+          onChange={(e) => {
+            setBirthDate(e.target.value);
+            setBirthDateIncomplete(!e.target.value && e.target.validity.badInput);
+          }}
+          onBlur={(e) => setBirthDateIncomplete(!e.target.value && e.target.validity.badInput)}
         />
+        {ageMonths !== null && ageMonths >= 0 && (
+          <span className="block text-xs font-semibold text-muted-foreground">
+            {fmt(t.babyIsAge, { name: nickname.trim() || t.yourBabyCap, age: ageLabel(ageMonths) })}
+          </span>
+        )}
       </label>
       <CheckRow checked={wasPremature} onChange={setWasPremature}>
         {t.prematureCheck}
@@ -418,16 +528,45 @@ function WizardForm({
           </span>
         </label>
       )}
+      {/* Age guidance, not an age gate. Under 4 months there is nothing to
+          unlock and we say so; 4–6 months is the window where a pediatrician's
+          say-so is the whole difference, so the override lives right here. */}
+      {ageMonths !== null && ageMonths >= 0 && ageMonths < READY_MONTHS && (
+        <div className="space-y-2.5 rounded-xl border border-border bg-muted p-4">
+          <p className="text-sm font-bold">
+            {ageMonths < EARLY_START_MONTHS ? t.tooYoungTitle : t.earlyWindowTitle}
+          </p>
+          <p className="text-[13px] leading-relaxed text-muted-foreground">
+            {fmt(ageMonths < EARLY_START_MONTHS ? t.tooYoungBody : t.earlyWindowBody, {
+              name: nickname.trim() || t.yourBaby,
+              date: readyOnLabel,
+            })}
+          </p>
+          {ageMonths >= EARLY_START_MONTHS && (
+            <CheckRow checked={earlyStartApproved} onChange={setEarlyStartApproved} alignTop dashed>
+              <span className="font-semibold">{t.earlyStartTitle}</span>{" "}
+              <span className="text-muted-foreground">{t.earlyStartDesc}</span>
+            </CheckRow>
+          )}
+          <Link
+            href="/learn/when-to-start"
+            className="inline-block text-[13px] font-semibold text-primary underline underline-offset-2"
+          >
+            {t.whenToStartLink}
+          </Link>
+        </div>
+      )}
       <div className="space-y-2">
         <span className="text-sm font-semibold">{t.feedHow}</span>
         <Choice value="purees" current={feedingStyle} onSelect={setFeedingStyle} label={t.pureesLabel} description={t.pureesDesc} />
         <Choice value="baby-led" current={feedingStyle} onSelect={setFeedingStyle} label={t.babyLedLabel} description={t.babyLedDesc} />
         <Choice value="mixed" current={feedingStyle} onSelect={setFeedingStyle} label={t.mixedLabel} description={t.mixedDesc} />
       </div>
+      <Blockers id={blockerId} items={step0Blockers} show={attempted} />
       <Button
         className="h-12 w-full text-[15px] font-bold"
-        disabled={!birthDate || !feedingStyle}
-        onClick={() => setStep(1)}
+        aria-describedby={blockerId}
+        onClick={() => go(1, step0Blockers)}
       >
         {t.nextAllergy}<span aria-hidden="true"> →</span>
       </Button>
@@ -504,14 +643,15 @@ function WizardForm({
           </p>
         </div>
       )}
+      <Blockers id={blockerId} items={step1Blockers} show={attempted} />
       <div className="flex gap-2.5">
-        <Button variant="outline" className="h-12 px-6 text-[15px] font-semibold" onClick={() => setStep(0)}>
+        <Button variant="outline" className="h-12 px-6 text-[15px] font-semibold" onClick={() => go(0, [])}>
           <span aria-hidden="true">← </span>{t.back}
         </Button>
         <Button
           className="h-12 flex-1 text-[15px] font-bold"
-          disabled={eczema === null || existingFoodAllergy === null || familyHistoryAtopy === null}
-          onClick={() => setStep(2)}
+          aria-describedby={blockerId}
+          onClick={() => go(2, step1Blockers)}
         >
           {t.nextReadiness}<span aria-hidden="true"> →</span>
         </Button>
@@ -549,10 +689,10 @@ function WizardForm({
         </span>
       </CheckRow>
       <div className="flex gap-2.5">
-        <Button variant="outline" className="h-12 px-6 text-[15px] font-semibold" onClick={() => setStep(1)}>
+        <Button variant="outline" className="h-12 px-6 text-[15px] font-semibold" onClick={() => go(1, [])}>
           <span aria-hidden="true">← </span>{t.back}
         </Button>
-        <Button className="h-12 flex-1 text-[15px] font-bold" onClick={() => setStep(3)}>
+        <Button className="h-12 flex-1 text-[15px] font-bold" onClick={() => go(3, [])}>
           {t.nextLastThing}<span aria-hidden="true"> →</span>
         </Button>
       </div>
@@ -624,11 +764,12 @@ function WizardForm({
           </div>
         ))}
 
+      <Blockers id={blockerId} items={step3Blockers} show={attempted} />
       <div className="flex flex-col gap-2.5">
         <Button
           className="h-12 w-full text-[15px] font-bold"
-          disabled={!disclaimer}
-          onClick={() => finish("today")}
+          aria-describedby={blockerId}
+          onClick={() => (disclaimer ? finish("today") : setAttempted(true))}
         >
           {editing || adding ? t.saveProfile : t.startFresh}
         </Button>
@@ -636,8 +777,8 @@ function WizardForm({
           <Button
             variant="outline"
             className="h-12 w-full text-[15px] font-semibold"
-            disabled={!disclaimer}
-            onClick={() => finish("import")}
+            aria-describedby={blockerId}
+            onClick={() => (disclaimer ? finish("import") : setAttempted(true))}
           >
             {t.alreadyStarted}
           </Button>
@@ -645,7 +786,7 @@ function WizardForm({
         <Button
           variant="ghost"
           className="h-11 w-full text-sm text-muted-foreground"
-          onClick={() => setStep(2)}
+          onClick={() => go(2, [])}
         >
           <span aria-hidden="true">← </span>{t.back}
         </Button>
