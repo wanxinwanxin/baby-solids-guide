@@ -65,12 +65,19 @@ export default function HistoryPage() {
     );
   }
 
+  const nothingToExport = !baby && logs.length === 0;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">{t.title}</h1>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={downloadExport} disabled={!baby && logs.length === 0}>
+          <Button
+            variant="outline"
+            onClick={downloadExport}
+            disabled={nothingToExport}
+            title={nothingToExport ? t.exportEmpty : undefined}
+          >
             {t.exportJson}
           </Button>
           <Button variant="outline" onClick={() => fileRef.current?.click()}>
@@ -90,6 +97,10 @@ export default function HistoryPage() {
           />
         </div>
       </div>
+
+      {nothingToExport && (
+        <p className="text-xs text-muted-foreground">{t.exportEmpty}</p>
+      )}
 
       {importMessage && (
         <Alert>

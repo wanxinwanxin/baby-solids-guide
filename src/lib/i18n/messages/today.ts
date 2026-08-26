@@ -55,6 +55,11 @@ export const todayMsgs = {
   },
   prevDay: { en: "Previous day", zh: "上一天" },
   nextDay: { en: "Next day", zh: "下一天" },
+  /** The forward arrow stops here; say so rather than just greying it out. */
+  previewCap: {
+    en: "Preview stops {n} days out — further than that, the picks depend on what actually gets eaten.",
+    zh: "预览最多只能看到 {n} 天后——再往后，推荐取决于宝宝实际吃了什么。",
+  },
   backToToday: { en: "← back to today", zh: "← 回到今天" },
   todayFor: { en: "Today for {name}", zh: "{name} 的今天" },
   tomorrowFor: { en: "Tomorrow for {name}", zh: "{name} 的明天" },

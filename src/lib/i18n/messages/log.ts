@@ -87,6 +87,11 @@ export const checkInOfferMsgs = {
     en: "Want a reminder to check on how this went down?",
     zh: "要不要设个提醒，回头看看这餐吃得怎么样？",
   },
+  /** Why the schedule button is inert until something is picked. */
+  schedulePickFirst: {
+    en: "Pick at least one reminder above to schedule it.",
+    zh: "请先在上面选择至少一项提醒。",
+  },
   scheduleOne: { en: "Schedule check-in", zh: "安排观察提醒" },
   scheduleMany: { en: "Schedule check-ins", zh: "安排观察提醒" },
   scheduledOne: {

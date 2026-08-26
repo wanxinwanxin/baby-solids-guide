@@ -6,6 +6,11 @@ import type { Msg, Msgs } from "../config";
 export const historyMsgs = {
   title: { en: "History", zh: "记录" },
   exportJson: { en: "Export JSON", zh: "导出 JSON" },
+  /** Why the export button is inert — there is simply nothing on this device yet. */
+  exportEmpty: {
+    en: "Nothing to export yet — set up a profile or log a food first.",
+    zh: "目前还没有可导出的内容——先建立档案或记录一次进食。",
+  },
   importJson: { en: "Import JSON", zh: "导入 JSON" },
   importFileAria: { en: "Import backup file", zh: "导入备份文件" },
   imported: { en: "Imported {n} log(s).", zh: "已导入 {n} 条记录。" },

@@ -171,6 +171,9 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
           </button>
         ))}
       </div>
+      {selected.size === 0 && (
+        <p className="text-xs text-muted-foreground">{t.schedulePickFirst}</p>
+      )}
       <Button
         size="sm"
         disabled={selected.size === 0}

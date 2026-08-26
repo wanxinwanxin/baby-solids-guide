@@ -404,6 +404,11 @@ export default function TodayPage() {
               )}
             </span>
           </div>
+          {offsetDays >= MAX_PREVIEW_DAYS && (
+            <p className="text-xs text-muted-foreground">
+              {fmt(t.previewCap, { n: MAX_PREVIEW_DAYS })}
+            </p>
+          )}
           <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
             {heading}
           </h1>
