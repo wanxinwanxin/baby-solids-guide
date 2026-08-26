@@ -36,7 +36,7 @@ export const onboardingMsgs = {
   nextAllergy: { en: "Next: allergy questions", zh: "下一步：过敏问题" },
 
   // Step 1 — allergy risk quiz
-  riskTitle: { en: "Three quick allergy questions", zh: "三个简短的过敏问题" },
+  riskTitle: { en: "A few quick allergy questions", zh: "几个简短的过敏问题" },
   riskLede: {
     en: "These set the allergen introduction plan (based on the NIAID guidelines).",
     zh: "这些问题决定过敏原引入计划（基于 NIAID 指南）。",
@@ -51,6 +51,29 @@ export const onboardingMsgs = {
     zh: "轻到中度：偶尔出现斑块，用润肤霜或温和治疗就能控制。重度：持续或大面积出现，需要处方药治疗。",
   },
   allergyQ: { en: "Any diagnosed food allergy already?", zh: "已经确诊过食物过敏吗？" },
+  knownWhichQ: { en: "Which one(s)?", zh: "是哪一种？" },
+  knownWhichHelp: {
+    en: "Tap any that apply. We'll keep these — and the foods that contain them — out of your suggestions and your plan.",
+    zh: "点选所有相关的。我们会把这些以及含有它们的食物从推荐和计划中排除。",
+  },
+  /** Shown under both allergen pickers — CMPA is the one parents ask about most. */
+  cmpaHint: {
+    en: "Cow's milk protein allergy (CMPA) is the most common one in the first year — that's “Milk (dairy)”.",
+    zh: "牛奶蛋白过敏（CMPA）是第一年里最常见的一种——对应“牛奶（乳制品）”。",
+  },
+  avoidingTitle: {
+    en: "We're avoiding a food, but nothing is confirmed.",
+    zh: "我们在回避某种食物，但还没有确诊。",
+  },
+  avoidingDesc: {
+    en: "Optional — a reaction you suspect, or something you've been advised to hold off on for now.",
+    zh: "可选——你怀疑有反应，或者被建议暂时先别吃的食物。",
+  },
+  avoidingWhichQ: { en: "What are you holding off on?", zh: "你们暂时不打算给宝宝吃什么？" },
+  avoidingWhichHelp: {
+    en: "We'll leave it out of your suggestions for now, and you can change this any time. It's worth mentioning at your next pediatrician visit — OpenSolids can't tell whether a food is really the cause.",
+    zh: "我们暂时不会在推荐里安排它，你随时可以修改。这件事值得在下次儿科就诊时提一下——OpenSolids 无法判断某种食物是不是真正的原因。",
+  },
   familyQ: {
     en: "Parent or sibling with food allergy, eczema, or asthma?",
     zh: "父母或兄弟姐妹有食物过敏、湿疹或哮喘吗？",

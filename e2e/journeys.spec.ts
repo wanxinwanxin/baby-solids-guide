@@ -65,6 +65,105 @@ test.describe("fresh-start journey", () => {
   });
 });
 
+test.describe("allergy history at onboarding", () => {
+  const HOLD_OFF = { name: "What are you holding off on?" };
+  const DIAGNOSED = { name: "Which one(s)?" };
+
+  async function startWizard(page: Page) {
+    await page.goto("/onboarding");
+    await page.getByLabel("Name or nickname").fill("Testling");
+    await page.getByLabel("Birth date").fill(isoDaysAgo(213));
+    await page.getByRole("button", { name: "A mix of both" }).click();
+    await page.getByRole("button", { name: "Next: allergy questions" }).click();
+  }
+
+  async function finishWizard(page: Page, save: RegExp | string) {
+    await page.getByRole("button", { name: "Next: readiness" }).click();
+    for (const sign of [
+      "Sits upright",
+      "Steady head control",
+      "Brings hands and toys",
+      "Watches your food",
+      "tongue-thrust",
+    ]) {
+      await page.getByRole("checkbox", { name: new RegExp(sign) }).check();
+    }
+    await page.getByRole("button", { name: "Next: one last thing" }).click();
+    await page.getByRole("checkbox", { name: /educational guide/ }).check();
+    await page.getByRole("button", { name: save }).click();
+    await page.waitForURL("**/today");
+  }
+
+  function storedState(page: Page) {
+    return page.evaluate(() => JSON.parse(localStorage.getItem("opensolids-v1")!).state);
+  }
+
+  test("a suspected (undiagnosed) milk allergy becomes a reversible avoid, not a hard block", async ({
+    page,
+  }) => {
+    await startWizard(page);
+    for (const i of [0, 1, 2]) {
+      await page.getByRole("button", { name: "No", exact: true }).nth(i).click();
+    }
+    // The optional path: nothing diagnosed, but the family is holding off on dairy.
+    await page.getByRole("checkbox", { name: /avoiding a food/ }).check();
+    await expect(page.getByText(/Cow's milk protein allergy \(CMPA\)/).first()).toBeVisible();
+    await page.getByRole("group", HOLD_OFF).getByRole("button", { name: "Milk (dairy)" }).click();
+    await finishWizard(page, /Start fresh/);
+
+    const state = await storedState(page);
+    expect(state.babies[0].knownAllergies).toEqual([]); // not a diagnosis → no blocking entry
+    expect(state.overrides).toMatchObject([{ allergenId: "milk", status: "avoid-per-doctor" }]);
+
+    // Today holds the group, and the suggested plan never schedules a milk food.
+    await expect(page.getByText(/milk group is excluded/)).toBeVisible();
+    await page.goto("/plan");
+    await page.getByRole("button", { name: "Suggest a plan" }).click();
+    await expect(page.getByRole("button", { name: /Remove .* from plan/ }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: /Remove 🥛 Yogurt from plan/ })).toHaveCount(0);
+  });
+
+  test("a diagnosed allergy is stored on the profile and survives an edit round-trip", async ({
+    page,
+  }) => {
+    await startWizard(page);
+    await page.getByRole("button", { name: "No", exact: true }).nth(0).click(); // eczema
+    await page.getByRole("button", { name: "Yes", exact: true }).nth(0).click(); // diagnosed allergy
+    await page.getByRole("group", DIAGNOSED).getByRole("button", { name: "Egg", exact: true }).click();
+    await page.getByRole("button", { name: "No", exact: true }).nth(2).click(); // family history
+    await page.getByRole("checkbox", { name: /avoiding a food/ }).check();
+    // Egg is already diagnosed, so it isn't offered again as a "holding off" pick.
+    const holdOff = page.getByRole("group", HOLD_OFF);
+    await expect(holdOff.getByRole("button", { name: "Egg", exact: true })).toHaveCount(0);
+    await holdOff.getByRole("button", { name: "Soy", exact: true }).click();
+    await finishWizard(page, /Start fresh/);
+
+    let state = await storedState(page);
+    expect(state.babies[0].knownAllergies).toEqual(["egg"]);
+    expect(state.overrides).toMatchObject([{ allergenId: "soy", status: "avoid-per-doctor" }]);
+
+    // Edit profile: both selections come back, and dropping soy clears its override.
+    await page.goto("/onboarding?edit=1");
+    await expect(page.getByRole("heading", { name: "Edit profile" })).toBeVisible();
+    await page.getByRole("button", { name: "Next: allergy questions" }).click();
+    await expect(
+      page.getByRole("group", DIAGNOSED).getByRole("button", { name: "Egg", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    const soy = page.getByRole("group", HOLD_OFF).getByRole("button", { name: "Soy", exact: true });
+    await expect(soy).toHaveAttribute("aria-pressed", "true");
+    await soy.click();
+    await page.getByRole("button", { name: "Next: readiness" }).click();
+    await page.getByRole("button", { name: "Next: one last thing" }).click();
+    await page.getByRole("button", { name: "Save profile" }).click();
+    await page.waitForURL("**/today");
+
+    state = await storedState(page);
+    expect(state.babies).toHaveLength(1); // edited in place, not duplicated
+    expect(state.babies[0].knownAllergies).toEqual(["egg"]);
+    expect(state.overrides).toEqual([]);
+  });
+});
+
 test.describe("logging journey", () => {
   test("log a food → persists across reload → export → wipe → import restores it", async ({ page }) => {
     await completeOnboarding(page);

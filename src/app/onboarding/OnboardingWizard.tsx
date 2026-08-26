@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useId, useState } from "react";
+import { ALLERGEN_IDS, type AllergenId } from "@/content-schema/food";
 import { todayIso } from "@/lib/food-utils";
 import { useActiveBaby, useHydrated } from "@/lib/hooks";
 import { fmt, msg } from "@/lib/i18n/config";
+import { allergenLabel } from "@/lib/i18n/labels";
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
 import { onboardingMsgs, READINESS_SIGN_MSGS } from "@/lib/i18n/messages/onboarding";
 import { newId, useGuideStore } from "@/lib/storage/store";
@@ -131,6 +133,67 @@ function CheckRow({
   );
 }
 
+/**
+ * Multi-select grid of the 9 common allergens. Used twice on the allergy step:
+ * once for confirmed diagnoses (→ BabyProfile.knownAllergies, a hard block)
+ * and once for foods a family is holding off on without a diagnosis
+ * (→ an "avoid-per-doctor" AllergenOverride, which is reversible and softer).
+ */
+function AllergenPicker({
+  label,
+  help,
+  cmpaHint,
+  options,
+  selected,
+  onToggle,
+}: {
+  /** Question text — also names the group, since both pickers can be on screen at once. */
+  label: string;
+  help: string;
+  /** Both pickers can be open at once; the CMPA example only needs saying once. */
+  cmpaHint: boolean;
+  options: readonly AllergenId[];
+  selected: AllergenId[];
+  onToggle: (id: AllergenId) => void;
+}) {
+  const t = useMsgs(onboardingMsgs);
+  const locale = useLocale();
+  const labelId = useId();
+  return (
+    <div className="space-y-2" role="group" aria-labelledby={labelId}>
+      <span id={labelId} className="text-sm font-semibold">
+        {label}
+      </span>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {options.map((id) => {
+          const on = selected.includes(id);
+          return (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={on}
+              onClick={() => onToggle(id)}
+              className={cn(
+                "min-h-11 rounded-xl border-[1.5px] px-2 py-2.5 text-center text-sm transition-colors",
+                on
+                  ? "border-primary bg-secondary font-bold text-secondary-foreground"
+                  : "border-input bg-background font-semibold text-foreground hover:border-primary/40",
+              )}
+            >
+              {allergenLabel(id, locale)}
+              {on && <span aria-hidden="true"> ✓</span>}
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-xs leading-relaxed text-muted-foreground">
+        {help}
+        {cmpaHint && <> {t.cmpaHint}</>}
+      </p>
+    </div>
+  );
+}
+
 /* One-time ~400ms confetti settle on the "It's time." verdict — pure CSS,
    guarded by prefers-reduced-motion (design/DESIGN-NOTES.md motion budget). */
 const CONFETTI: Array<{
@@ -183,17 +246,37 @@ function ConfettiSettle() {
   );
 }
 
+/**
+ * The persisted store rehydrates *after* the first client render (zustand
+ * hands React the pre-hydration snapshot as its server snapshot), so the form
+ * below is only mounted once `hydrated` is true — otherwise the "Edit profile"
+ * path would start from a blank profile and save the blanks back.
+ */
 export function OnboardingWizard() {
   const hydrated = useHydrated();
+  const params = useSearchParams();
+  const adding = params.get("add") === "1";
+  const activeBaby = useActiveBaby();
+
+  if (!hydrated) return null;
+  return (
+    <WizardForm baby={adding ? null : activeBaby} editing={params.get("edit") === "1"} adding={adding} />
+  );
+}
+
+function WizardForm({
+  baby,
+  editing,
+  adding,
+}: {
+  baby: BabyProfile | null;
+  editing: boolean;
+  adding: boolean;
+}) {
   const locale = useLocale();
   const t = useMsgs(onboardingMsgs);
   const router = useRouter();
-  const params = useSearchParams();
-  const editing = params.get("edit") === "1";
-  const adding = params.get("add") === "1";
-  const activeBaby = useActiveBaby();
-  const baby = adding ? null : activeBaby;
-  const { saveBaby, setActiveBaby } = useGuideStore();
+  const { saveBaby, setActiveBaby, overrides, setOverride, clearOverride } = useGuideStore();
 
   const [step, setStep] = useState(0);
   const [nickname, setNickname] = useState(baby?.nickname ?? "");
@@ -203,8 +286,20 @@ export function OnboardingWizard() {
   const [feedingStyle, setFeedingStyle] = useState<FeedingStyle | null>(baby?.feedingStyle ?? null);
   const [eczema, setEczema] = useState<EczemaSeverity | null>(baby?.allergyRisk.eczema ?? null);
   const [existingFoodAllergy, setExistingFoodAllergy] = useState<boolean | null>(
-    baby?.allergyRisk.existingFoodAllergy ?? null,
+    // A profile carrying known allergies has one, even if the flag predates this step.
+    baby ? baby.allergyRisk.existingFoodAllergy || baby.knownAllergies.length > 0 : null,
   );
+  const [knownAllergies, setKnownAllergies] = useState<AllergenId[]>(baby?.knownAllergies ?? []);
+  // Foods held off on without a diagnosis — stored as "avoid-per-doctor" overrides.
+  const [avoiding, setAvoiding] = useState<AllergenId[]>(() =>
+    baby
+      ? overrides
+          .filter((o) => o.babyId === baby.id && o.status === "avoid-per-doctor")
+          .map((o) => o.allergenId)
+          .filter((id) => !baby.knownAllergies.includes(id))
+      : [],
+  );
+  const [hasAvoiding, setHasAvoiding] = useState(() => avoiding.length > 0);
   const [familyHistoryAtopy, setFamilyHistoryAtopy] = useState<boolean | null>(
     baby?.allergyRisk.familyHistoryAtopy ?? null,
   );
@@ -216,14 +311,18 @@ export function OnboardingWizard() {
   );
   const [disclaimer, setDisclaimer] = useState(!!baby?.disclaimerAcknowledgedAt);
 
-  if (!hydrated) return null;
-
   const readinessSigns = READINESS_SIGN_MSGS.map((m) => msg(m, locale));
   const allSigns = signs.every(Boolean);
   const signCount = signs.filter(Boolean).length;
   const signTotal = readinessSigns.length;
   const readyVerdict = allSigns || earlyStartApproved;
   const watchingFor = readinessSigns.filter((_, i) => !signs[i]);
+  const diagnosed = existingFoodAllergy ? knownAllergies : [];
+  const avoidOptions = ALLERGEN_IDS.filter((id) => !diagnosed.includes(id));
+
+  function toggle(list: AllergenId[], id: AllergenId): AllergenId[] {
+    return list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
+  }
 
   function buildProfile(): BabyProfile {
     return {
@@ -237,7 +336,7 @@ export function OnboardingWizard() {
         existingFoodAllergy: existingFoodAllergy ?? false,
         familyHistoryAtopy: familyHistoryAtopy ?? false,
       },
-      knownAllergies: baby?.knownAllergies ?? [],
+      knownAllergies: diagnosed,
       doctorAvoidList: baby?.doctorAvoidList ?? [],
       doctorClearances: baby?.doctorClearances ?? [],
       conditions: baby?.conditions ?? [],
@@ -251,9 +350,30 @@ export function OnboardingWizard() {
     };
   }
 
+  /**
+   * Reconcile the "holding off, not diagnosed" picks with stored overrides.
+   * Only touches `avoid-per-doctor` rows, so a reaction pause or a status the
+   * family set on the allergen tracker is never clobbered from here.
+   */
+  function saveAvoidOverrides(babyId: string) {
+    const wanted = new Set(hasAvoiding ? avoiding.filter((id) => !diagnosed.includes(id)) : []);
+    const setOn = todayIso();
+    for (const id of ALLERGEN_IDS) {
+      const current = overrides.find((o) => o.babyId === babyId && o.allergenId === id);
+      if (wanted.has(id)) {
+        if (current?.status !== "avoid-per-doctor") {
+          setOverride({ babyId, allergenId: id, status: "avoid-per-doctor", setOn });
+        }
+      } else if (current?.status === "avoid-per-doctor") {
+        clearOverride(babyId, id);
+      }
+    }
+  }
+
   function finish(then: "today" | "import") {
     const profile = buildProfile();
     saveBaby(profile);
+    saveAvoidOverrides(profile.id);
     setActiveBaby(profile.id);
     router.push(then === "today" ? "/today" : "/onboarding/import");
   }
@@ -338,6 +458,18 @@ export function OnboardingWizard() {
           <Choice center value="no" current={existingFoodAllergy === null ? null : existingFoodAllergy ? "yes" : "no"} onSelect={() => setExistingFoodAllergy(false)} label={t.no} />
           <Choice center value="yes" current={existingFoodAllergy === null ? null : existingFoodAllergy ? "yes" : "no"} onSelect={() => setExistingFoodAllergy(true)} label={t.yes} />
         </div>
+        {existingFoodAllergy && (
+          <div className="pt-1">
+            <AllergenPicker
+              label={t.knownWhichQ}
+              help={t.knownWhichHelp}
+              cmpaHint
+              options={ALLERGEN_IDS}
+              selected={knownAllergies}
+              onToggle={(id) => setKnownAllergies(toggle(knownAllergies, id))}
+            />
+          </div>
+        )}
       </div>
       <div className="space-y-2">
         <span className="text-sm font-semibold">{t.familyQ}</span>
@@ -345,6 +477,24 @@ export function OnboardingWizard() {
           <Choice center value="no" current={familyHistoryAtopy === null ? null : familyHistoryAtopy ? "yes" : "no"} onSelect={() => setFamilyHistoryAtopy(false)} label={t.no} />
           <Choice center value="yes" current={familyHistoryAtopy === null ? null : familyHistoryAtopy ? "yes" : "no"} onSelect={() => setFamilyHistoryAtopy(true)} label={t.yes} />
         </div>
+      </div>
+      <div className="space-y-2">
+        <CheckRow checked={hasAvoiding} onChange={setHasAvoiding} alignTop dashed>
+          <span className="font-semibold">{t.avoidingTitle}</span>{" "}
+          <span className="text-muted-foreground">{t.avoidingDesc}</span>
+        </CheckRow>
+        {hasAvoiding && (
+          <div className="pt-1">
+            <AllergenPicker
+              label={t.avoidingWhichQ}
+              help={t.avoidingWhichHelp}
+              cmpaHint={!existingFoodAllergy}
+              options={avoidOptions}
+              selected={avoiding}
+              onToggle={(id) => setAvoiding(toggle(avoiding, id))}
+            />
+          </div>
+        )}
       </div>
       {(eczema === "severe" || existingFoodAllergy) && (
         <div className="flex items-start gap-2.5 rounded-xl border border-honey/40 bg-accent p-4">
