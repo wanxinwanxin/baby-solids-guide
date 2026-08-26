@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Food } from "@/content-schema/food";
-import type { BabyProfile, ExposureLog } from "@/lib/storage/types";
+import type { BabyProfile, ExposureLog, Plan } from "@/lib/storage/types";
 import { recommend, type EngineInput } from "./index";
 
 /** Fixed clock — the engine never reads Date.now(). */

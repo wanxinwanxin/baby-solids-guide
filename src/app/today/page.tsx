@@ -352,6 +352,15 @@ export default function TodayPage() {
       : offsetDays === 1
         ? fmt(t.tomorrowFor, { name: baby.nickname })
         : fmt(t.dayFor, { day: longDayLabel, name: baby.nickname });
+  // The picks below belong to the day being previewed, so the heading over
+  // them has to move with it — "Today's picks" under "Thursday for Ada" reads
+  // as though the list never changed.
+  const picksHeading =
+    offsetDays === 0
+      ? t.todaysPicks
+      : offsetDays === 1
+        ? t.tomorrowsPicks
+        : fmt(t.picksForDay, { day: longDayLabel });
 
   return (
     <div className="space-y-6">
@@ -590,7 +599,7 @@ export default function TodayPage() {
 
       <section className="space-y-3.5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-2xl font-bold tracking-tight">{t.todaysPicks}</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{picksHeading}</h2>
           <span className="font-data text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
             {t.picksCriteria}
           </span>

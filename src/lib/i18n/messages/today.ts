@@ -109,6 +109,8 @@ export const todayMsgs = {
 
   // ——— Today's picks ———
   todaysPicks: { en: "Today's picks", zh: "今日推荐" },
+  tomorrowsPicks: { en: "Tomorrow's picks", zh: "明日推荐" },
+  picksForDay: { en: "Picks for {day}", zh: "{day} 的推荐" },
   picksCriteria: {
     en: "Iron · allergen pace · variety · texture",
     zh: "铁 · 过敏原节奏 · 多样性 · 质地",

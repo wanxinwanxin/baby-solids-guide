@@ -328,6 +328,7 @@ export function PlanBoard() {
   const [targetWeek, setTargetWeek] = useState<number | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
   const [dragging, setDragging] = useState<string | null>(null);
+  const [startedEmpty, setStartedEmpty] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -430,6 +431,13 @@ export function PlanBoard() {
     plan ?? { babyId: baby.id, anchorMonday: mondayOf(today), entries: [] };
 
   /**
+   * A plan with no entries is how a *cleared* plan travels between devices, so
+   * it reads as "no plan" everywhere. Starting from an empty board is a
+   * different intent that lives only in this view until a food is added.
+   */
+  const boardActive = !!plan || startedEmpty;
+
+  /**
    * Every edit goes through the planner so the observation-window spacing is
    * re-derived from scratch. An empty board is the one case `addFoodToWeek`
    * cannot express: with nothing scheduled it packs the first food onto day 0,
@@ -449,6 +457,7 @@ export function PlanBoard() {
   }
 
   function startEmpty() {
+    setStartedEmpty(true);
     setPlan(basePlan());
   }
 
@@ -478,8 +487,10 @@ export function PlanBoard() {
   }
 
   const weekLabel = (i: number) => {
-    if (!plan) return fmt(t.weekN, { n: i + 1 });
-    const start = new Date(new Date(`${plan.anchorMonday}T00:00:00Z`).getTime() + i * 7 * 86400000);
+    if (!boardActive) return fmt(t.weekN, { n: i + 1 });
+    // An empty board has no stored plan yet, so it anchors on this week.
+    const anchorMonday = plan?.anchorMonday ?? mondayOf(today);
+    const start = new Date(new Date(`${anchorMonday}T00:00:00Z`).getTime() + i * 7 * 86400000);
     return i === currentWeek
       ? t.thisWeek
       : start.toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", {
@@ -536,7 +547,7 @@ export function PlanBoard() {
         </Link>
       </p>
 
-      {!plan && (
+      {!boardActive && (
         <Alert className="border-primary/40">
           <AlertTitle>{t.noPlanTitle}</AlertTitle>
           <AlertDescription>{fmt(t.noPlanBody, { name: baby.nickname })}</AlertDescription>
@@ -544,7 +555,7 @@ export function PlanBoard() {
       )}
 
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
-        {plan && (
+        {boardActive && (
           <div className="space-y-2">
             <p className="max-w-2xl text-sm text-muted-foreground">
               {fmt(t.spacingNote, { days: INTRO_SPACING_DAYS })}
@@ -556,7 +567,7 @@ export function PlanBoard() {
                   weekIndex={i}
                   label={weekLabel(i)}
                   isCurrent={i === currentWeek}
-                  entries={plan.entries
+                  entries={(plan?.entries ?? [])
                     .filter((e) => weekOfEntry(e) === i)
                     .sort((a, b) => entryDay(a) - entryDay(b))}
                   warningsByEntry={warningsByEntry}
@@ -595,7 +606,7 @@ export function PlanBoard() {
           setTargetWeek={setTargetWeek}
           weekLabel={weekLabel}
           onAdd={(slug) => placeFood(slug, effectiveTargetWeek)}
-          planExists={!!plan}
+          planExists={boardActive}
           onStartEmpty={startEmpty}
         />
 
