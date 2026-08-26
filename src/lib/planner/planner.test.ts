@@ -6,6 +6,7 @@ import {
   addFoodToWeek,
   INTRO_SPACING_DAYS,
   generatePlan,
+  migrateLegacyPlan,
   mondayOf,
   removeFoodFromPlan,
   scheduleSlugs,
@@ -326,5 +327,38 @@ describe("plan edits re-space the calendar", () => {
     };
     const edited = addFoodToWeek(late, "avocado", 0, foodBySlug);
     for (const e of edited.entries) expect(e.dayIndex!).toBeGreaterThanOrEqual(42);
+  });
+});
+
+describe("migrateLegacyPlan", () => {
+  it("spaces out a plan written before day-level scheduling", () => {
+    // Four foods in one week, week-only — the shape that made every chip in a
+    // lane render the same date and kept the old four-a-week packing.
+    const legacy: Plan = {
+      babyId: "baby-1",
+      anchorMonday: "2026-08-17",
+      entries: [
+        { id: "e1", foodSlug: "beef", weekIndex: 0 },
+        { id: "e2", foodSlug: "lentils", weekIndex: 0 },
+        { id: "e3", foodSlug: "avocado", weekIndex: 0 },
+        { id: "e4", foodSlug: "banana", weekIndex: 0 },
+      ],
+    };
+    const migrated = migrateLegacyPlan(legacy);
+    const days = migrated.entries.map((e) => e.dayIndex!);
+    expect(days).toEqual([0, 3, 6, 9]);
+    expect(new Set(days).size).toBe(4); // no two foods share a start date
+    expect(migrated.entries.map((e) => e.foodSlug)).toEqual([
+      "beef", "lentils", "avocado", "banana",
+    ]);
+  });
+
+  it("leaves an already-migrated plan untouched", () => {
+    const current: Plan = {
+      babyId: "baby-1",
+      anchorMonday: "2026-08-17",
+      entries: scheduleSlugs(["beef", "lentils"]),
+    };
+    expect(migrateLegacyPlan(current)).toBe(current);
   });
 });
