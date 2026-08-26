@@ -33,6 +33,16 @@ export const accountMsgs = {
     en: "Your babies' profiles and logs sync to this account and follow you to any device. Nothing else is stored — no analytics, no tracking.",
     zh: "宝宝的档案和记录会同步到这个账户，换设备也随时跟着你。除此之外什么都不存——没有分析统计，也没有跟踪。",
   },
+  /** Honest freshness line: when this device last heard from the server. */
+  lastChecked: { en: "Last checked for updates at {time}.", zh: "上次检查更新：{time}。" },
+  lastCheckedNever: {
+    en: "Checking for updates from your other devices…",
+    zh: "正在检查其他设备上的更新……",
+  },
+  lastCheckedStale: {
+    en: "Last checked at {time} — other devices' changes may not be here yet.",
+    zh: "上次检查是 {time}——其他设备上的改动可能还没同步过来。",
+  },
   downloadData: { en: "Download my data from the server", zh: "从服务器下载我的数据" },
   signOut: { en: "Sign out", zh: "退出登录" },
   deleteConfirmBody: {

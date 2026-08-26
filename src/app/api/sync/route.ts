@@ -10,7 +10,7 @@ import {
   planSchema,
 } from "@/lib/storage/schema";
 import type { SyncSnapshot } from "@/lib/storage/store";
-import { mergeSnapshots } from "@/lib/sync/merge";
+import { mergeSnapshots, snapshotVersion } from "@/lib/sync/merge";
 import { loadSnapshot, saveSnapshot } from "@/lib/sync/server";
 
 const snapshotSchema = z.object({
@@ -29,11 +29,15 @@ async function requireUser() {
   return session?.user ?? null;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const user = await requireUser();
   if (!user) return Response.json({ error: "Sign in required." }, { status: 401 });
   const snapshot = await loadSnapshot(getDb(), user.id);
-  return Response.json({ snapshot });
+  const version = snapshotVersion(snapshot);
+  // ?probe=1 — "has anything changed?" for the visible-tab poll. Same DB read,
+  // but the response is a hash instead of the whole snapshot.
+  if (new URL(req.url).searchParams.get("probe") === "1") return Response.json({ version });
+  return Response.json({ snapshot, version });
 }
 
 export async function POST(req: Request) {
@@ -58,5 +62,5 @@ export async function POST(req: Request) {
   const server = await loadSnapshot(db, user.id);
   const merged = mergeSnapshots(server, parsed.data as SyncSnapshot);
   await saveSnapshot(db, user.id, merged);
-  return Response.json({ snapshot: merged });
+  return Response.json({ snapshot: merged, version: snapshotVersion(merged) });
 }

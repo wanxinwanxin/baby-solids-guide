@@ -12,7 +12,7 @@ import { Button } from"@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from"@/components/ui/card";
 import { Input } from"@/components/ui/input";
 import { cn } from"@/lib/utils";
-import { msg } from"@/lib/i18n/config";
+import { fmt, msg } from"@/lib/i18n/config";
 import { useLocale, useMsgs } from"@/lib/i18n/LocaleProvider";
 import { accountMsgs, SYNC_STATUS_LABELS } from"@/lib/i18n/messages/account";
 
@@ -23,6 +23,7 @@ export default function AccountPage() {
   const enabled = useAuthEnabled();
   const { data: session, isPending } = useSession();
   const syncState = useSyncStatus((s) => s.state);
+  const lastSyncedAt = useSyncStatus((s) => s.lastSyncedAt);
 
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
   const [email, setEmail] = useState("");
@@ -116,6 +117,16 @@ export default function AccountPage() {
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <p className="text-muted-foreground">{t.syncedExplainer}</p>
+            <p className="text-muted-foreground text-xs">
+              {lastSyncedAt === null
+                ? t.lastCheckedNever
+                : fmt(syncState === "error" ? t.lastCheckedStale : t.lastChecked, {
+                    time: new Date(lastSyncedAt).toLocaleTimeString(
+                      locale === "zh" ? "zh-CN" : undefined,
+                      { hour: "2-digit", minute: "2-digit" },
+                    ),
+                  })}
+            </p>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline"size="sm"onClick={downloadServerData}>
                 {t.downloadData}
