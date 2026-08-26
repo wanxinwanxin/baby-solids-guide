@@ -360,3 +360,53 @@ describe("R0 — pediatrician-guided early start", () => {
     expect(rec.todaysPicks.map((p) => p.slug)).not.toContain("honey");
   });
 });
+
+describe("introduction pacing (day-level plans)", () => {
+  const foods = FOODS;
+  const plan: Plan = {
+    babyId: "baby-1",
+    anchorMonday: "2026-08-17",
+    entries: [
+      { id: "p1", foodSlug: "beef", weekIndex: 0, dayIndex: 0 },
+      { id: "p2", foodSlug: "lentils", weekIndex: 0, dayIndex: 3 },
+      { id: "p3", foodSlug: "broccoli", weekIndex: 0, dayIndex: 6 },
+    ],
+  };
+  const anchor = new Date("2026-08-17T12:00:00Z");
+  const atDay = (d: number) => new Date(anchor.getTime() + d * 86400000);
+  const eaten = (slug: string, date: string): ExposureLog =>
+    ({
+      id: `l-${slug}`, babyId: "baby-1", foodSlug: slug, date,
+      amountEaten: "some", enjoyment: "loved", symptoms: [],
+    }) as unknown as ExposureLog;
+  const history = [eaten("avocado", "2026-08-01"), eaten("banana", "2026-08-03")];
+
+  const pickSlugs = (day: number) =>
+    recommend({
+      baby: makeBaby({ birthDate: birthDateForAgeMonths(7) }),
+      logs: history, overrides: [], foods, today: atDay(day), plan,
+    }).todaysPicks.map((p) => p.slug);
+
+  it("holds one introduction steady across its observation window", () => {
+    expect(pickSlugs(0)[0]).toBe("beef");
+    expect(pickSlugs(1)[0]).toBe("beef");
+    expect(pickSlugs(2)[0]).toBe("beef");
+  });
+
+  it("moves to the next food only when its day arrives", () => {
+    expect(pickSlugs(3)[0]).toBe("lentils");
+    expect(pickSlugs(6)[0]).toBe("broccoli");
+  });
+
+  it("never surfaces a food whose plan day has not arrived", () => {
+    expect(pickSlugs(0)).not.toContain("lentils");
+    expect(pickSlugs(0)).not.toContain("broccoli");
+  });
+
+  it("fills the remaining picks with foods the baby already eats", () => {
+    const companions = pickSlugs(0).slice(1);
+    for (const slug of companions) {
+      expect(history.some((l) => l.foodSlug === slug)).toBe(true);
+    }
+  });
+});

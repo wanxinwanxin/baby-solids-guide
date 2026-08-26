@@ -11,6 +11,7 @@ import type {
   BabyProfile,
   ExposureLog,
   Plan,
+  PlanEntry,
   TextureStage,
 } from "@/lib/storage/types";
 import { TEXTURE_STAGES } from "@/lib/storage/types";
@@ -634,13 +635,21 @@ export function recommend(input: EngineInput, locale: Locale = "en"): Recommenda
     (a, b) => (stats.get(a.slug)!.attempts - stats.get(b.slug)!.attempts) || a.slug.localeCompare(b.slug),
   );
 
-  // ——— R10: foods planned for the current week ———
-  const currentWeek = plan && plan.entries.length > 0 ? planWeekIndex(plan, today) : null;
-  const plannedThisWeek = new Set(
-    currentWeek === null
-      ? []
-      : plan!.entries.filter((e) => e.weekIndex === currentWeek).map((e) => e.foodSlug),
-  );
+  // ——— R10: the food whose introduction window is open today ———
+  // Boosting everything planned this week surfaced a different new food each
+  // day, which defeats the observation window the plan is built around. Only
+  // the most recently started entry is being introduced right now; entries
+  // whose day has not arrived yet stay off the list until it does.
+  // (entryDay is inlined rather than imported — planner imports this module.)
+  const planDay = plan && plan.entries.length > 0 ? daysBetween(plan.anchorMonday, today) : null;
+  const dayOf = (e: PlanEntry) => e.dayIndex ?? e.weekIndex * 7;
+  const openIntroSlug =
+    planDay === null
+      ? null
+      : ([...plan!.entries]
+          .filter((e) => dayOf(e) <= planDay)
+          .sort((a, b) => dayOf(b) - dayOf(a))[0]?.foodSlug ?? null);
+  const plannedThisWeek = new Set(openIntroSlug ? [openIntroSlug] : []);
 
   // ——— R9 scoring ———
   const eligibleNextAllergen = next && !next.gated ? next.allergenId : null;
@@ -710,7 +719,28 @@ export function recommend(input: EngineInput, locale: Locale = "en"): Recommenda
   // a couple of days while watching before adding the next.
   const distinctIntroduced = new Set(logs.map((l) => l.foodSlug)).size;
   const pickCount = distinctIntroduced === 0 ? 1 : distinctIntroduced <= 2 ? 2 : 3;
-  let todaysPicks = scored.slice(0, pickCount);
+
+  // Only one unproven food a day — the one whose plan window is open. Three
+  // first-time foods on one tray is not an experiment a parent can read, so
+  // the remaining slots come from what the baby already eats.
+  const everEaten = new Set(logs.filter((l) => l.amountEaten !== "none").map((l) => l.foodSlug));
+  const introFirst = openIntroSlug
+    ? [...scored].sort(
+        (a, b) => Number(b.slug === openIntroSlug) - Number(a.slug === openIntroSlug),
+      )
+    : scored;
+  const paced: ScoredFood[] = [];
+  let newFoods = 0;
+  for (const candidate of introFirst) {
+    if (!everEaten.has(candidate.slug)) {
+      if (newFoods >= 1) continue;
+      newFoods += 1;
+    }
+    paced.push(candidate);
+    if (paced.length >= pickCount) break;
+  }
+
+  let todaysPicks = paced.slice(0, pickCount);
   if (distinctIntroduced >= 1 && distinctIntroduced <= 2) {
     const lastEaten = [...logs]
       .filter((l) => l.amountEaten !== "none")
@@ -730,7 +760,7 @@ export function recommend(input: EngineInput, locale: Locale = "en"): Recommenda
         suggestedBand: bandForAge(pinFood, age),
         reason: t(COPY.reasonPinned(attempts, pinFood.name)),
       };
-      todaysPicks = [pinned, ...scored.filter((s) => s.slug !== pinFood.slug)].slice(0, pickCount);
+      todaysPicks = [pinned, ...paced.filter((s) => s.slug !== pinFood.slug)].slice(0, pickCount);
     }
   }
 

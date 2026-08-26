@@ -63,7 +63,7 @@ function ageAtDay(baby: BabyProfile, today: Date, dayIndex: number): number {
  */
 export function scheduleSlugs(
   orderedSlugs: string[],
-  foodBySlug: Map<string, Food>,
+  _foodBySlug?: Map<string, Food>,
   startDay = 0,
 ): PlanEntry[] {
   const entries: PlanEntry[] = [];
@@ -98,8 +98,22 @@ export function planStartDay(plan: Plan): number {
   return plan.entries.length === 0 ? 0 : Math.min(...plan.entries.map(entryDay));
 }
 
+/**
+ * Give day slots to a plan written before day-level scheduling existed.
+ * Those entries carry only a weekIndex, so `entryDay` collapses every food
+ * in a week onto the same day — the board then shows one repeated date and
+ * keeps the old four-a-week packing. Re-spacing them in place fixes both.
+ */
+export function migrateLegacyPlan(plan: Plan): Plan {
+  if (plan.entries.every((entry) => entry.dayIndex !== undefined)) return plan;
+  return {
+    ...plan,
+    entries: scheduleSlugs(planOrder(plan), undefined, planStartDay(plan)),
+  };
+}
+
 /** Re-space an existing plan without changing the order the parent chose. */
-export function reflowPlan(plan: Plan, foodBySlug: Map<string, Food>): Plan {
+export function reflowPlan(plan: Plan, foodBySlug?: Map<string, Food>): Plan {
   return {
     ...plan,
     entries: scheduleSlugs(planOrder(plan), foodBySlug, planStartDay(plan)),

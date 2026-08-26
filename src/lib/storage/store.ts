@@ -19,6 +19,7 @@ import {
   exposureLogSchema,
   planSchema,
 } from "./schema";
+import { migrateLegacyPlan } from "@/lib/planner";
 import { mergeSnapshots } from "@/lib/sync/merge";
 
 /**
@@ -175,6 +176,8 @@ export const useGuideStore = create<GuideState>()(
         // state (LWW + tombstones). A raced/stale/empty server response can
         // then never destroy local data; a follow-up push reconciles instead.
         const merged = mergeSnapshots(serverSnap, snapshotOf(get()));
+        // A plan can arrive from a device still on the old week-only shape.
+        merged.plans = merged.plans.map(migrateLegacyPlan);
         const activeBabyId =
           get().activeBabyId && merged.babies.some((b) => b.id === get().activeBabyId)
             ? get().activeBabyId
@@ -311,10 +314,18 @@ export const useGuideStore = create<GuideState>()(
     }),
     {
       name: STORAGE_KEY,
-      version: 2,
+      version: 3,
       migrate: (persisted, version) => {
-        if (version < 2) return migrateV1ToV2(persisted) as unknown as GuideState;
-        return persisted as GuideState;
+        const state = (
+          version < 2 ? migrateV1ToV2(persisted) : persisted
+        ) as unknown as GuideState;
+        if (version < 3) {
+          // v3 gave plan entries a dayIndex. Without one, every food in a
+          // week reads as starting on the same day and the board keeps the
+          // old four-a-week packing.
+          return { ...state, plans: (state.plans ?? []).map(migrateLegacyPlan) };
+        }
+        return state;
       },
       storage: createJSONStorage(() =>
         typeof window !== "undefined" ? window.localStorage : memoryStorage,
