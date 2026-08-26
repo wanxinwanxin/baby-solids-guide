@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { BabyProfile, ExposureLog } from "@/lib/storage/types";
+import type { BabyProfile, ExposureLog, Plan } from "@/lib/storage/types";
 import type { SyncSnapshot } from "@/lib/storage/store";
-import { EMPTY_SNAPSHOT, mergeSnapshots } from "./merge";
+import { EMPTY_SNAPSHOT, mergeSnapshots, snapshotVersion } from "./merge";
 
 const baby = (id: string, nickname: string, updatedAt?: string): BabyProfile => ({
   id,
@@ -28,6 +28,13 @@ const log = (id: string, babyId: string, updatedAt?: string, foodSlug = "carrot"
   enjoyment: "loved",
   gagging: false,
   symptoms: [],
+  updatedAt,
+});
+
+const plan = (babyId: string, foodSlug: string, updatedAt?: string): Plan => ({
+  babyId,
+  anchorMonday: "2026-08-17",
+  entries: [{ id: `e-${foodSlug}`, foodSlug, weekIndex: 0 }],
   updatedAt,
 });
 
@@ -81,7 +88,7 @@ describe("mergeSnapshots — LWW matrix (ROADMAP Part II §6)", () => {
     expect(merged.overrides).toEqual([]);
   });
 
-  it("overrides/plans are client-authoritative for babies the client knows", () => {
+  it("overrides are client-authoritative for babies the client knows", () => {
     const b1 = baby("b1", "A", "2026-08-01T00:00:00Z");
     const server = snap({
       babies: [b1],
@@ -110,6 +117,75 @@ describe("mergeSnapshots — LWW matrix (ROADMAP Part II §6)", () => {
     expect(merged.babies).toHaveLength(1);
     expect(merged.overrides).toHaveLength(1);
     expect(merged.logs).toHaveLength(1);
+  });
+
+  it("plans: the newer plan wins, whichever side holds it", () => {
+    const b1 = baby("b1", "A", "2026-08-01T00:00:00Z");
+    // Two parents, one baby: the client edited a minute ago, the server copy
+    // is an hour old → the client's edit is the survivor.
+    const server = snap({ babies: [b1], plans: [plan("b1", "beef", "2026-08-20T09:00:00Z")] });
+    const clientNewer = snap({ babies: [b1], plans: [plan("b1", "tofu", "2026-08-20T09:59:00Z")] });
+    const merged = mergeSnapshots(server, clientNewer);
+    expect(merged.plans).toHaveLength(1);
+    expect(merged.plans[0].entries[0].foodSlug).toBe("tofu");
+  });
+
+  it("plans: a stale client cannot clobber the other parent's newer plan", () => {
+    const b1 = baby("b1", "A", "2026-08-01T00:00:00Z");
+    // THE BUG THIS PINS: the other parent just edited (server, 09:59); this
+    // device has an hour-old plan it hasn't touched. Pushing must not win.
+    const server = snap({ babies: [b1], plans: [plan("b1", "tofu", "2026-08-20T09:59:00Z")] });
+    const clientOlder = snap({ babies: [b1], plans: [plan("b1", "beef", "2026-08-20T09:00:00Z")] });
+    const merged = mergeSnapshots(server, clientOlder);
+    expect(merged.plans[0].entries[0].foodSlug).toBe("tofu");
+
+    // An unstamped plan (pre-updatedAt device) counts as epoch and loses too.
+    const clientUnstamped = snap({ babies: [b1], plans: [plan("b1", "beef")] });
+    expect(mergeSnapshots(server, clientUnstamped).plans[0].entries[0].foodSlug).toBe("tofu");
+  });
+
+  it("plans: a plan for a baby the client has never seen survives", () => {
+    const server = snap({
+      babies: [baby("b9", "OtherDeviceBaby", "2026-08-01T00:00:00Z")],
+      plans: [plan("b9", "beef", "2026-08-20T09:00:00Z")],
+    });
+    const client = snap({ babies: [baby("b1", "MyBaby", "2026-08-02T00:00:00Z")] });
+    const merged = mergeSnapshots(server, client);
+    expect(merged.plans.map((p) => p.babyId)).toEqual(["b9"]);
+    // …and an entirely empty client snapshot leaves it alone as well.
+    expect(mergeSnapshots(server, EMPTY_SNAPSHOT).plans).toHaveLength(1);
+  });
+
+  it("plans: clearing (entries-less, freshly stamped) propagates, not resurrects", () => {
+    const b1 = baby("b1", "A", "2026-08-01T00:00:00Z");
+    const server = snap({ babies: [b1], plans: [plan("b1", "beef", "2026-08-20T09:00:00Z")] });
+    const cleared: Plan = {
+      babyId: "b1",
+      anchorMonday: "2026-08-17",
+      entries: [],
+      updatedAt: "2026-08-20T10:00:00Z",
+    };
+    const merged = mergeSnapshots(server, snap({ babies: [b1], plans: [cleared] }));
+    expect(merged.plans[0].entries).toEqual([]);
+  });
+
+  it("plans: deleting the baby drops its plan", () => {
+    const server = snap({
+      babies: [baby("b1", "A", "2026-08-01T00:00:00Z")],
+      plans: [plan("b1", "beef", "2026-08-20T09:00:00Z")],
+    });
+    expect(mergeSnapshots(server, snap({ deletedBabyIds: ["b1"] })).plans).toEqual([]);
+  });
+
+  it("snapshotVersion is stable, order-insensitive, and moves when a plan changes", () => {
+    const b1 = baby("b1", "A", "2026-08-01T00:00:00Z");
+    const a = snap({ babies: [b1], logs: [log("l1", "b1", "2026-08-20T00:00:00Z")] });
+    const reordered = snap({ babies: [b1], logs: [log("l1", "b1", "2026-08-20T00:00:00Z")] });
+    expect(snapshotVersion(a)).toBe(snapshotVersion(reordered));
+    const withPlan = snap({ ...a, plans: [plan("b1", "beef", "2026-08-20T09:00:00Z")] });
+    expect(snapshotVersion(withPlan)).not.toBe(snapshotVersion(a));
+    const edited = snap({ ...a, plans: [plan("b1", "beef", "2026-08-20T10:00:00Z")] });
+    expect(snapshotVersion(edited)).not.toBe(snapshotVersion(withPlan));
   });
 
   it("empty ⊕ empty = empty; merge is idempotent", () => {

@@ -4,7 +4,7 @@ import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { eq } from "drizzle-orm";
 import { schema, type Db } from "@/lib/db";
-import type { BabyProfile, ExposureLog } from "@/lib/storage/types";
+import type { BabyProfile, ExposureLog, Plan } from "@/lib/storage/types";
 import type { SyncSnapshot } from "@/lib/storage/store";
 import { EMPTY_SNAPSHOT, mergeSnapshots } from "./merge";
 import { loadSnapshot, saveSnapshot } from "./server";
@@ -207,5 +207,59 @@ describe("family sharing (D4, pglite)", () => {
     // Last member deletes → the baby finally cascades away.
     await deleteUserWithHandoff(db, "parent-b");
     expect(await db.select().from(schema.babies).where(eq(schema.babies.id, SHARED))).toEqual([]);
+  });
+});
+
+describe("two parents editing one plan (pglite)", () => {
+  const SHARED = "55555555-5555-4555-8555-555555555555";
+  const planAt = (foodSlug: string, updatedAt: string): Plan => ({
+    babyId: SHARED,
+    anchorMonday: "2026-08-17",
+    entries: [{ id: `e-${foodSlug}`, foodSlug, weekIndex: 0 }],
+    updatedAt,
+  });
+
+  const pushAs = async (userId: string, snap: SyncSnapshot) => {
+    const merged = mergeSnapshots(await loadSnapshot(db, userId), snap);
+    await saveSnapshot(db, userId, merged);
+  };
+
+  it("a device pushing an hour-old plan does not overwrite the fresh one", async () => {
+    await createUser("mom", "mom2@example.com");
+    await createUser("dad", "dad2@example.com");
+
+    // Mom creates the baby and an early plan; dad joins the family.
+    await pushAs("mom", snapWith({ babies: [baby(SHARED)], plans: [planAt("beef", "2026-08-20T09:00:00.000Z")] }));
+    await db.insert(schema.babyMembers).values({ babyId: SHARED, userId: "dad", role: "member" });
+    expect((await loadSnapshot(db, "dad")).plans[0].entries[0].foodSlug).toBe("beef");
+
+    // Dad edits at 09:59 and pushes.
+    await pushAs("dad", snapWith({ babies: [baby(SHARED)], plans: [planAt("tofu", "2026-08-20T09:59:00.000Z")] }));
+    expect((await loadSnapshot(db, "mom")).plans[0].entries[0].foodSlug).toBe("tofu");
+
+    // Mom's tab, still holding the 09:00 copy, syncs. Her stale push must lose.
+    await pushAs("mom", snapWith({ babies: [baby(SHARED)], plans: [planAt("beef", "2026-08-20T09:00:00.000Z")] }));
+    const afterStale = await loadSnapshot(db, "mom");
+    expect(afterStale.plans).toHaveLength(1);
+    expect(afterStale.plans[0].entries[0].foodSlug).toBe("tofu");
+
+    // And a genuinely newer edit from mom does land.
+    await pushAs("mom", snapWith({ babies: [baby(SHARED)], plans: [planAt("lentil", "2026-08-20T11:00:00.000Z")] }));
+    expect((await loadSnapshot(db, "dad")).plans[0].entries[0].foodSlug).toBe("lentil");
+  });
+
+  it("clearing the plan travels as an entries-less plan and stays cleared", async () => {
+    const cleared: Plan = {
+      babyId: SHARED,
+      anchorMonday: "2026-08-17",
+      entries: [],
+      updatedAt: "2026-08-20T12:00:00.000Z",
+    };
+    await pushAs("dad", snapWith({ babies: [baby(SHARED)], plans: [cleared] }));
+    expect((await loadSnapshot(db, "mom")).plans[0].entries).toEqual([]);
+
+    // Mom's stale pre-clear copy cannot bring the plan back.
+    await pushAs("mom", snapWith({ babies: [baby(SHARED)], plans: [planAt("lentil", "2026-08-20T11:00:00.000Z")] }));
+    expect((await loadSnapshot(db, "dad")).plans[0].entries).toEqual([]);
   });
 });

@@ -2,7 +2,7 @@
 
 import { useMemo, useSyncExternalStore } from "react";
 import type { AllergenOverride, BabyProfile, CheckIn, ExposureLog, Plan } from "@/lib/storage/types";
-import { useGuideStore } from "@/lib/storage/store";
+import { isEmptyPlan, useGuideStore } from "@/lib/storage/store";
 
 const emptySubscribe = () => () => {};
 
@@ -49,5 +49,10 @@ export function useActiveCheckIns(): CheckIn[] {
 export function useActivePlan(): Plan | null {
   const baby = useActiveBaby();
   const plans = useGuideStore((s) => s.plans);
-  return useMemo(() => (baby ? (plans.find((p) => p.babyId === baby.id) ?? null) : null), [plans, baby]);
+  return useMemo(() => {
+    if (!baby) return null;
+    // An entries-less plan is a cleared plan (see store.clearPlan) — no plan.
+    const plan = plans.find((p) => p.babyId === baby.id);
+    return isEmptyPlan(plan) ? null : (plan ?? null);
+  }, [plans, baby]);
 }

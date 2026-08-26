@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { BabyProfile, ExposureLog } from "./types";
-import { migrateV1ToV2, newId, useGuideStore } from "./store";
+import { migrateV1ToV2, newId, selectPlanForActive, useGuideStore } from "./store";
 
 const makeBaby = (id = "b1", nickname = "Testling"): BabyProfile => ({
   id,
@@ -82,6 +82,21 @@ describe("GuideStore v2 (multi-baby, local-first)", () => {
     expect(st.logs).toHaveLength(0);
     expect(st.deletedLogIds).toContain(l.id);
     expect(st.checkIns).toHaveLength(0);
+  });
+
+  it("clearPlan leaves a stamped, entries-less plan that reads as no plan", () => {
+    const s = useGuideStore.getState();
+    s.saveBaby(makeBaby());
+    s.setPlan({ babyId: "b1", anchorMonday: "2026-08-17", entries: [{ id: "e1", foodSlug: "beef", weekIndex: 0 }] });
+    useGuideStore.getState().clearPlan("b1");
+
+    const st = useGuideStore.getState();
+    // The row survives so the clear can win last-write-wins on the other
+    // parent's device — but every reader sees "no plan".
+    expect(st.plans).toHaveLength(1);
+    expect(st.plans[0].entries).toEqual([]);
+    expect(st.plans[0].updatedAt).toBeDefined();
+    expect(selectPlanForActive(st)).toBeNull();
   });
 
   it("resolveCheckIn flips status", () => {

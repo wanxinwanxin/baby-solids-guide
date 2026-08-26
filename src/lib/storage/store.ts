@@ -91,9 +91,14 @@ export const selectCheckInsForActive = (s: GuideState): CheckIn[] => {
   const baby = selectActiveBaby(s);
   return baby ? s.checkIns.filter((c) => c.babyId === baby.id) : [];
 };
+/** An entries-less plan is how a cleared plan travels between devices (see
+ *  clearPlan) — to every reader it means "no plan". */
+export const isEmptyPlan = (p: Plan | undefined | null): boolean => !p || p.entries.length === 0;
 export const selectPlanForActive = (s: GuideState): Plan | null => {
   const baby = selectActiveBaby(s);
-  return baby ? (s.plans.find((p) => p.babyId === baby.id) ?? null) : null;
+  if (!baby) return null;
+  const plan = s.plans.find((p) => p.babyId === baby.id);
+  return isEmptyPlan(plan) ? null : (plan ?? null);
 };
 
 const now = () => new Date().toISOString();
@@ -227,7 +232,16 @@ export const useGuideStore = create<GuideState>()(
           plans: [...get().plans.filter((p) => p.babyId !== plan.babyId), { ...plan, updatedAt: now() }],
         }),
 
-      clearPlan: (babyId) => set({ plans: get().plans.filter((p) => p.babyId !== babyId) }),
+      // Clearing leaves a stamped, entries-less plan rather than dropping the
+      // row: plans merge by last-write-wins on updatedAt, so a bare deletion
+      // would be resurrected by the other parent's copy on the next sync.
+      // Readers treat an entries-less plan as no plan (selectPlanForActive).
+      clearPlan: (babyId) =>
+        set({
+          plans: get().plans.map((p) =>
+            p.babyId === babyId ? { ...p, entries: [], updatedAt: now() } : p,
+          ),
+        }),
 
       snoozeBackupNudge: (untilIso) => set({ backupNudgeSnoozedUntil: untilIso }),
 
