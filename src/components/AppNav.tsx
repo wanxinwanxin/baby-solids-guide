@@ -21,17 +21,24 @@ import { cn } from "@/lib/utils";
  */
 type NavMsgs = ReturnType<typeof useMsgs<typeof chromeMsgs>>;
 
+/**
+ * The daily loop, in the order a parent lives it: what to feed today, what
+ * actually happened, the food reference, something to cook, what's scheduled.
+ * History sits next to Today because the past is consulted as often as the
+ * plan — reference material (Learn, Allergens, Safety) moved under "More" to
+ * make room without widening the bar past its md breakpoint.
+ */
 const primaryLinks = (t: NavMsgs) => [
   { href: "/today", label: t.navToday },
+  { href: "/history", label: t.navHistory },
   { href: "/foods", label: t.navFoods },
   { href: "/recipes", label: t.navRecipes },
   { href: "/plan", label: t.navPlan },
-  { href: "/learn", label: t.navLearn },
 ];
 
 const moreLinks = (t: NavMsgs) => [
+  { href: "/learn", label: t.navLearn },
   { href: "/allergens", label: t.navAllergens },
-  { href: "/history", label: t.navHistory },
   { href: "/insights", label: t.navInsights },
   { href: "/safety", label: t.navSafety },
 ];
