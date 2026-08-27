@@ -6,16 +6,13 @@ import type { Msg, Msgs } from "../config";
  * shared by the log form and the journal's edit dialog.
  */
 export const journalMsgs = {
-  journalHeading: { en: "Feeding journal", zh: "喂养日记" },
   entriesFor: { en: "{n} entries for {name}", zh: "{name} 的 {n} 条记录" },
   oneEntryFor: { en: "1 entry for {name}", zh: "{name} 的 1 条记录" },
   firstTry: { en: "first try", zh: "第一次尝试" },
   dayFirstTries: { en: "{n} new", zh: "{n} 种新食物" },
   noTime: { en: "no time set", zh: "未记录时间" },
-  addedDetails: { en: "Details", zh: "详情" },
-  editEntry: { en: "Edit", zh: "编辑" },
+  editEntry: { en: "edit", zh: "编辑" },
   editEntryAria: { en: "Edit the {food} entry on {date}", zh: "编辑 {date} 的{food}记录" },
-  editTitle: { en: "Edit entry", zh: "编辑记录" },
   saveChanges: { en: "Save changes", zh: "保存修改" },
   cancel: { en: "Cancel", zh: "取消" },
   photoAlt: { en: "Photo of {food}", zh: "{food}的照片" },
@@ -28,10 +25,6 @@ export const journalMsgs = {
     en: "Photo is on the device that added it",
     zh: "照片保存在添加它的那台设备上",
   },
-  dataTools: { en: "Data & backup", zh: "数据与备份" },
-  showDataTools: { en: "Show data & backup tools", zh: "显示数据与备份工具" },
-  jumpToOldest: { en: "Oldest first", zh: "最早在前" },
-  jumpToNewest: { en: "Newest first", zh: "最新在前" },
   filterLabel: { en: "Show", zh: "筛选" },
   filterAll: { en: "Everything", zh: "全部" },
   filterFirsts: { en: "First tries", zh: "第一次尝试" },
@@ -40,7 +33,12 @@ export const journalMsgs = {
     en: "No entries match this filter yet.",
     zh: "还没有符合此筛选条件的记录。",
   },
-  loggedAt: { en: "at {time}", zh: "{time}" },
+  /**
+   * The amount phrase on its own. historyMsgs.ateLine carries a leading "·"
+   * baked in, which renders as a dangling separator whenever the entry has no
+   * measured quantity in front of it; the journal composes its own separators.
+   */
+  ateAmount: { en: "ate {amount}", zh: "{amount}" },
 } satisfies Msgs;
 
 /**
@@ -54,7 +52,6 @@ export const logDetailMsgs = {
     zh: "都是可选的——时间、具体分量、照片。",
   },
   timeLabel: { en: "Time", zh: "时间" },
-  timeClear: { en: "clear", zh: "清除" },
   mealLabel: { en: "Meal", zh: "餐次" },
   mealNone: { en: "Not set", zh: "未设置" },
   quantityLabel: { en: "Measured amount", zh: "具体分量" },
@@ -70,7 +67,6 @@ export const logDetailMsgs = {
   addPhoto: { en: "Add photo", zh: "添加照片" },
   replacePhoto: { en: "Replace", zh: "替换" },
   removePhoto: { en: "Remove", zh: "移除" },
-  photoPending: { en: "Processing photo…", zh: "正在处理照片…" },
   /** Sets the expectation before someone relies on photos syncing. */
   photoLocalOnly: {
     en: "Photos stay on this device — they aren't uploaded or synced.",

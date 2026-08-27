@@ -135,7 +135,6 @@ export default function HistoryPage() {
 
       {baby && (
         <p className="text-sm text-muted-foreground">
-          {fmt(t.nameLogs, { name: baby.nickname, n: logs.length })} ·{" "}
           <Link href="/onboarding?edit=1" className="underline underline-offset-2">
             {t.editProfile}
           </Link>{" "}

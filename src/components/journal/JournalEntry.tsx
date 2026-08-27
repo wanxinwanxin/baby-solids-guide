@@ -110,6 +110,20 @@ export function JournalEntry({
 
   const hasReaction = log.symptoms.length > 0 || log.gagging;
 
+  // Built as parts so the separators land *between* items — a measured amount
+  // is optional, and a hard-coded leading "·" left a dangling mark without it.
+  const meta: React.ReactNode[] = [];
+  if (log.quantity) {
+    meta.push(
+      <span className="font-data text-foreground">
+        {formatQuantity(log.quantity, msg(UNIT_MSGS[log.quantity.unit], locale))}
+      </span>,
+    );
+  }
+  meta.push(<span>{fmt(j.ateAmount, { amount: msg(AMOUNT_MSGS[log.amountEaten], locale) })}</span>);
+  meta.push(<span>{msg(BAND_ID_MSGS[log.prepBandUsed], locale)}</span>);
+  meta.push(<span>{msg(ENJOYMENT_SHORT_MSGS[log.enjoyment], locale)}</span>);
+
   return (
     <li className="rounded-xl border bg-card p-3">
       <div className="flex items-start gap-3">
@@ -142,19 +156,13 @@ export function JournalEntry({
             )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
-            {log.quantity && (
-              <span className="font-data text-foreground">
-                {formatQuantity(log.quantity, msg(UNIT_MSGS[log.quantity.unit], locale))}
+          <div className="flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground">
+            {meta.map((part, i) => (
+              <span key={i} className="flex items-center gap-x-1.5">
+                {i > 0 && <span aria-hidden="true">·</span>}
+                {part}
               </span>
-            )}
-            <span>
-              {fmt(t.ateLine, {
-                amount: msg(AMOUNT_MSGS[log.amountEaten], locale),
-                band: msg(BAND_ID_MSGS[log.prepBandUsed], locale),
-              })}
-            </span>
-            <span>· {msg(ENJOYMENT_SHORT_MSGS[log.enjoyment], locale)}</span>
+            ))}
           </div>
 
           {hasReaction && (
