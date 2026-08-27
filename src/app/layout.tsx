@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Figtree, JetBrains_Mono, Noto_Sans_SC } from "next/font/google";
 import Link from "next/link";
-import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
+import { BRAND, BRAND_TAGLINE, SUPPORT_EMAIL } from "@/lib/brand";
 import { AppNav } from "@/components/AppNav";
 import { MobileTabBar } from "@/components/MobileTabBar";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
@@ -69,7 +69,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               ·{" "}
               <Link href="/account" className="underline underline-offset-2">
                 {t.footerAccount}
-              </Link>
+              </Link>{" "}
+              ·{" "}
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="underline underline-offset-2">
+                {t.footerContact}
+              </a>
             </p>
           </footer>
         </LocaleProvider>

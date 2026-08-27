@@ -32,4 +32,5 @@ export const chromeMsgs = {
   footerSources: { en: "Sources & methodology", zh: "资料来源与方法" },
   footerSafety: { en: "Gagging vs. choking & emergencies", zh: "干呕与窒息 · 紧急情况" },
   footerAccount: { en: "Account & sync", zh: "账户与同步" },
+  footerContact: { en: "Contact us", zh: "联系我们" },
 } satisfies Msgs;

@@ -47,6 +47,21 @@ export const aboutMsgs = {
     en: "Everything you enter — your baby's profile and every log — lives in your browser's storage on your device. There is no account, no server database, no analytics, no trackers, and no ads. The Export button gives you a complete JSON copy of your data; \"Delete all data\" on the History page removes everything instantly. If you clear your browser data, your logs go with it, so export a backup now and then.",
     zh: "你输入的一切——宝宝的档案和每一条记录——都只保存在你设备上的浏览器存储里。没有账号、没有服务器数据库、没有数据分析、没有跟踪器、也没有广告。“导出”按钮可以给你一份完整的 JSON 数据副本；历史页面上的“删除所有数据”会立即清除全部数据。如果你清除了浏览器数据，记录也会一起消失，所以记得时不时导出一份备份。",
   },
+  contactTitle: { en: "Getting in touch", zh: "联系我们" },
+  contactBody: {
+    en: "Questions about the app, a food entry that looks wrong, a confusing screen, or a bug — email {email} and a person will read it. Replies can take a few days.",
+    zh: "对这个应用有疑问、发现某种食物的信息有误、某个页面让人困惑，或是遇到了程序问题——请发邮件到 {email}，会有真人阅读。回复可能需要几天。",
+  },
+  /**
+   * Email is the slow channel, and this is a health-adjacent app. The two
+   * faster paths are named explicitly so nobody waits on a reply during a
+   * reaction or a medical question.
+   */
+  contactUrgent: {
+    en: "Email is slow. For a reaction happening right now, open the emergency guide or call your local emergency number. For medical questions about your baby, your pediatrician comes first.",
+    zh: "邮件回复较慢。如果宝宝正在出现过敏反应，请打开紧急指南或拨打当地急救电话。关于宝宝的医疗问题，请优先咨询儿科医生。",
+  },
+  contactEmergencyLink: { en: "Emergency guide", zh: "紧急指南" },
   nameTitle: { en: "Name & trademarks", zh: "名称与商标" },
   nameBody: {
     en: "\"OpenSolids\" is a working name. This project is not affiliated with, endorsed by, or connected to any commercial infant-feeding program or brand.",

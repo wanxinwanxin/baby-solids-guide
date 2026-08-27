@@ -4,6 +4,8 @@ import { allFoods } from "../../../content/foods";
 import { getLocale } from "@/lib/i18n/server";
 import { fmt, pick } from "@/lib/i18n/config";
 import { aboutMsgs } from "@/lib/i18n/messages/about";
+import { SUPPORT_EMAIL } from "@/lib/brand";
+import Link from "next/link";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -53,6 +55,25 @@ export default async function AboutPage() {
       <section className="space-y-3 text-sm leading-relaxed">
         <h2 className="text-lg font-semibold">{t.privacyTitle}</h2>
         <p>{t.privacyBody}</p>
+      </section>
+
+      <section className="space-y-3 text-sm leading-relaxed">
+        <h2 className="text-lg font-semibold">{t.contactTitle}</h2>
+        <p>
+          {/* Split on the placeholder so the address lands inline in both
+              locales, where the sentence actually puts it. */}
+          {t.contactBody.split("{email}")[0]}
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="underline underline-offset-2">
+            {SUPPORT_EMAIL}
+          </a>
+          {t.contactBody.split("{email}")[1]}
+        </p>
+        <p className="text-muted-foreground">
+          {t.contactUrgent}{" "}
+          <Link href="/safety" className="underline underline-offset-2">
+            {t.contactEmergencyLink}
+          </Link>
+        </p>
       </section>
 
       <section className="space-y-3 text-sm leading-relaxed">
