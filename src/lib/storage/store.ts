@@ -21,6 +21,7 @@ import {
 } from "./schema";
 import { migrateLegacyPlan } from "@/lib/planner";
 import { mergeSnapshots } from "@/lib/sync/merge";
+import { deletePhoto } from "@/lib/media/photos";
 
 /**
  * GuideStore (ROADMAP §5.6, Part II) — the only module allowed to touch
@@ -44,6 +45,8 @@ export type GuideState = {
   setActiveBaby: (id: string) => void;
   removeBaby: (id: string) => void;
   addLog: (l: ExposureLog) => void;
+  /** Patch one entry in place (journal edits); re-stamps updatedAt for LWW. */
+  updateLog: (id: string, patch: Partial<Omit<ExposureLog, "id" | "babyId">>) => void;
   deleteLog: (id: string) => void;
   setOverride: (o: AllergenOverride) => void;
   clearOverride: (babyId: string, allergenId: AllergenId) => void;
@@ -165,6 +168,7 @@ export const useGuideStore = create<GuideState>()(
 
       removeBaby: (id) => {
         const babies = get().babies.filter((b) => b.id !== id);
+        for (const l of get().logs) if (l.babyId === id && l.photoId) void deletePhoto(l.photoId);
         set({
           babies,
           activeBabyId: get().activeBabyId === id ? (babies[0]?.id ?? null) : get().activeBabyId,
@@ -192,12 +196,30 @@ export const useGuideStore = create<GuideState>()(
 
       addLog: (log) => set({ logs: [...get().logs, { ...log, updatedAt: now() }] }),
 
-      deleteLog: (id) =>
+      updateLog: (id, patch) => {
+        const existing = get().logs.find((l) => l.id === id);
+        if (!existing) return;
+        // Dropping or replacing a photo evicts the old blob, so an edit can't
+        // leak an orphan that nothing references any more.
+        if ("photoId" in patch && existing.photoId && patch.photoId !== existing.photoId) {
+          void deletePhoto(existing.photoId);
+        }
+        set({
+          logs: get().logs.map((l) =>
+            l.id === id ? { ...l, ...patch, id: l.id, babyId: l.babyId, updatedAt: now() } : l,
+          ),
+        });
+      },
+
+      deleteLog: (id) => {
+        const existing = get().logs.find((l) => l.id === id);
+        if (existing?.photoId) void deletePhoto(existing.photoId);
         set({
           logs: get().logs.filter((l) => l.id !== id),
           deletedLogIds: [...new Set([...get().deletedLogIds, id])],
           checkIns: get().checkIns.filter((c) => c.logId !== id),
-        }),
+        });
+      },
 
       setOverride: (o) => {
         const stamped = { ...o, updatedAt: now() };

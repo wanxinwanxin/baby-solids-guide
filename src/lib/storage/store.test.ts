@@ -197,3 +197,68 @@ describe("GuideStore v2 (multi-baby, local-first)", () => {
     expect(active()?.textureStage).toBe("S2");
   });
 });
+
+describe("updateLog (journal edits)", () => {
+  beforeEach(() => {
+    useGuideStore.getState().reset();
+    useGuideStore.getState().saveBaby(makeBaby());
+  });
+
+  const seed = () => {
+    const l = log("carrot", "2026-08-20");
+    useGuideStore.getState().addLog(l);
+    return l.id;
+  };
+  const find = (id: string) => useGuideStore.getState().logs.find((l) => l.id === id);
+
+  it("patches the detail fields in place", () => {
+    const id = seed();
+    useGuideStore.getState().updateLog(id, {
+      time: "19:00",
+      mealSlot: "dinner",
+      quantity: { value: 20, unit: "ml" },
+      notes: "loved the spoon",
+    });
+    const updated = find(id);
+    expect(updated?.time).toBe("19:00");
+    expect(updated?.mealSlot).toBe("dinner");
+    expect(updated?.quantity).toEqual({ value: 20, unit: "ml" });
+    expect(updated?.notes).toBe("loved the spoon");
+    // Untouched fields survive the patch.
+    expect(updated?.foodSlug).toBe("carrot");
+    expect(updated?.amountEaten).toBe("some");
+  });
+
+  it("re-stamps updatedAt so the edit wins last-write-wins sync", async () => {
+    const id = seed();
+    const before = find(id)?.updatedAt;
+    await new Promise((r) => setTimeout(r, 2));
+    useGuideStore.getState().updateLog(id, { time: "08:00" });
+    expect(new Date(find(id)!.updatedAt!).getTime()).toBeGreaterThan(
+      new Date(before!).getTime(),
+    );
+  });
+
+  it("refuses to let a patch rewrite identity", () => {
+    const id = seed();
+    // A stray id/babyId in the patch must not detach the row from its baby.
+    useGuideStore
+      .getState()
+      .updateLog(id, { id: "hijacked", babyId: "other" } as never);
+    expect(find(id)?.babyId).toBe("b1");
+    expect(useGuideStore.getState().logs).toHaveLength(1);
+  });
+
+  it("clears a field when patched with undefined", () => {
+    const id = seed();
+    useGuideStore.getState().updateLog(id, { time: "19:00" });
+    useGuideStore.getState().updateLog(id, { time: undefined });
+    expect(find(id)?.time).toBeUndefined();
+  });
+
+  it("ignores an unknown id instead of appending a row", () => {
+    seed();
+    useGuideStore.getState().updateLog("nope", { time: "10:00" });
+    expect(useGuideStore.getState().logs).toHaveLength(1);
+  });
+});

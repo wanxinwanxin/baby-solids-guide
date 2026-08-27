@@ -9,6 +9,14 @@ import { correctedAgeMonths } from"@/lib/age";
 import { onsetForElapsed } from"@/lib/checkins";
 import { useActiveBaby, useActiveCheckIns, useHydrated } from"@/lib/hooks";
 import { newId, useGuideStore } from"@/lib/storage/store";
+import { clockNow } from"@/lib/journal";
+import {
+  commitPhoto,
+  LogDetailFields,
+  type LogDetails,
+  type PhotoState,
+} from"@/components/journal/LogDetailFields";
+import { logDetailMsgs } from"@/lib/i18n/messages/journal";
 import { CheckInOffer } from"./CheckInOffer";
 import type { AmountEaten, Enjoyment, SymptomId } from"@/lib/storage/types";
 import { SYMPTOM_IDS } from"@/lib/storage/types";
@@ -57,6 +65,7 @@ export function LogForm() {
   const baby = useActiveBaby();
   const locale = useLocale();
   const t = useMsgs(logFormMsgs);
+  const td = useMsgs(logDetailMsgs);
   const { foods, foodBySlug } = useL10nFoods();
   const addLog = useGuideStore((s) => s.addLog);
   const resolveCheckIn = useGuideStore((s) => s.resolveCheckIn);
@@ -73,6 +82,13 @@ export function LogForm() {
   const [amount, setAmount] = useState<AmountEaten>("some");
   const [enjoyment, setEnjoyment] = useState<Enjoyment>("neutral");
   const [gagging, setGagging] = useState(false);
+  // Time is pre-filled with "now" because the overwhelmingly common case is
+  // logging a feed that just happened; changing the date clears it (see below)
+  // rather than stamping today's clock onto a back-dated entry.
+  const [details, setDetails] = useState<LogDetails>({ time: clockNow() });
+  const [photo, setPhoto] = useState<PhotoState>({ kind: "none" });
+  const [showDetails, setShowDetails] = useState(false);
+  const [photoFailed, setPhotoFailed] = useState(false);
   const [showSymptoms, setShowSymptoms] = useState(false);
   const [symptoms, setSymptoms] = useState<SymptomId[]>([]);
   const [emergency, setEmergency] = useState<TriageResult | null>(null);
@@ -121,14 +137,21 @@ export function LogForm() {
     if (result.severity === "emergency") setEmergency(result);
   }
 
-  function save() {
+  async function save() {
     if (!food || !baby) return;
     const id = newId();
+    const { photoId, failed } = await commitPhoto(photo);
+    setPhotoFailed(failed);
     addLog({
       id,
       babyId: baby.id,
       foodSlug: food.slug,
       date,
+      time: details.time,
+      mealSlot: details.mealSlot,
+      quantity: details.quantity,
+      notes: details.notes,
+      photoId,
       prepBandUsed: band ?? defaultBand,
       amountEaten: amount,
       enjoyment,
@@ -157,6 +180,11 @@ export function LogForm() {
             {fmt(t.inTheBook, { food: food.name, name: baby.nickname })}
           </AlertDescription>
         </Alert>
+        {photoFailed && (
+          <Alert>
+            <AlertDescription>{td.photoFailed}</AlertDescription>
+          </Alert>
+        )}
         {!activeCheckIn && <CheckInOffer food={food} baby={baby} logId={savedClean.logId} />}
         <div className="flex gap-3">
           <Button onClick={() => router.push("/today")} className="bg-primary text-primary-foreground hover:bg-primary/85">
@@ -370,6 +398,26 @@ export function LogForm() {
             )}
           </section>
 
+          {/* Details — opt-in expansion, mirroring the symptoms pattern */}
+          <section className="space-y-2">
+            <button
+              type="button"
+              onClick={() => setShowDetails((v) => !v)}
+              className="text-sm font-semibold underline-offset-2 hover:underline"
+              aria-expanded={showDetails}
+            >
+              {showDetails ? "▾" : "▸"} {td.detailsToggle}
+            </button>
+            {showDetails && (
+              <LogDetailFields
+                value={details}
+                onChange={setDetails}
+                photo={photo}
+                onPhotoChange={setPhoto}
+              />
+            )}
+          </section>
+
           <div className="flex items-center gap-3">
             <label className="text-sm text-muted-foreground">
               {t.dateLabel}{" "}
@@ -377,12 +425,19 @@ export function LogForm() {
                 type="date"
                 value={date}
                 max={todayIso()}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setDate(next);
+                  // "Now" only means anything for today. Back-dating an entry
+                  // drops the pre-filled clock instead of inventing a time the
+                  // parent never chose.
+                  if (next !== todayIso()) setDetails((d) => ({ ...d, time: undefined }));
+                }}
                 className="rounded-md border px-2 py-1.5 text-sm"
               />
             </label>
             <Button
-              onClick={save}
+              onClick={() => void save()}
               size="lg"
               className="ml-auto bg-primary text-primary-foreground hover:bg-primary/85"
             >

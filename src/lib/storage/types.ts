@@ -78,15 +78,46 @@ export type BabyProfile = {
 };
 
 export type MealSlot = "breakfast" | "lunch" | "dinner" | "snack";
+export const MEAL_SLOTS: MealSlot[] = ["breakfast", "lunch", "dinner", "snack"];
 export type AmountEaten = "none" | "taste" | "some" | "lots";
 export type Enjoyment = "loved" | "neutral" | "disliked" | "refused";
+
+/**
+ * Units offered for a measured serving. Deliberately small: the volume/weight
+ * pair parents actually read off a bottle or scale, plus spoons for purees.
+ */
+export const AMOUNT_UNITS = ["ml", "g", "oz", "tbsp", "tsp"] as const;
+export type AmountUnit = (typeof AMOUNT_UNITS)[number];
+
+/**
+ * An optional measured serving ("20 ml"), for parents who track precisely.
+ * It never replaces `amountEaten` — that coarse enum stays required because
+ * the planner, insights, and combo ranking all key off it, and most logs are
+ * still one-tap. Think of this as the detail layer on top.
+ */
+export type FeedQuantity = { value: number; unit: AmountUnit };
 
 export type ExposureLog = {
   id: string;
   babyId: string;
   foodSlug: string;
   date: string; // ISO date
+  /**
+   * Local wall-clock time the food was served, "HH:MM" (24h). Stored as a
+   * plain clock string rather than folded into an ISO datetime on purpose:
+   * "7pm" means the same thing to both parents regardless of the device
+   * timezone, and `date` stays the stable grouping key for the journal.
+   */
+  time?: string;
   mealSlot?: MealSlot;
+  /** Optional measured serving, shown alongside the coarse amountEaten. */
+  quantity?: FeedQuantity;
+  /**
+   * Key of a photo held in this device's IndexedDB (see lib/media/photos).
+   * The id syncs so other devices can say "there's a photo elsewhere", but
+   * the image bytes never leave the device that added them.
+   */
+  photoId?: string;
   prepBandUsed: AgeBand;
   amountEaten: AmountEaten;
   enjoyment: Enjoyment;

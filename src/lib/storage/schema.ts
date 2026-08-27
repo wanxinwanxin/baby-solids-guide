@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { AGE_BANDS, ALLERGEN_IDS } from "@/content-schema/food";
-import { SYMPTOM_IDS } from "./types";
+import { AMOUNT_UNITS, SYMPTOM_IDS } from "./types";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const isoDateTime = z.string().min(10);
+/** Local wall-clock "HH:MM", 24-hour. */
+const clockTime = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 
 export const babyProfileSchema = z.object({
   id: z.string().min(1),
@@ -36,7 +38,14 @@ export const exposureLogSchema = z.object({
   babyId: z.string().min(1),
   foodSlug: z.string().min(1),
   date: isoDate,
+  time: clockTime.optional(),
   mealSlot: z.enum(["breakfast", "lunch", "dinner", "snack"]).optional(),
+  // Bounded so a slipped decimal or a hand-edited export can't render as a
+  // nonsense serving; imports surface the row as skipped instead.
+  quantity: z
+    .object({ value: z.number().positive().max(10000), unit: z.enum(AMOUNT_UNITS) })
+    .optional(),
+  photoId: z.string().min(1).optional(),
   prepBandUsed: z.enum(AGE_BANDS),
   amountEaten: z.enum(["none", "taste", "some", "lots"]),
   enjoyment: z.enum(["loved", "neutral", "disliked", "refused"]),
