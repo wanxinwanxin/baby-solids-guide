@@ -189,4 +189,51 @@ test.describe("Feeding journal (granular history)", () => {
     await page.getByRole("navigation", { name: /Primary/i }).getByRole("link", { name: "History" }).click();
     await page.waitForURL("**/history");
   });
+  test("attaches a photo, keeps it on the device, and survives a reload", async ({ page }) => {
+    await completeOnboarding(page);
+    await page.goto("/log?food=carrot");
+    await page.getByRole("button", { name: /Add details/ }).click();
+
+    // A real 1x1 PNG: the capture path decodes it through createImageBitmap
+    // and re-encodes via canvas, so a fake buffer wouldn't exercise it.
+    const png = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64",
+    );
+    await page
+      .locator('input[type="file"][accept="image/*"]')
+      .setInputFiles({ name: "meal.png", mimeType: "image/png", buffer: png });
+
+    // Preview appears before saving, and the local-only promise is stated.
+    await expect(page.getByRole("img", { name: "Photo" })).toBeVisible();
+    await expect(page.getByText(/Photos stay on this device/)).toBeVisible();
+
+    await page.getByRole("button", { name: "Save log" }).click();
+    await expect(page.getByText("Logged — nice work. 🎉")).toBeVisible();
+
+    await page.goto("/history");
+    await expect(page.getByRole("img", { name: "Photo of Carrot" })).toBeVisible();
+
+    // Reload proves it came back out of IndexedDB, not component state.
+    await page.reload();
+    await expect(page.getByRole("img", { name: "Photo of Carrot" })).toBeVisible();
+  });
+
+  test("explains a photo whose bytes live on another device", async ({ page }) => {
+    await completeOnboarding(page);
+    await mutateStore(
+      page,
+      `(state) => {
+        const babyId = state.babies[0].id;
+        state.logs.push({ babyId, id: "l-remote", foodSlug: "carrot",
+          date: new Date().toISOString().slice(0, 10), time: "09:00",
+          prepBandUsed: "6-8m", amountEaten: "some", enjoyment: "loved",
+          gagging: false, symptoms: [], photoId: "never-stored-here" });
+      }`,
+    );
+    await page.goto("/history");
+    // The id syncs but the image doesn't, so the gap is named rather than
+    // rendering an empty frame.
+    await expect(page.getByText("Photo is on the device that added it")).toBeVisible();
+  });
 });
