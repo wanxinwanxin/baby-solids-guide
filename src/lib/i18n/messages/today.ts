@@ -112,6 +112,16 @@ export const todayMsgs = {
   // ——— Warnings ———
   playbook: { en: "Playbook →", zh: "应对手册 →" },
   manageHolds: { en: "Manage holds →", zh: "管理暂停 →" },
+  hideNote: { en: "Hide", zh: "隐藏" },
+  /** {message} = the note being hidden, so the button says what it hides. */
+  hideNoteAria: { en: "Hide this note: {message}", zh: "隐藏这条提示：{message}" },
+  hiddenNotesOne: { en: "1 note hidden.", zh: "已隐藏 1 条提示。" },
+  hiddenNotesMany: { en: "{n} notes hidden.", zh: "已隐藏 {n} 条提示。" },
+  showHiddenNotes: { en: "Show them", zh: "重新显示" },
+  hidingKeepsHold: {
+    en: "Hiding a note changes nothing it describes: a hold stays in force, and the note comes back if it happens again.",
+    zh: "隐藏提示不会改变它所描述的情况：暂停依然有效，如果再次发生，提示会重新出现。",
+  },
 
   // ——— Coming up (the plan, read forward) ———
   comingUp: { en: "Coming up", zh: "接下来" },

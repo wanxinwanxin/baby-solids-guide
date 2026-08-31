@@ -99,6 +99,9 @@ export default function TodayPage() {
   const snoozeBackupNudge = useGuideStore((s) => s.snoozeBackupNudge);
   const lastExportAt = useGuideStore((s) => s.lastExportAt);
   const backupNudgeSnoozedUntil = useGuideStore((s) => s.backupNudgeSnoozedUntil);
+  const dismissedNotices = useGuideStore((s) => s.dismissedNotices);
+  const dismissNotice = useGuideStore((s) => s.dismissNotice);
+  const restoreNotices = useGuideStore((s) => s.restoreNotices);
 
   const authEnabled = useAuthEnabled();
   const { data: session } = useSession();
@@ -121,6 +124,14 @@ export default function TodayPage() {
     if (!baby) return null;
     return recommend({ baby, logs, overrides, foods: allFoods, today: viewDate, plan }, locale);
   }, [baby, logs, overrides, plan, viewDate, allFoods, locale]);
+  /** Notes the parent chose to hide. The hold itself is untouched — the
+   *  foods behind it stay out of the picks either way. */
+  const hiddenKeys = useMemo(() => new Set(dismissedNotices), [dismissedNotices]);
+  const visibleWarnings = useMemo(
+    () => (rec?.warnings ?? []).filter((w) => !hiddenKeys.has(w.dismissKey)),
+    [rec, hiddenKeys],
+  );
+  const hiddenCount = (rec?.warnings.length ?? 0) - visibleWarnings.length;
   const { due: dueCheckIns, upcoming: upcomingCheckIns } = useMemo(
     () => pendingCheckIns(checkIns, now),
     [checkIns, now],
@@ -571,9 +582,9 @@ export default function TodayPage() {
         </Card>
       )}
 
-      {rec.warnings.length > 0 && (
+      {visibleWarnings.length > 0 && (
         <div className="space-y-2">
-          {rec.warnings.map((w) => {
+          {visibleWarnings.map((w) => {
             const safety = SAFETY_WARNING_KINDS.has(w.kind);
             return (
               <Alert
@@ -585,27 +596,57 @@ export default function TodayPage() {
                 )}
               >
                 <AlertDescription
-                  className={cn(safety ? "text-foreground/85" : "text-accent-foreground/90")}
-                >
-                  {w.message}{" "}
-                  {w.allergenId && (
-                    <>
-                      <Link
-                        href={`/allergens/${w.allergenId}`}
-                        className="font-semibold underline underline-offset-2"
-                      >
-                        {t.playbook}
-                      </Link>{" "}
-                      <Link href="/allergens" className="font-semibold underline underline-offset-2">
-                        {t.manageHolds}
-                      </Link>
-                    </>
+                  className={cn(
+                    "flex flex-wrap items-baseline gap-x-3 gap-y-1",
+                    safety ? "text-foreground/85" : "text-accent-foreground/90",
                   )}
+                >
+                  <span className="min-w-50 flex-1">
+                    {w.message}{" "}
+                    {w.allergenId && (
+                      <>
+                        <Link
+                          href={`/allergens/${w.allergenId}`}
+                          className="font-semibold underline underline-offset-2"
+                        >
+                          {t.playbook}
+                        </Link>{" "}
+                        <Link
+                          href="/allergens"
+                          className="font-semibold underline underline-offset-2"
+                        >
+                          {t.manageHolds}
+                        </Link>
+                      </>
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => dismissNotice(w.dismissKey)}
+                    aria-label={fmt(t.hideNoteAria, { message: w.message })}
+                    className="font-data ml-auto inline-flex min-h-11 shrink-0 items-center text-[11px] uppercase tracking-[0.06em] underline underline-offset-2 opacity-80 hover:opacity-100"
+                  >
+                    {t.hideNote}
+                  </button>
                 </AlertDescription>
               </Alert>
             );
           })}
         </div>
+      )}
+
+      {hiddenCount > 0 && (
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          {fmt(hiddenCount === 1 ? t.hiddenNotesOne : t.hiddenNotesMany, { n: hiddenCount })}{" "}
+          <button
+            type="button"
+            onClick={restoreNotices}
+            className="font-semibold underline underline-offset-2 hover:text-foreground"
+          >
+            {t.showHiddenNotes}
+          </button>{" "}
+          {t.hidingKeepsHold}
+        </p>
       )}
 
       <section className="space-y-3.5">

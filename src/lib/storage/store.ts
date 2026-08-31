@@ -40,6 +40,14 @@ export type GuideState = {
   deletedBabyIds: string[];
   lastExportAt?: string;
   backupNudgeSnoozedUntil?: string;
+  /**
+   * Notes the parent has hidden on this device, by dismiss key (see
+   * engine Warning.dismissKey). Device-local on purpose: it is a reading
+   * preference, not shared family data, so it stays out of the sync
+   * snapshot. The state that raised a note is baked into its key, so a new
+   * reaction or a fresh lapse brings the note back on its own.
+   */
+  dismissedNotices: string[];
 
   saveBaby: (b: BabyProfile) => void;
   setActiveBaby: (id: string) => void;
@@ -56,6 +64,10 @@ export type GuideState = {
   setPlan: (plan: Plan) => void;
   clearPlan: (babyId: string) => void;
   snoozeBackupNudge: (untilIso: string) => void;
+  /** Hide one note. The condition behind it stays in force. */
+  dismissNotice: (key: string) => void;
+  /** Bring every hidden note back. */
+  restoreNotices: () => void;
   /** Replace local state with a server-merged snapshot (Phase 6 sync). */
   applySnapshot: (s: SyncSnapshot) => void;
   reset: () => void;
@@ -129,6 +141,7 @@ const EMPTY = {
   deletedBabyIds: [] as string[],
   lastExportAt: undefined as string | undefined,
   backupNudgeSnoozedUntil: undefined as string | undefined,
+  dismissedNotices: [] as string[],
 };
 
 /** v1 persisted shape → v2 (single `baby` becomes `babies[]`; overrides stamped). */
@@ -267,6 +280,11 @@ export const useGuideStore = create<GuideState>()(
 
       snoozeBackupNudge: (untilIso) => set({ backupNudgeSnoozedUntil: untilIso }),
 
+      dismissNotice: (key) =>
+        set({ dismissedNotices: [...new Set([...get().dismissedNotices, key])] }),
+
+      restoreNotices: () => set({ dismissedNotices: [] }),
+
       reset: () => set({ ...EMPTY }),
 
       exportJson: () => {
@@ -377,6 +395,7 @@ export const useGuideStore = create<GuideState>()(
         deletedBabyIds,
         lastExportAt,
         backupNudgeSnoozedUntil,
+        dismissedNotices,
       }) => ({
         babies,
         activeBabyId,
@@ -388,6 +407,7 @@ export const useGuideStore = create<GuideState>()(
         deletedBabyIds,
         lastExportAt,
         backupNudgeSnoozedUntil,
+        dismissedNotices,
       }),
     },
   ),
