@@ -8,6 +8,7 @@ import {
 import type { Locale, Msg } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/config";
 import { allergenLabel } from "@/lib/i18n/labels";
+import { entryDay, INTRO_SPACING_DAYS } from "@/lib/plan-progress";
 import type { AllergenOverride, BabyProfile, ExposureLog, Plan, PlanEntry } from "@/lib/storage/types";
 
 /**
@@ -19,22 +20,13 @@ const WEEKS_PER_MONTH = 30.4375 / 7;
 const DAYS_PER_MONTH = 30.4375;
 export const PLAN_WEEKS = 12;
 
-/**
- * The observation window a new food owns before the next one starts, so a
- * reaction points at exactly one food. Three days is what the allergen
- * guidance asks for, and applying it to every new food is what keeps a
- * seven-day week to two or three introductions — the old week-bucket
- * planner packed in four, leaving no clear days between them at all.
- */
-export const INTRO_SPACING_DAYS = 3;
-
 /** Days a food must sit reaction-free before it may partner a new food. */
 export const COMPANION_ESTABLISHED_DAYS = 7;
 
-/** Schedule slot of an entry; pre-day-level plans fall back to their week. */
-export function entryDay(entry: PlanEntry): number {
-  return entry.dayIndex ?? entry.weekIndex * 7;
-}
+// The spacing rule and the entry→day accessor live in lib/plan-progress, the
+// module that reconciles a written plan with what was actually logged. They
+// are re-exported here so every planner caller keeps one import.
+export { INTRO_SPACING_DAYS, entryDay } from "@/lib/plan-progress";
 
 /** ISO date of the Monday of the week containing `date` (UTC). */
 export function mondayOf(date: Date): string {

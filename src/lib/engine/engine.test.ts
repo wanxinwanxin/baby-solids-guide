@@ -393,9 +393,32 @@ describe("introduction pacing (day-level plans)", () => {
     expect(pickSlugs(2)[0]).toBe("beef");
   });
 
-  it("moves to the next food only when its day arrives", () => {
-    expect(pickSlugs(3)[0]).toBe("lentils");
-    expect(pickSlugs(6)[0]).toBe("broccoli");
+  it("moves on once the food has had its window, whether or not it was eaten", () => {
+    const offered = (slug: string, date: string, amount: string): ExposureLog =>
+      ({ ...eaten(slug, date), id: `o-${slug}`, amountEaten: amount }) as unknown as ExposureLog;
+    const withOffers = (logs: ExposureLog[], day: number) =>
+      recommend({
+        baby: makeBaby({ birthDate: birthDateForAgeMonths(7) }),
+        logs: [...history, ...logs], overrides: [], foods, today: atDay(day), plan,
+      }).todaysPicks.map((p) => p.slug);
+
+    expect(withOffers([offered("beef", "2026-08-17", "some")], 3)[0]).toBe("lentils");
+    // A refusal counts as the introduction too — the retry queue brings beef
+    // back, so the plan does not stall on a food the baby turned down.
+    expect(withOffers([offered("beef", "2026-08-17", "none")], 3)[0]).toBe("lentils");
+    expect(
+      withOffers(
+        [offered("beef", "2026-08-17", "some"), offered("lentils", "2026-08-20", "some")],
+        6,
+      )[0],
+    ).toBe("broccoli");
+  });
+
+  it("waits for a skipped food instead of dropping it off the plan", () => {
+    // Nobody served beef, so day 3 is still beef's turn — advancing on the
+    // calendar alone used to discard it without saying so.
+    expect(pickSlugs(3)[0]).toBe("beef");
+    expect(pickSlugs(3)).not.toContain("lentils");
   });
 
   it("never surfaces a food whose plan day has not arrived", () => {
@@ -408,5 +431,98 @@ describe("introduction pacing (day-level plans)", () => {
     for (const slug of companions) {
       expect(history.some((l) => l.foodSlug === slug)).toBe(true);
     }
+  });
+});
+
+describe("a plan that follows what actually happened", () => {
+  const plan: Plan = {
+    babyId: "baby-1",
+    anchorMonday: "2026-08-17",
+    entries: [
+      { id: "p1", foodSlug: "beef", weekIndex: 0, dayIndex: 0 },
+      { id: "p2", foodSlug: "egg", weekIndex: 0, dayIndex: 3 },
+      { id: "p3", foodSlug: "broccoli", weekIndex: 0, dayIndex: 6 },
+    ],
+  };
+  const anchor = new Date("2026-08-17T12:00:00Z");
+  const atDay = (d: number) => new Date(anchor.getTime() + d * 86400000);
+  const iso = (d: number) => new Date(atDay(d)).toISOString().slice(0, 10);
+  const log = (slug: string, day: number, over: Partial<ExposureLog> = {}): ExposureLog =>
+    ({
+      id: `l-${slug}-${day}`, babyId: "baby-1", foodSlug: slug, date: iso(day),
+      prepBandUsed: "6-8m", amountEaten: "some", enjoyment: "loved", gagging: false,
+      symptoms: [], ...over,
+    }) as ExposureLog;
+
+  // Three clean days of solids so the egg group is past its opening gate.
+  const settled = [log("apple", -6), log("banana", -5), log("spinach", -4), log("beef", 0)];
+  const eggReaction = log("egg", 3, { symptoms: ["hives-widespread"] });
+
+  const at = (day: number, extra: ExposureLog[] = [], overrides: EngineInput["overrides"] = []) =>
+    recommend({
+      baby: makeBaby({ birthDate: birthDateForAgeMonths(7) }),
+      logs: [...settled, ...extra], overrides, foods: FOODS, today: atDay(day), plan,
+    });
+
+  it("hands egg's slot to the next food after a reaction pauses the group", () => {
+    const paused = at(4, [eggReaction]);
+    expect(paused.todaysPicks.map((p) => p.slug)).not.toContain("egg");
+    expect(paused.plan?.steps.find((s) => s.foodSlug === "egg")?.status).toBe("blocked");
+    expect(paused.warnings.some((w) => w.kind === "symptom-hold" && w.allergenId === "egg")).toBe(true);
+
+    // Broccoli keeps its own day rather than being rushed into the gap.
+    expect(paused.plan?.now).toBeNull();
+    expect(at(6, [eggReaction]).todaysPicks[0].slug).toBe("broccoli");
+  });
+
+  it("puts egg back in the rotation when the pause is cleared", () => {
+    const resumed = at(
+      6,
+      [eggReaction],
+      [{ babyId: "baby-1", allergenId: "egg", status: "introducing", setOn: iso(5) }],
+    );
+    expect(resumed.warnings.some((w) => w.allergenId === "egg")).toBe(false);
+    expect(resumed.plan?.steps.find((s) => s.foodSlug === "egg")?.status).toBe("introduced");
+    expect(resumed.plan?.blocked).toHaveLength(0);
+  });
+
+  it("gives the plan the one new-food slot and keeps everything else familiar", () => {
+    // Beef is still inside its observation window on day 1, so no other
+    // first-time food may share the tray with it.
+    const picks = at(1).todaysPicks.map((p) => p.slug);
+    expect(picks[0]).toBe("beef");
+    const eatenAlready = new Set(settled.map((l) => l.foodSlug));
+    for (const slug of picks.slice(1)) expect(eatenAlready.has(slug)).toBe(true);
+  });
+
+  it("reports the plan's standing so the board and Today agree", () => {
+    const rec = at(1);
+    expect(rec.plan?.introducedCount).toBe(1);
+    expect(rec.plan?.total).toBe(3);
+    expect(rec.plan?.watching?.foodSlug).toBe("beef");
+    expect(rec.plan?.upcoming.map((s) => s.foodSlug)).toEqual(["egg", "broccoli"]);
+  });
+
+  it("has no plan standing to report when there is no plan", () => {
+    expect(run({}).plan).toBeNull();
+  });
+
+  it("still offers one food when the plan's only step is on hold", () => {
+    // A family whose very first planned food is excluded has no familiar
+    // food to fall back on. An empty picks list is worse than one honest
+    // suggestion, and one is still the daily limit for anything unproven.
+    const rec = recommend({
+      baby: makeBaby({ knownAllergies: ["egg"] }),
+      logs: [],
+      overrides: [],
+      foods: FOODS,
+      today: atDay(0),
+      plan: { babyId: "baby-1", anchorMonday: "2026-08-17", entries: [
+        { id: "p1", foodSlug: "egg", weekIndex: 0, dayIndex: 0 },
+      ] },
+    });
+    expect(rec.plan?.now).toBeNull();
+    expect(rec.todaysPicks).toHaveLength(1);
+    expect(rec.todaysPicks[0].slug).not.toBe("egg");
   });
 });

@@ -4,6 +4,7 @@ import { correctedAgeMonths, daysBetween } from "@/lib/age";
 import type { Locale, Msg } from "@/lib/i18n/config";
 import { msg } from "@/lib/i18n/config";
 import { allergenLabel, bandLabel, categoryLabel } from "@/lib/i18n/labels";
+import { planProgress, type PlanProgress } from "@/lib/plan-progress";
 import { triage } from "@/lib/triage";
 import type {
   AllergenOverride,
@@ -11,7 +12,6 @@ import type {
   BabyProfile,
   ExposureLog,
   Plan,
-  PlanEntry,
   TextureStage,
 } from "@/lib/storage/types";
 import { TEXTURE_STAGES } from "@/lib/storage/types";
@@ -136,6 +136,13 @@ export type Warning = {
   message: string;
   allergenId?: AllergenId;
   foodSlug?: string;
+  /**
+   * Stable identity for "hide this note". The state that raised the warning
+   * is baked into the key — the date of the reaction, the last exposure —
+   * so hiding one note never hides the next one. A second reaction, or a
+   * fresh lapse, produces a new key and the note comes back.
+   */
+  dismissKey: string;
 };
 
 export type AllergenPlanItem = {
@@ -169,6 +176,8 @@ export type Recommendation = {
   textureStage: { current: TextureStage; nudge?: string };
   retryQueue: ScoredFood[];
   warnings: Warning[];
+  /** Where the plan stands today — null when there is no plan. */
+  plan: PlanProgress | null;
 };
 
 // ——— Derivation helpers ———
@@ -179,6 +188,8 @@ type FoodStats = {
   lastDate?: string;
   lastEnjoyment?: ExposureLog["enjoyment"];
   hasPausingSymptoms: boolean;
+  /** Date of the most recent log with allergen-pausing symptoms. */
+  lastSymptomDate?: string;
 };
 
 export function deriveFoodStats(logs: ExposureLog[]): Map<string, FoodStats> {
@@ -194,21 +205,30 @@ export function deriveFoodStats(logs: ExposureLog[]): Map<string, FoodStats> {
     if (log.amountEaten !== "none") s.exposures += 1;
     s.lastDate = log.date;
     s.lastEnjoyment = log.enjoyment;
-    if (triage(log.symptoms).pausesAllergen) s.hasPausingSymptoms = true;
+    if (triage(log.symptoms).pausesAllergen) {
+      s.hasPausingSymptoms = true;
+      s.lastSymptomDate = log.date;
+    }
     stats.set(log.foodSlug, s);
   }
   return stats;
 }
+
+export type DerivedAllergenState = AllergenStateView & {
+  firstExposureDate?: string;
+  /** Date of the most recent reaction that paused this group. */
+  lastReactionDate?: string;
+};
 
 export function deriveAllergenStates(input: {
   baby: BabyProfile;
   logs: ExposureLog[];
   overrides: AllergenOverride[];
   foods: Food[];
-}): Map<AllergenId, AllergenStateView & { firstExposureDate?: string }> {
+}): Map<AllergenId, DerivedAllergenState> {
   const { baby, logs, overrides, foods } = input;
   const allergenOfFood = new Map(foods.map((f) => [f.slug, f.commonAllergen]));
-  const result = new Map<AllergenId, AllergenStateView & { firstExposureDate?: string }>();
+  const result = new Map<AllergenId, DerivedAllergenState>();
 
   for (const id of ALLERGEN_IDS) {
     result.set(id, { allergenId: id, status: "not-started", exposureCount: 0 });
@@ -224,7 +244,10 @@ export function deriveAllergenStates(input: {
       state.firstExposureDate ??= log.date;
       state.lastExposureDate = log.date;
     }
-    if (triage(log.symptoms).pausesAllergen) state.status = "reacted-paused";
+    if (triage(log.symptoms).pausesAllergen) {
+      state.status = "reacted-paused";
+      state.lastReactionDate = log.date;
+    }
   }
 
   for (const id of ALLERGEN_IDS) {
@@ -402,6 +425,75 @@ const COPY = {
   }),
 };
 
+// ——— Shared exclusion rules ———
+
+export type FoodExclusion = {
+  /** The sentence that says why, already localized. */
+  reason: string;
+  kind: "too-young" | "allergen-paused" | "doctor-avoid" | "food-hold";
+};
+
+/**
+ * Every food that cannot be served right now, with the reason. Today's picks,
+ * the plan projection, and the plan board all read this one map, so none of
+ * them can tell a parent a different story about the same food.
+ */
+export function foodExclusions(
+  input: {
+    baby: BabyProfile;
+    logs: ExposureLog[];
+    overrides: AllergenOverride[];
+    foods: Food[];
+    today: Date;
+  },
+  locale: Locale = "en",
+): Map<string, FoodExclusion> {
+  const t = (m: Msg) => msg(m, locale);
+  const { baby, logs, overrides, foods, today } = input;
+  const stats = deriveFoodStats(logs);
+  const allergenStates = deriveAllergenStates({ baby, logs, overrides, foods });
+  const eligibilityAge = eligibilityAgeMonths(baby, today);
+
+  const pausedAllergens = new Set<AllergenId>();
+  for (const [id, state] of allergenStates) {
+    if (state.status === "reacted-paused" || state.status === "avoid-per-doctor") {
+      pausedAllergens.add(id);
+    }
+  }
+
+  const excluded = new Map<string, FoodExclusion>();
+  for (const food of foods) {
+    if (eligibilityAge < food.minAgeMonths) {
+      excluded.set(food.slug, { kind: "too-young", reason: t(COPY.exclTooYoung(food.minAgeMonths)) });
+      continue;
+    }
+    if (food.commonAllergen && pausedAllergens.has(food.commonAllergen)) {
+      excluded.set(food.slug, {
+        kind: "allergen-paused",
+        reason: t(COPY.exclAllergenPaused(food.commonAllergen)),
+      });
+      continue;
+    }
+    if (baby.doctorAvoidList.includes(food.slug)) {
+      excluded.set(food.slug, { kind: "doctor-avoid", reason: t(COPY.exclDoctorAvoid) });
+      continue;
+    }
+    // A food that caused symptoms without being an allergen vehicle gets its
+    // own hold — the allergen groups above already cover the rest.
+    if (stats.get(food.slug)?.hasPausingSymptoms && !food.commonAllergen) {
+      excluded.set(food.slug, { kind: "food-hold", reason: t(COPY.exclFoodHold) });
+    }
+  }
+  return excluded;
+}
+
+/** The block-reason lookup `planProgress` asks for, built from `foodExclusions`. */
+export function planBlocker(
+  exclusions: Map<string, FoodExclusion>,
+): (foodSlug: string) => string | undefined {
+  return (foodSlug) => exclusions.get(foodSlug)?.reason;
+}
+
 // ——— The engine ———
 
 export function recommend(input: EngineInput, locale: Locale = "en"): Recommendation {
@@ -438,23 +530,28 @@ export function recommend(input: EngineInput, locale: Locale = "en"): Recommenda
       textureStage: { current: baby.textureStage },
       retryQueue: [],
       warnings,
+      plan: null,
     };
   }
 
   // A pediatrician-guided early starter (4–6 months) is deliberately on the
-  // program before our 6-month food floor, so eligibility uses the clamped
-  // age — every food's first prep band is already the smooth purée/mash an
-  // early starter needs. Surface the caveat once instead of gating.
-  const eligibilityAge = eligibilityAgeMonths(baby, today);
+  // program before our 6-month food floor, so `foodExclusions` measures
+  // eligibility with the clamped age — every food's first prep band is
+  // already the smooth purée/mash an early starter needs. Surface the caveat
+  // once instead of gating.
   if (pediatricianGuided && (age < READY_MONTHS || !baby.readiness.confirmedAt)) {
     warnings.push({
       kind: "early-start",
       message: t(COPY.warnEarlyStart(age < READY_MONTHS)),
+      dismissKey: "early-start",
     });
   }
 
   // ——— Exclusions (R7, R8) ———
-  const excludedSlugs = new Map<string, string>(); // slug → reason
+  const exclusions = foodExclusions({ baby, logs, overrides, foods, today }, locale);
+  const excludedSlugs = new Map<string, string>(
+    [...exclusions].map(([slug, e]) => [slug, e.reason]),
+  );
   const pausedAllergens = new Set<AllergenId>();
   for (const [id, state] of allergenStates) {
     if (state.status === "reacted-paused" || state.status === "avoid-per-doctor") {
@@ -463,27 +560,13 @@ export function recommend(input: EngineInput, locale: Locale = "en"): Recommenda
   }
 
   for (const food of foods) {
-    if (eligibilityAge < food.minAgeMonths) {
-      excludedSlugs.set(food.slug, t(COPY.exclTooYoung(food.minAgeMonths)));
-      continue;
-    }
-    if (food.commonAllergen && pausedAllergens.has(food.commonAllergen)) {
-      excludedSlugs.set(food.slug, t(COPY.exclAllergenPaused(food.commonAllergen)));
-      continue;
-    }
-    if (baby.doctorAvoidList.includes(food.slug)) {
-      excludedSlugs.set(food.slug, t(COPY.exclDoctorAvoid));
-      continue;
-    }
-    const s = stats.get(food.slug);
-    if (s?.hasPausingSymptoms && !food.commonAllergen) {
-      excludedSlugs.set(food.slug, t(COPY.exclFoodHold));
-      warnings.push({
-        kind: "food-hold",
-        foodSlug: food.slug,
-        message: t(COPY.warnFoodHold(food.name)),
-      });
-    }
+    if (exclusions.get(food.slug)?.kind !== "food-hold") continue;
+    warnings.push({
+      kind: "food-hold",
+      foodSlug: food.slug,
+      message: t(COPY.warnFoodHold(food.name)),
+      dismissKey: `food-hold:${food.slug}:${stats.get(food.slug)?.lastSymptomDate ?? "?"}`,
+    });
   }
 
   for (const id of pausedAllergens) {
@@ -495,6 +578,9 @@ export function recommend(input: EngineInput, locale: Locale = "en"): Recommenda
         state.status === "avoid-per-doctor"
           ? t(COPY.warnAvoidPerDoctor(id))
           : t(COPY.warnReactionPaused(id)),
+      // Keyed on the reaction that caused the pause, so hiding this note
+      // never hides the note for a later, different reaction.
+      dismissKey: `symptom-hold:${id}:${state.lastReactionDate ?? state.status}`,
     });
   }
 
@@ -587,6 +673,8 @@ export function recommend(input: EngineInput, locale: Locale = "en"): Recommenda
         kind: "maintenance-lapse",
         allergenId: id,
         message: t(COPY.warnMaintLapse(id, days)),
+        // Serving the group again ends this lapse and starts a new key.
+        dismissKey: `maintenance-lapse:${id}:${state.lastExposureDate}`,
       });
     } else if (days > MAINTENANCE_NUDGE_DAYS) {
       maintenance.push({
@@ -635,20 +723,22 @@ export function recommend(input: EngineInput, locale: Locale = "en"): Recommenda
     (a, b) => (stats.get(a.slug)!.attempts - stats.get(b.slug)!.attempts) || a.slug.localeCompare(b.slug),
   );
 
-  // ——— R10: the food whose introduction window is open today ———
-  // Boosting everything planned this week surfaced a different new food each
-  // day, which defeats the observation window the plan is built around. Only
-  // the most recently started entry is being introduced right now; entries
-  // whose day has not arrived yet stay off the list until it does.
-  // (entryDay is inlined rather than imported — planner imports this module.)
-  const planDay = plan && plan.entries.length > 0 ? daysBetween(plan.anchorMonday, today) : null;
-  const dayOf = (e: PlanEntry) => e.dayIndex ?? e.weekIndex * 7;
-  const openIntroSlug =
-    planDay === null
-      ? null
-      : ([...plan!.entries]
-          .filter((e) => dayOf(e) <= planDay)
-          .sort((a, b) => dayOf(b) - dayOf(a))[0]?.foodSlug ?? null);
+  // ——— R10: where the plan actually stands today ———
+  // Reading the plan off the calendar alone made this drift: a food already
+  // eaten stayed "open" for its three days, a food the family skipped held
+  // the slot forever, and a paused group stopped the plan driving Today at
+  // all. planProgress reconciles the written plan with the logs and the
+  // hold list, so the plan the board shows is the plan Today follows.
+  const progress = planProgress({
+    plan,
+    logs,
+    today,
+    isBlocked: planBlocker(exclusions),
+  });
+  // The food to introduce today, or the one still inside its observation
+  // window — the second is what keeps a new food on the tray for the two or
+  // three days it takes to read a reaction.
+  const openIntroSlug = progress.now?.foodSlug ?? progress.watching?.foodSlug ?? null;
   const plannedThisWeek = new Set(openIntroSlug ? [openIntroSlug] : []);
 
   // ——— R9 scoring ———
@@ -720,10 +810,14 @@ export function recommend(input: EngineInput, locale: Locale = "en"): Recommenda
   const distinctIntroduced = new Set(logs.map((l) => l.foodSlug)).size;
   const pickCount = distinctIntroduced === 0 ? 1 : distinctIntroduced <= 2 ? 2 : 3;
 
-  // Only one unproven food a day — the one whose plan window is open. Three
-  // first-time foods on one tray is not an experiment a parent can read, so
-  // the remaining slots come from what the baby already eats.
+  // Only one unproven food a day. Three first-time foods on one tray is not
+  // an experiment a parent can read, so the remaining slots come from what
+  // the baby already eats. When a plan exists that single slot belongs to
+  // it: the step whose turn it is, and nothing at all while the last
+  // introduction is still inside its observation window.
   const everEaten = new Set(logs.filter((l) => l.amountEaten !== "none").map((l) => l.foodSlug));
+  const planOwnsNewFood = progress.total > 0;
+  const newFoodSlug = planOwnsNewFood ? openIntroSlug : null;
   const introFirst = openIntroSlug
     ? [...scored].sort(
         (a, b) => Number(b.slug === openIntroSlug) - Number(a.slug === openIntroSlug),
@@ -733,6 +827,7 @@ export function recommend(input: EngineInput, locale: Locale = "en"): Recommenda
   let newFoods = 0;
   for (const candidate of introFirst) {
     if (!everEaten.has(candidate.slug)) {
+      if (planOwnsNewFood && candidate.slug !== newFoodSlug) continue;
       if (newFoods >= 1) continue;
       newFoods += 1;
     }
@@ -740,7 +835,12 @@ export function recommend(input: EngineInput, locale: Locale = "en"): Recommenda
     if (paced.length >= pickCount) break;
   }
 
-  let todaysPicks = paced.slice(0, pickCount);
+  // A plan that holds every new food back can leave a family with nothing on
+  // the tray — a brand-new baby whose first planned food is on hold has no
+  // familiar food to fall back on. Show the single best eligible food rather
+  // than an empty page: one is the daily limit for anything unproven, and
+  // the hold itself is already spelled out above the picks.
+  let todaysPicks = paced.length > 0 ? paced.slice(0, pickCount) : scored.slice(0, 1);
   if (distinctIntroduced >= 1 && distinctIntroduced <= 2) {
     const lastEaten = [...logs]
       .filter((l) => l.amountEaten !== "none")
@@ -792,5 +892,6 @@ export function recommend(input: EngineInput, locale: Locale = "en"): Recommenda
     textureStage: { current: baby.textureStage, nudge },
     retryQueue: retryQueue.slice(0, 5),
     warnings,
+    plan: progress.total > 0 ? progress : null,
   };
 }
