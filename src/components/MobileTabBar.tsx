@@ -7,16 +7,19 @@ import { chromeMsgs } from "@/lib/i18n/messages/chrome";
 import { cn } from "@/lib/utils";
 
 /**
- * Mobile bottom tab bar (design sheet 08): Today · History · Foods · +Log FAB ·
- * Plan · Learn. Desktop keeps the top nav; this renders only below md. All
- * targets ≥ 44px per the acceptance criteria.
+ * Mobile bottom tab bar (design sheet 08): Today · History · +Log FAB · Plan ·
+ * Learn. Desktop keeps the top nav; this renders only below md. All targets
+ * ≥ 44px per the acceptance criteria.
  *
- * History is added here rather than swapped in: mobile has no "More" menu, so
- * anything dropped from this bar becomes reachable only through in-page links.
+ * Four tabs, two either side of the log button. Adding History made it five,
+ * which pushed the FAB off centre and left the bar looking lopsided. Foods
+ * came out instead of History because the food library is a reference people
+ * look something up in, not a place they live — and it keeps a top-bar
+ * shortcut on mobile (see AppNav) so it is still one tap away.
  */
 const TABS: {
   href: string;
-  msgKey: "navToday" | "navHistory" | "navFoods" | "navPlan" | "navLearn";
+  msgKey: "navToday" | "navHistory" | "navPlan" | "navLearn";
   icon: React.ReactNode;
 }[] = [
   {
@@ -37,16 +40,6 @@ const TABS: {
         <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
         <path d="M3 3v5h5" />
         <path d="M12 7v5l3 2" />
-      </svg>
-    ),
-  },
-  {
-    href: "/foods",
-    msgKey: "navFoods",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden="true">
-        <path d="M15 3c2 0 4 2 4 5 0 6-4 13-7 13S5 14 5 8c0-3 2-5 4-5 1.2 0 2.2.5 3 1.5C12.8 3.5 13.8 3 15 3Z" />
-        <path d="M12 4.5V2" />
       </svg>
     ),
   },
@@ -98,7 +91,7 @@ export function MobileTabBar() {
       className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
       <div className="mx-auto flex max-w-md items-center px-2">
-        {TABS.slice(0, 3).map(tab)}
+        {TABS.slice(0, 2).map(tab)}
         <Link
           href="/log"
           aria-label={m.navLogAria}
@@ -108,7 +101,7 @@ export function MobileTabBar() {
             <path d="M12 5v14M5 12h14" />
           </svg>
         </Link>
-        {TABS.slice(3).map(tab)}
+        {TABS.slice(2).map(tab)}
       </div>
     </nav>
   );

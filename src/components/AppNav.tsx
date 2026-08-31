@@ -192,6 +192,19 @@ export function AppNav() {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <BabySwitcher />
+          {/* The bottom tab bar has room for four tabs either side of the log
+              button, so Foods lives here on mobile — a reference people look
+              things up in, one tap from every page. */}
+          <Link
+            href="/foods"
+            aria-label={t.navFoods}
+            className="flex size-9 shrink-0 items-center justify-center rounded-full border text-muted-foreground hover:border-primary/60 hover:text-foreground md:hidden"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden="true">
+              <path d="M15 3c2 0 4 2 4 5 0 6-4 13-7 13S5 14 5 8c0-3 2-5 4-5 1.2 0 2.2.5 3 1.5C12.8 3.5 13.8 3 15 3Z" />
+              <path d="M12 4.5V2" />
+            </svg>
+          </Link>
           <Link
             href="/safety"
             className="rounded-full border border-destructive/40 px-3 py-1.5 text-xs font-semibold text-destructive md:hidden"
