@@ -17,7 +17,7 @@ import {
 } from "@dnd-kit/core";
 import type { Food } from "@/content-schema/food";
 import { useActiveBaby, useActiveLogs, useActiveOverrides, useActivePlan, useHydrated } from "@/lib/hooks";
-import { fmt } from "@/lib/i18n/config";
+import { fmt, type Locale } from "@/lib/i18n/config";
 import { useL10nFoods } from "@/lib/i18n/content-client";
 import { allergenLabel } from "@/lib/i18n/labels";
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
@@ -33,7 +33,9 @@ import {
   validatePlan,
   type PlanWarning,
 } from "@/lib/planner";
-import { eligibilityAgeMonths, planWeekIndex } from "@/lib/engine";
+import { eligibilityAgeMonths, foodExclusions, planBlocker, planWeekIndex } from "@/lib/engine";
+import { planProgress, type PlanStep } from "@/lib/plan-progress";
+import { stepChip, stepWhen } from "@/components/plan/PlanSteps";
 import { useGuideStore } from "@/lib/storage/store";
 import type { Plan, PlanEntry } from "@/lib/storage/types";
 import { mondayOf } from "@/lib/planner";
@@ -57,28 +59,34 @@ function norm(s: string): string {
 function PlannedChip({
   entry,
   label,
-  startLabel,
+  step,
+  locale,
   warnings,
   onRemove,
 }: {
   entry: PlanEntry;
   label: string;
-  startLabel: string;
+  /** Where this food actually stands; absent only for a board with no plan. */
+  step?: PlanStep;
+  locale: Locale;
   warnings: PlanWarning[];
   onRemove: () => void;
 }) {
   const t = useMsgs(planMsgs);
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: entry.id });
   const worst = warnings.find((w) => w.blocking) ?? warnings[0];
+  const chip = step ? stepChip(step, t, locale) : null;
   return (
     <span
       ref={setNodeRef}
       className={cn(
         "inline-flex items-center gap-1 rounded-full border bg-background py-1 pl-3 pr-1 text-sm",
         isDragging && "opacity-40",
+        step?.status === "now" && "border-primary bg-secondary/60",
+        step?.status === "introduced" && "text-muted-foreground",
         worst && (worst.blocking ? "border-red-500" : "border-amber-400"),
       )}
-      title={worst?.message}
+      title={worst?.message ?? chip?.title}
     >
       <button
         type="button"
@@ -86,19 +94,24 @@ function PlannedChip({
         {...attributes}
         className="cursor-grab touch-none"
         aria-label={
-          worst
+          // The standing rides along with the name so a screen reader hears
+          // "introduced" or "in 4 days" — the chip shows it as a glyph.
+          (worst
             ? fmt(t.moveChipWarning, { label, message: worst.message })
-            : fmt(t.moveChip, { label })
+            : fmt(t.moveChip, { label })) + (chip ? ` — ${chip.title}` : "")
         }
       >
         {label}
         {worst && <span aria-hidden> {worst.blocking ? "⛔" : "⚠️"}</span>}
       </button>
       <span
-        className="text-xs tabular-nums text-muted-foreground"
-        title={fmt(t.startsOn, { label, date: startLabel })}
+        className={cn(
+          "text-xs tabular-nums",
+          step?.status === "now" ? "font-semibold text-primary" : "text-muted-foreground",
+        )}
+        title={chip ? `${label} — ${chip.title}` : label}
       >
-        {startLabel}
+        {chip?.text ?? ""}
       </span>
       <button
         type="button"
@@ -264,7 +277,8 @@ function WeekLane({
   entries,
   warningsByEntry,
   chipLabel,
-  startLabel,
+  stepBySlug,
+  locale,
   addOptions,
   onAdd,
   onRemove,
@@ -275,7 +289,8 @@ function WeekLane({
   entries: PlanEntry[];
   warningsByEntry: Map<string, PlanWarning[]>;
   chipLabel: (slug: string) => string;
-  startLabel: (entry: PlanEntry) => string;
+  stepBySlug: Map<string, PlanStep>;
+  locale: Locale;
   addOptions: (query: string) => { visible: AddOption[]; total: number };
   onAdd: (slug: string) => void;
   onRemove: (foodSlug: string) => void;
@@ -302,7 +317,8 @@ function WeekLane({
             key={e.id}
             entry={e}
             label={chipLabel(e.foodSlug)}
-            startLabel={startLabel(e)}
+            step={stepBySlug.get(e.foodSlug)}
+            locale={locale}
             warnings={warningsByEntry.get(e.id) ?? []}
             onRemove={() => onRemove(e.foodSlug)}
           />
@@ -348,6 +364,28 @@ export function PlanBoard() {
     return map;
   }, [warnings]);
 
+  /**
+   * The same projection Today reads, from the same hold list. The board used
+   * to print the dates the plan was written with, which stopped being true
+   * the first time a family fell behind or a group went on hold.
+   */
+  const progress = useMemo(
+    () =>
+      baby && plan
+        ? planProgress({
+            plan,
+            logs,
+            today,
+            isBlocked: planBlocker(foodExclusions({ baby, logs, overrides, foods, today }, locale)),
+          })
+        : null,
+    [baby, plan, logs, overrides, foods, today, locale],
+  );
+  const stepBySlug = useMemo(
+    () => new Map((progress?.steps ?? []).map((step) => [step.foodSlug, step])),
+    [progress],
+  );
+
   if (!hydrated) return null;
 
   if (!baby) {
@@ -383,13 +421,6 @@ export function PlanBoard() {
     .filter((f) => !plannedSlugs.has(f.slug))
     .filter((f) => !query || f.name.toLowerCase().includes(query.toLowerCase()))
     .sort((a, b) => a.name.localeCompare(b.name));
-
-  const anchor = plan ? Date.parse(`${plan.anchorMonday}T00:00:00Z`) : Date.parse(`${mondayOf(today)}T00:00:00Z`);
-  const startLabel = (entry: PlanEntry): string =>
-    new Date(anchor + entryDay(entry) * 86400000).toLocaleDateString(
-      locale === "zh" ? "zh-CN" : undefined,
-      { month: "short", day: "numeric", timeZone: "UTC" },
-    );
 
   const ageAtWeek = (weekIndex: number) =>
     eligibilityAgeMonths(baby, today) + (weekIndex * 7) / DAYS_PER_MONTH;
@@ -555,6 +586,84 @@ export function PlanBoard() {
         </Alert>
       )}
 
+      {progress && progress.total > 0 && (
+        <section className="space-y-3 rounded-lg border border-primary/40 bg-secondary/30 p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-sm font-semibold">{t.standingTitle}</h2>
+            <span className="font-data text-xs text-muted-foreground">
+              {fmt(t.standingCount, {
+                done: progress.introducedCount,
+                total: progress.total,
+              })}
+            </span>
+          </div>
+
+          {progress.slipDays > 0 && (
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {fmt(t.standingBehind, { n: progress.slipDays })}
+            </p>
+          )}
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <p className="font-data text-[10.5px] uppercase tracking-[0.08em] text-muted-foreground">
+                {t.standingNow}
+              </p>
+              {progress.now ?? progress.watching ? (
+                <p className="text-sm font-semibold">
+                  {chipLabel((progress.now ?? progress.watching)!.foodSlug)}
+                </p>
+              ) : (
+                <p className="text-[13px] leading-relaxed text-muted-foreground">
+                  {t.standingNothingNow}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <p className="font-data text-[10.5px] uppercase tracking-[0.08em] text-muted-foreground">
+                {t.standingNextUp}
+              </p>
+              {progress.upcoming.length > 0 ? (
+                <ul className="space-y-0.5 text-sm">
+                  {progress.upcoming.slice(0, 3).map((step) => (
+                    <li key={step.entry.id} className="flex justify-between gap-3">
+                      <span>{chipLabel(step.foodSlug)}</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {stepWhen(step, t, locale)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-[13px] leading-relaxed text-muted-foreground">
+                  {t.standingFinished}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {progress.blocked.length > 0 && (
+            <div className="space-y-1 border-t border-primary/25 pt-3">
+              <p className="font-data text-[10.5px] uppercase tracking-[0.08em] text-muted-foreground">
+                {t.standingOnHold}
+              </p>
+              {progress.blocked.map((step) => (
+                <p key={step.entry.id} className="text-[13px] leading-relaxed text-foreground/75">
+                  <span className="font-semibold">{chipLabel(step.foodSlug)}</span> —{" "}
+                  {step.blockedReason}
+                </p>
+              ))}
+              <Link
+                href="/allergens"
+                className="inline-flex min-h-11 items-center text-[13px] font-semibold underline underline-offset-2"
+              >
+                {t.resumeOnHold}
+              </Link>
+            </div>
+          )}
+        </section>
+      )}
+
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
         {boardActive && (
           <div className="space-y-2">
@@ -573,7 +682,8 @@ export function PlanBoard() {
                     .sort((a, b) => entryDay(a) - entryDay(b))}
                   warningsByEntry={warningsByEntry}
                   chipLabel={chipLabel}
-                  startLabel={startLabel}
+                  stepBySlug={stepBySlug}
+                  locale={locale}
                   addOptions={addOptionsFor(i)}
                   onAdd={(slug) => placeFood(slug, i)}
                   onRemove={removeFood}

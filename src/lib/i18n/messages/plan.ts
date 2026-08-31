@@ -63,9 +63,6 @@ export const planMsgs = {
     en: "New foods start about {days} days apart, so a reaction can be traced back to one food.",
     zh: "每种新食物之间大约相隔 {days} 天，这样一旦出现反应，就能追溯到具体是哪一种。",
   },
-  /** {label} = chip label, {date} = localized start date. */
-  startsOn: { en: "{label} starts {date}", zh: "{label}从{date}开始" },
-
   // --- Per-week "add a food" combobox ---
   addFood: { en: "+ Add food", zh: "+ 添加食物" },
   /** {week} = week lane label. */
@@ -85,4 +82,35 @@ export const planMsgs = {
   hintChoking: { en: "high choking risk", zh: "高窒息风险" },
   /** {n} = 1-based week number the food already sits in. */
   hintAlreadyIn: { en: "already in week {n} — picking it moves it", zh: "已在第 {n} 周——选中即可移过来" },
+
+  // --- Where the plan actually stands (lib/plan-progress) ---
+  standingTitle: { en: "Where you are", zh: "当前进度" },
+  /** {done} / {total} = foods introduced out of the plan's length. */
+  standingCount: { en: "{done} of {total} introduced", zh: "{total} 种中已引入 {done} 种" },
+  standingNow: { en: "Introducing now", zh: "正在引入" },
+  standingNothingNow: {
+    en: "Nothing new today. Next up has the next food and its date.",
+    zh: "今天不加新食物。“接下来”里有下一种食物和它的日期。",
+  },
+  standingNextUp: { en: "Next up", zh: "接下来" },
+  standingOnHold: { en: "On hold", zh: "暂停中" },
+  standingFinished: { en: "Every food on this plan has had its turn.", zh: "这份计划里的食物都轮过一遍了。" },
+  /** {n} = days the plan is running behind its written dates. */
+  standingBehind: {
+    en: "Running {n} days behind the written dates — the ones below are the real ones.",
+    zh: "比原定日期晚了 {n} 天——下面显示的是实际日期。",
+  },
+  resumeOnHold: { en: "Manage holds →", zh: "管理暂停 →" },
+
+  // --- Step status, shared with Today ---
+  stepIntroduced: { en: "introduced", zh: "已引入" },
+  stepOffered: { en: "offered", zh: "已尝试" },
+  stepNow: { en: "now", zh: "进行中" },
+  stepOnHold: { en: "on hold", zh: "暂停中" },
+  whenToday: { en: "today", zh: "今天" },
+  whenTomorrow: { en: "tomorrow", zh: "明天" },
+  /** {n} = whole days from today. */
+  whenInDays: { en: "in {n} days", zh: "{n} 天后" },
+  /** {date} = the date the plan originally reserved. */
+  originallyOn: { en: "originally {date}", zh: "原定 {date}" },
 } satisfies Msgs;

@@ -24,6 +24,7 @@ import { READINESS_SIGNS, todayMsgs } from "@/lib/i18n/messages/today";
 import { CutDiagram, isDiagramVariant } from "@/components/diagrams/CutDiagram";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { NutrientBenefits, NutrientProfile } from "@/components/NutrientProfile";
+import { ComingUp } from "@/components/plan/PlanSteps";
 import { PushOptIn } from "@/components/PushOptIn";
 import { useAuthEnabled, useSyncStatus } from "@/components/SyncProvider";
 import { useSession } from "@/lib/auth-client";
@@ -576,7 +577,7 @@ export default function TodayPage() {
             const safety = SAFETY_WARNING_KINDS.has(w.kind);
             return (
               <Alert
-                key={`${w.kind}-${w.allergenId ?? w.foodSlug}`}
+                key={w.dismissKey}
                 className={cn(
                   safety
                     ? "border-destructive/50 bg-destructive-tint/60"
@@ -588,12 +589,17 @@ export default function TodayPage() {
                 >
                   {w.message}{" "}
                   {w.allergenId && (
-                    <Link
-                      href={`/allergens/${w.allergenId}`}
-                      className="font-semibold underline underline-offset-2"
-                    >
-                      {t.playbook}
-                    </Link>
+                    <>
+                      <Link
+                        href={`/allergens/${w.allergenId}`}
+                        className="font-semibold underline underline-offset-2"
+                      >
+                        {t.playbook}
+                      </Link>{" "}
+                      <Link href="/allergens" className="font-semibold underline underline-offset-2">
+                        {t.manageHolds}
+                      </Link>
+                    </>
                   )}
                 </AlertDescription>
               </Alert>
@@ -695,6 +701,13 @@ export default function TodayPage() {
           </div>
         )}
       </section>
+
+      <ComingUp
+        progress={rec.plan}
+        babyName={baby.nickname}
+        foodName={(slug) => foodBySlug.get(slug)?.name ?? slug}
+        locale={locale}
+      />
 
       <section className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-3.5 rounded-2xl bg-card p-5 ring-1 ring-border">

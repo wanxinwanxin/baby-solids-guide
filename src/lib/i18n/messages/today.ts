@@ -111,6 +111,35 @@ export const todayMsgs = {
 
   // ——— Warnings ———
   playbook: { en: "Playbook →", zh: "应对手册 →" },
+  manageHolds: { en: "Manage holds →", zh: "管理暂停 →" },
+
+  // ——— Coming up (the plan, read forward) ———
+  comingUp: { en: "Coming up", zh: "接下来" },
+  /** {name} = baby nickname. */
+  comingUpLede: {
+    en: "The next foods on {name}'s plan, with enough notice to shop or batch-cook.",
+    zh: "{name}计划里接下来的食物——提前知道，好去采购或提前做好。",
+  },
+  comingUpNowLabel: { en: "On the tray now", zh: "正在引入" },
+  comingUpNothingNew: {
+    en: "Nothing new on the tray today. The next food and its date are below.",
+    zh: "今天托盘上没有新食物。下一种食物和它的日期在下面。",
+  },
+  comingUpEmpty: {
+    en: "Every food on the plan has had its turn. Add more to keep the run going.",
+    zh: "计划里的食物都轮过一遍了。再加一些，继续这个节奏。",
+  },
+  comingUpOnHold: { en: "Waiting on a hold", zh: "因暂停而搁置" },
+  wholePlanLink: { en: "The whole plan →", zh: "完整计划 →" },
+  /** {done} / {total} = foods introduced out of the plan's length. */
+  planProgressStat: { en: "{done} of {total} introduced", zh: "{total} 种中已引入 {done} 种" },
+  noPlanTitle: { en: "No plan yet", zh: "还没有计划" },
+  /** {name} = baby nickname. */
+  noPlanBody: {
+    en: "A plan paces new foods so a reaction always points at one of them — and it's what fills this list with what to buy next.",
+    zh: "计划会安排新食物的节奏，让出现反应时总能追溯到具体某一种——也正是它让这份清单告诉你接下来要买什么。",
+  },
+  buildPlanLink: { en: "Build a plan →", zh: "生成计划 →" },
 
   // ——— Today's picks ———
   todaysPicks: { en: "Today's picks", zh: "今日推荐" },
