@@ -1,4 +1,4 @@
-import { daysBetween } from "@/lib/age";
+import { calendarDaysBetween } from "@/lib/age";
 import type { ExposureLog, Plan, PlanEntry } from "@/lib/storage/types";
 
 /**
@@ -118,7 +118,7 @@ export function planProgress(input: PlanProgressInput): PlanProgress {
     Math.round((Date.parse(`${iso}T00:00:00Z`) - anchorMs) / 86400000);
   const dateOfDay = (day: number) =>
     new Date(anchorMs + day * 86400000).toISOString().slice(0, 10);
-  const todayDay = Math.floor(daysBetween(plan.anchorMonday, today));
+  const todayDay = calendarDaysBetween(plan.anchorMonday, today);
 
   // Counted over every log, not just planned foods, so a food eaten off-plan
   // still reads as introduced when the plan reaches it.

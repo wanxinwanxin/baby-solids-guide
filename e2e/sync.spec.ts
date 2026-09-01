@@ -8,7 +8,9 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
 test.skip(!process.env.ENABLE_SYNC_E2E, "set ENABLE_SYNC_E2E=1 to run against a real database");
 
 function isoDaysAgo(days: number): string {
-  return new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+  // Local calendar date, matching how the app stamps log dates.
+  const d = new Date(Date.now() - days * 86400000);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 async function completeOnboarding(page: Page, nickname: string) {

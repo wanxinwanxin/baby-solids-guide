@@ -1,7 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 
 function isoDaysAgo(days: number): string {
-  return new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+  // Local calendar date, matching how the app stamps log dates.
+  const d = new Date(Date.now() - days * 86400000);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 async function completeOnboarding(page: Page, nickname = "Testling") {
@@ -82,7 +84,7 @@ test.describe("Feeding journal (granular history)", () => {
       page,
       `(state) => {
         const babyId = state.babies[0].id;
-        const date = new Date().toISOString().slice(0, 10);
+        const date = ((x) => x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"))(new Date());
         const base = { babyId, date, prepBandUsed: "6-8m", amountEaten: "some",
           enjoyment: "neutral", gagging: false, symptoms: [] };
         state.logs.push({ ...base, id: "l-dinner", foodSlug: "pear", time: "18:30" });
@@ -157,7 +159,7 @@ test.describe("Feeding journal (granular history)", () => {
       page,
       `(state) => {
         const babyId = state.babies[0].id;
-        const d = (n) => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+        const d = (n) => ((x) => x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"))(new Date(Date.now() - n * 86400000));
         const base = { babyId, prepBandUsed: "6-8m", amountEaten: "some",
           enjoyment: "neutral", gagging: false, symptoms: [] };
         state.logs.push({ ...base, id: "l-today", foodSlug: "carrot", date: d(0), time: "08:00" });
@@ -226,7 +228,7 @@ test.describe("Feeding journal (granular history)", () => {
       `(state) => {
         const babyId = state.babies[0].id;
         state.logs.push({ babyId, id: "l-remote", foodSlug: "carrot",
-          date: new Date().toISOString().slice(0, 10), time: "09:00",
+          date: ((x) => x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"))(new Date()), time: "09:00",
           prepBandUsed: "6-8m", amountEaten: "some", enjoyment: "loved",
           gagging: false, symptoms: [], photoId: "never-stored-here" });
       }`,

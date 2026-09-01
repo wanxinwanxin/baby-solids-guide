@@ -1,6 +1,6 @@
 import type { Food } from "@/content-schema/food";
 import type { Recipe } from "@/content-schema/recipe";
-import { bandForAgeMonths } from "@/lib/food-utils";
+import { bandForAgeMonths, localIsoDate } from "@/lib/food-utils";
 import { COMPANION_ESTABLISHED_DAYS } from "@/lib/planner";
 import { triage } from "@/lib/triage";
 import type { ExposureLog } from "@/lib/storage/types";
@@ -23,7 +23,7 @@ export function establishedSlugs(
     const prev = firstEaten.get(log.foodSlug);
     if (!prev || log.date < prev) firstEaten.set(log.foodSlug, log.date);
   }
-  const cutoff = new Date(now.getTime() - minDays * 86400000).toISOString().slice(0, 10);
+  const cutoff = localIsoDate(new Date(now.getTime() - minDays * 86400000));
   const established = new Set<string>();
   for (const [slug, date] of firstEaten) {
     if (!paused.has(slug) && date <= cutoff) established.add(slug);

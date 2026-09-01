@@ -8,11 +8,14 @@ import { expect, test, type Page } from "@playwright/test";
 const DAY = 86400000;
 
 function isoDaysAgo(days: number): string {
-  return new Date(Date.now() - days * DAY).toISOString().slice(0, 10);
+  // Local calendar date, matching how the app stamps log dates.
+  const d = new Date(Date.now() - days * DAY);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function mondayOf(d: Date): Date {
-  const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  // UTC midnight of the LOCAL calendar date, matching the app anchor.
+  const x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   const day = x.getUTCDay();
   x.setUTCDate(x.getUTCDate() + (day === 0 ? -6 : 1 - day));
   return x;

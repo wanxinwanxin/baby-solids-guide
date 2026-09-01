@@ -82,10 +82,10 @@ const FOODS: Food[] = [
 const emptyInput = { logs: [] as ExposureLog[], overrides: [], today: TODAY, foods: FOODS };
 
 describe("mondayOf", () => {
-  it("maps any day to that week's Monday", () => {
-    expect(mondayOf(new Date("2026-08-22T12:00:00Z"))).toBe("2026-08-17"); // Sat → Mon
-    expect(mondayOf(new Date("2026-08-17T00:00:00Z"))).toBe("2026-08-17"); // Mon → itself
-    expect(mondayOf(new Date("2026-08-23T00:00:00Z"))).toBe("2026-08-17"); // Sun → prior Mon
+  it("maps any day to that week's Monday (local calendar)", () => {
+    expect(mondayOf(new Date(2026, 7, 22, 12))).toBe("2026-08-17"); // Sat → Mon
+    expect(mondayOf(new Date(2026, 7, 17))).toBe("2026-08-17"); // Mon midnight → itself
+    expect(mondayOf(new Date(2026, 7, 23, 23, 59))).toBe("2026-08-17"); // Sun night → prior Mon
   });
 });
 

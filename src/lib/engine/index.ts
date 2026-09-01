@@ -1,6 +1,7 @@
 import type { AgeBand, AllergenId, Food, FoodCategory } from "@/content-schema/food";
 import { ALLERGEN_IDS } from "@/content-schema/food";
-import { correctedAgeMonths, daysBetween } from "@/lib/age";
+import { calendarDaysBetween, correctedAgeMonths } from "@/lib/age";
+import { localIsoDate } from "@/lib/food-utils";
 import type { Locale, Msg } from "@/lib/i18n/config";
 import { msg } from "@/lib/i18n/config";
 import { allergenLabel, bandLabel, categoryLabel } from "@/lib/i18n/labels";
@@ -120,7 +121,7 @@ export function allergenOrderFromPlan(plan: Plan, foods: Food[]): AllergenId[] {
 
 /** Which plan week `today` falls in (negative before the anchor week). */
 export function planWeekIndex(plan: Plan, today: Date): number {
-  return Math.floor(daysBetween(plan.anchorMonday, today) / 7);
+  return Math.floor(calendarDaysBetween(plan.anchorMonday, today) / 7);
 }
 
 export type ScoredFood = {
@@ -278,8 +279,9 @@ function bandForAge(food: Food, ageMonths: number): AgeBand {
   return food.prepSpecs[0].band;
 }
 
+// Local calendar day, because log dates are local (see localIsoDate).
 function isoDay(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  return localIsoDate(d);
 }
 
 /** NIAID risk tier (ROADMAP §8.2). */
@@ -600,7 +602,7 @@ export function recommend(input: EngineInput, locale: Locale = "en"): Recommenda
     .sort()
     .at(-1);
   const daysSinceNewAllergen = lastNewAllergenFirstExposure
-    ? daysBetween(lastNewAllergenFirstExposure, today)
+    ? calendarDaysBetween(lastNewAllergenFirstExposure, today)
     : Infinity;
 
   const tier = riskTier(baby);
@@ -661,7 +663,7 @@ export function recommend(input: EngineInput, locale: Locale = "en"): Recommenda
   const maintenance: MaintenanceNudge[] = [];
   for (const [id, state] of allergenStates) {
     if (state.status !== "maintaining" || !state.lastExposureDate) continue;
-    const days = Math.floor(daysBetween(state.lastExposureDate, today));
+    const days = calendarDaysBetween(state.lastExposureDate, today);
     if (days > MAINTENANCE_WARN_DAYS) {
       maintenance.push({
         allergenId: id,
@@ -710,7 +712,7 @@ export function recommend(input: EngineInput, locale: Locale = "en"): Recommenda
     if (!s?.lastDate) continue;
     if (s.lastEnjoyment !== "refused" && s.lastEnjoyment !== "disliked") continue;
     if (s.attempts >= RETRY_MAX_ATTEMPTS) continue;
-    if (daysBetween(s.lastDate, today) < RETRY_MIN_DAYS) continue;
+    if (calendarDaysBetween(s.lastDate, today) < RETRY_MIN_DAYS) continue;
     retryQueue.push({
       slug: food.slug,
       name: food.name,
@@ -760,7 +762,7 @@ export function recommend(input: EngineInput, locale: Locale = "en"): Recommenda
     if (
       s?.lastDate &&
       (s.lastEnjoyment === "refused" || s.lastEnjoyment === "disliked") &&
-      daysBetween(s.lastDate, today) >= RETRY_MIN_DAYS &&
+      calendarDaysBetween(s.lastDate, today) >= RETRY_MIN_DAYS &&
       s.attempts < RETRY_MAX_ATTEMPTS
     ) {
       score += RETRY_BONUS;
@@ -850,7 +852,7 @@ export function recommend(input: EngineInput, locale: Locale = "en"): Recommenda
       lastEaten &&
       pinFood &&
       !excludedSlugs.has(pinFood.slug) &&
-      daysBetween(lastEaten.date, today) <= 3
+      calendarDaysBetween(lastEaten.date, today) <= 3
     ) {
       const attempts = stats.get(pinFood.slug)?.attempts ?? 1;
       const pinned: ScoredFood = {

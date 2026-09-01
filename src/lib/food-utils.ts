@@ -95,6 +95,14 @@ export function slimFood(f: Food): SlimFood {
   };
 }
 
+/**
+ * The calendar date of `d` on this device, "YYYY-MM-DD". Log dates are local
+ * wall-calendar days — a UTC conversion moves an evening entry to tomorrow.
+ */
+export function localIsoDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return localIsoDate(new Date());
 }

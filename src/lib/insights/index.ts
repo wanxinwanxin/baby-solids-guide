@@ -1,6 +1,7 @@
 import type { AgeBand, Food, FoodCategory, NutrientTag } from "@/content-schema/food";
 import { AGE_BANDS, FOOD_CATEGORIES, NUTRIENT_TAGS } from "@/content-schema/food";
-import { daysBetween } from "@/lib/age";
+import { calendarDaysBetween } from "@/lib/age";
+import { localIsoDate } from "@/lib/food-utils";
 import type { AllergenStateView } from "@/lib/engine";
 import type { Locale } from "@/lib/i18n/config";
 import { categoryLabel, nutrientLabel } from "@/lib/i18n/labels";
@@ -14,13 +15,14 @@ import type { ExposureLog } from "@/lib/storage/types";
 
 const DAY = 86400000;
 
+// Local calendar day, because log dates are local (see localIsoDate).
 function isoDay(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  return localIsoDate(d);
 }
 
 /** Whole days between the log's date and `today` (0 = logged today). */
 function dayIndex(dateIso: string, today: Date): number {
-  return Math.floor(daysBetween(dateIso, today));
+  return calendarDaysBetween(dateIso, today);
 }
 
 function ate(log: ExposureLog): boolean {

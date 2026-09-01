@@ -5,6 +5,7 @@ import {
   eligibilityAgeMonths,
   riskTier,
 } from "@/lib/engine";
+import { localIsoDate } from "@/lib/food-utils";
 import type { Locale, Msg } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/config";
 import { allergenLabel } from "@/lib/i18n/labels";
@@ -28,13 +29,13 @@ export const COMPANION_ESTABLISHED_DAYS = 7;
 // are re-exported here so every planner caller keeps one import.
 export { INTRO_SPACING_DAYS, entryDay } from "@/lib/plan-progress";
 
-/** ISO date of the Monday of the week containing `date` (UTC). */
+/** ISO date of the Monday of the week containing `date` (local calendar). */
 export function mondayOf(date: Date): string {
-  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-  const day = d.getUTCDay(); // 0 = Sunday
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = d.getDay(); // 0 = Sunday
   const diff = day === 0 ? -6 : 1 - day;
-  d.setUTCDate(d.getUTCDate() + diff);
-  return d.toISOString().slice(0, 10);
+  d.setDate(d.getDate() + diff);
+  return localIsoDate(d);
 }
 
 // Eligibility age (not raw corrected age): a pediatrician-guided early

@@ -1,3 +1,5 @@
+import { localIsoDate } from "@/lib/food-utils";
+
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const DAYS_PER_MONTH = 30.4375; // 365.25 / 12
 
@@ -7,6 +9,18 @@ function toUtcDate(iso: string): Date {
 
 export function daysBetween(fromIso: string, to: Date): number {
   return (to.getTime() - toUtcDate(fromIso).getTime()) / MS_PER_DAY;
+}
+
+/**
+ * Whole calendar days from `fromIso` to the local calendar day of `to`
+ * (0 = the same day). Use this to compare a stored log date with the clock —
+ * `daysBetween` measures from UTC midnight, so an evening "today" reads as
+ * one day ago in western timezones.
+ */
+export function calendarDaysBetween(fromIso: string, to: Date): number {
+  return Math.round(
+    (toUtcDate(localIsoDate(to)).getTime() - toUtcDate(fromIso).getTime()) / MS_PER_DAY,
+  );
 }
 
 export function chronologicalAgeMonths(birthDate: string, today: Date): number {
