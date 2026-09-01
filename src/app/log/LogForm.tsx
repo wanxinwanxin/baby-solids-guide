@@ -318,19 +318,41 @@ export function LogForm() {
 
       {food && (
         <>
-          {/* 2. How was it served */}
+          {/* 2. How was it served — each option shows the actual prep, not
+              just an age band, so the choice is legible at a glance. */}
           <section className="space-y-2">
             <h2 className="text-sm font-semibold">{t.prepUsed}</h2>
-            <div className="flex flex-wrap gap-2">
-              {food.prepSpecs.map((p) => (
-                <Chip
-                  key={p.band}
-                  active={(band ?? defaultBand) === p.band}
-                  onClick={() => setBand(p.band)}
-                >
-                  {bandLabel(p.band, locale)}
-                </Chip>
-              ))}
+            <div className="space-y-2" role="radiogroup" aria-label={t.prepUsed}>
+              {food.prepSpecs.map((p) => {
+                const selected = (band ?? defaultBand) === p.band;
+                return (
+                  <button
+                    key={p.band}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => setBand(p.band)}
+                    className={cn(
+                      "w-full rounded-lg border px-4 py-2.5 text-left transition-colors",
+                      selected
+                        ? "border-primary bg-secondary/60 ring-1 ring-primary"
+                        : "hover:border-primary/60",
+                    )}
+                  >
+                    <span className="font-data block text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+                      {bandLabel(p.band, locale)}
+                    </span>
+                    <span
+                      className={cn(
+                        "block text-sm leading-snug",
+                        selected ? "font-medium" : "text-foreground/80",
+                      )}
+                    >
+                      {p.form}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </section>
 
