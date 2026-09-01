@@ -5,6 +5,7 @@ import { useEffect, useState } from"react";
 import { authClient, signIn, signOut, signUp, useSession } from"@/lib/auth-client";
 import { useAuthEnabled, useSyncStatus } from"@/components/SyncProvider";
 import { useHydrated } from"@/lib/hooks";
+import { CaregiverModeCard } from"@/components/CaregiverModeCard";
 import { FamilyCard } from"@/components/FamilyCard";
 import { InstallPrompt } from"@/components/InstallPrompt";
 import { Alert, AlertDescription, AlertTitle } from"@/components/ui/alert";
@@ -49,6 +50,7 @@ export default function AccountPage() {
             {t.noSyncAfter}
           </AlertDescription>
         </Alert>
+        <CaregiverModeCard />
       </div>
     );
   }
@@ -138,6 +140,7 @@ export default function AccountPage() {
           </CardContent>
         </Card>
         <FamilyCard myUserId={session.user.id} />
+        <CaregiverModeCard />
         <InstallPrompt persistent />
         <div className="border-t pt-4">
           {confirmDelete ? (
@@ -235,6 +238,7 @@ export default function AccountPage() {
 
       <p className="text-xs text-muted-foreground">{t.firstSignInNote}</p>
 
+      <CaregiverModeCard />
       <InstallPrompt persistent />
     </div>
   );

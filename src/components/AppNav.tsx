@@ -36,6 +36,13 @@ const primaryLinks = (t: NavMsgs) => [
   { href: "/plan", label: t.navPlan },
 ];
 
+/** Caregiver mode: what to serve, the food reference, and emergencies. */
+const caregiverLinks = (t: NavMsgs) => [
+  { href: "/today", label: t.navToday },
+  { href: "/foods", label: t.navFoods },
+  { href: "/safety", label: t.navSafety },
+];
+
 const moreLinks = (t: NavMsgs) => [
   { href: "/learn", label: t.navLearn },
   { href: "/allergens", label: t.navAllergens },
@@ -165,7 +172,11 @@ function MoreMenu({ pathname }: { pathname: string }) {
 
 export function AppNav() {
   const t = useMsgs(chromeMsgs);
-  const PRIMARY = primaryLinks(t);
+  const hydrated = useHydrated();
+  // The persisted flag is read only after hydration so the first client
+  // render matches the server render.
+  const caregiver = useGuideStore((s) => s.caregiverMode) && hydrated;
+  const PRIMARY = caregiver ? caregiverLinks(t) : primaryLinks(t);
   const pathname = usePathname();
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
@@ -188,13 +199,15 @@ export function AppNav() {
               {l.label}
             </Link>
           ))}
-          <MoreMenu pathname={pathname} />
+          {!caregiver && <MoreMenu pathname={pathname} />}
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <BabySwitcher />
           {/* The bottom tab bar has room for four tabs either side of the log
               button, so Foods lives here on mobile — a reference people look
               things up in, one tap from every page. */}
+          {/* Hidden in caregiver mode — its bottom bar has a Foods tab. */}
+          {!caregiver && (
           <Link
             href="/foods"
             aria-label={t.navFoods}
@@ -205,18 +218,21 @@ export function AppNav() {
               <path d="M12 4.5V2" />
             </svg>
           </Link>
+          )}
           <Link
             href="/safety"
             className="rounded-full border border-destructive/40 px-3 py-1.5 text-xs font-semibold text-destructive md:hidden"
           >
             {t.navEmergency}
           </Link>
-          <Link
-            href="/log"
-            className="hidden rounded-full bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-deep md:inline-flex dark:hover:bg-primary/80"
-          >
-            {t.navLog}
-          </Link>
+          {!caregiver && (
+            <Link
+              href="/log"
+              className="hidden rounded-full bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-deep md:inline-flex dark:hover:bg-primary/80"
+            >
+              {t.navLog}
+            </Link>
+          )}
           <LanguageToggle />
           <AccountButton />
         </div>

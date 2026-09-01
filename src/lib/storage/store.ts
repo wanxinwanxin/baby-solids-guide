@@ -48,6 +48,13 @@ export type GuideState = {
    * reaction or a fresh lapse brings the note back on its own.
    */
   dismissedNotices: string[];
+  /**
+   * This device belongs to a caregiver who feeds but does not plan (Phase
+   * 16). Device-local like dismissedNotices — it describes who holds this
+   * phone, so it never enters the sync snapshot. When true, Today shows only
+   * the day's foods with their prep, and the nav hides the planning surfaces.
+   */
+  caregiverMode: boolean;
 
   saveBaby: (b: BabyProfile) => void;
   setActiveBaby: (id: string) => void;
@@ -68,6 +75,7 @@ export type GuideState = {
   dismissNotice: (key: string) => void;
   /** Bring every hidden note back. */
   restoreNotices: () => void;
+  setCaregiverMode: (on: boolean) => void;
   /** Replace local state with a server-merged snapshot (Phase 6 sync). */
   applySnapshot: (s: SyncSnapshot) => void;
   reset: () => void;
@@ -142,6 +150,7 @@ const EMPTY = {
   lastExportAt: undefined as string | undefined,
   backupNudgeSnoozedUntil: undefined as string | undefined,
   dismissedNotices: [] as string[],
+  caregiverMode: false,
 };
 
 /** v1 persisted shape → v2 (single `baby` becomes `babies[]`; overrides stamped). */
@@ -285,6 +294,8 @@ export const useGuideStore = create<GuideState>()(
 
       restoreNotices: () => set({ dismissedNotices: [] }),
 
+      setCaregiverMode: (caregiverMode) => set({ caregiverMode }),
+
       reset: () => set({ ...EMPTY }),
 
       exportJson: () => {
@@ -396,6 +407,7 @@ export const useGuideStore = create<GuideState>()(
         lastExportAt,
         backupNudgeSnoozedUntil,
         dismissedNotices,
+        caregiverMode,
       }) => ({
         babies,
         activeBabyId,
@@ -408,6 +420,7 @@ export const useGuideStore = create<GuideState>()(
         lastExportAt,
         backupNudgeSnoozedUntil,
         dismissedNotices,
+        caregiverMode,
       }),
     },
   ),

@@ -257,6 +257,32 @@ export const todayMsgs = {
   quickLog: { en: "+ Quick log", zh: "+ 快速记录" },
 } satisfies Msgs;
 
+/** Caregiver view (src/app/today/CaregiverToday.tsx) — the simplified Today
+ * a helper sees on their own device: just the day's foods and their prep. */
+export const caregiverMsgs = {
+  emergencyLink: {
+    en: "Worried right now? Emergency guide",
+    zh: "现在就担心？看急救指南",
+  },
+  serveLede: {
+    en: "What to serve {name} today, and exactly how to prepare it.",
+    zh: "今天给{name}吃什么，以及具体怎么准备。",
+  },
+  howToPrepare: { en: "How to prepare", zh: "如何准备" },
+  textureCheck: { en: "Safe-texture check:", zh: "安全质地检查：" },
+  typicalAmount: { en: "Typical amount:", zh: "常见分量：" },
+  fullGuide: { en: "Full guide →", zh: "查看完整指南 →" },
+  nothingPlanned: {
+    en: "No planned foods today — any familiar favorite is a great choice.",
+    zh: "今天没有安排新食物——任何吃惯的食物都是好选择。",
+  },
+  caregiverNote: {
+    en: "You're in caregiver view — just today's foods and how to prepare them.",
+    zh: "当前是看护人视图——只显示今天的食物和做法。",
+  },
+  showFullApp: { en: "Show the full app", zh: "显示完整应用" },
+} satisfies Msgs;
+
 /** The 5 readiness signs shown in onboarding (OnboardingWizard.tsx) — we
  * don't store per-sign answers, so the gated state renders them as an
  * unchecked watch list, never as fabricated progress. */

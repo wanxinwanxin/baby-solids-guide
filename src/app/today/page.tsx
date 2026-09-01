@@ -22,6 +22,7 @@ import { allergenLabel, bandLabel, TEXTURE_STAGE_MSGS } from "@/lib/i18n/labels"
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
 import { READINESS_SIGNS, todayMsgs } from "@/lib/i18n/messages/today";
 import { CutDiagram, isDiagramVariant } from "@/components/diagrams/CutDiagram";
+import { CaregiverToday } from "./CaregiverToday";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { NutrientBenefits, NutrientProfile } from "@/components/NutrientProfile";
 import { ComingUp } from "@/components/plan/PlanSteps";
@@ -99,6 +100,7 @@ export default function TodayPage() {
   const snoozeBackupNudge = useGuideStore((s) => s.snoozeBackupNudge);
   const lastExportAt = useGuideStore((s) => s.lastExportAt);
   const backupNudgeSnoozedUntil = useGuideStore((s) => s.backupNudgeSnoozedUntil);
+  const caregiverMode = useGuideStore((s) => s.caregiverMode);
   const dismissedNotices = useGuideStore((s) => s.dismissedNotices);
   const dismissNotice = useGuideStore((s) => s.dismissNotice);
   const restoreNotices = useGuideStore((s) => s.restoreNotices);
@@ -334,6 +336,18 @@ export default function TodayPage() {
           {t.meanwhileEnd}
         </p>
       </div>
+    );
+  }
+
+  // ——— Caregiver view: only the day's foods and their prep (Phase 16) ———
+  if (caregiverMode) {
+    return (
+      <CaregiverToday
+        baby={baby}
+        picks={rec.todaysPicks}
+        foodBySlug={foodBySlug}
+        dueCheckIns={dueCheckIns}
+      />
     );
   }
 

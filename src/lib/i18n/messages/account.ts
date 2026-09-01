@@ -110,3 +110,18 @@ export const resetPasswordMsgs = {
   newPasswordLabel: { en: "New password", zh: "新密码" },
   submit: { en: "Set new password", zh: "设置新密码" },
 } satisfies Msgs;
+
+/** Caregiver-mode card (src/components/CaregiverModeCard.tsx). */
+export const caregiverCardMsgs = {
+  title: { en: "Who uses this device?", zh: "这台设备谁在用？" },
+  body: {
+    en: "Helping with feeding, but not with planning? Caregiver view hides the planning tools and shows just what to serve today and how to prepare it. It changes only this device.",
+    zh: "只负责喂，不负责规划？看护人视图会隐藏规划工具，只显示今天吃什么、怎么做。此设置只影响这台设备。",
+  },
+  onNote: {
+    en: "Caregiver view is on for this device.",
+    zh: "这台设备已开启看护人视图。",
+  },
+  toggleOn: { en: "Switch to caregiver view", zh: "切换到看护人视图" },
+  toggleOff: { en: "Show the full app", zh: "显示完整应用" },
+} satisfies Msgs;

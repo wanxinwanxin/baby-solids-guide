@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useHydrated } from "@/lib/hooks";
+import { useGuideStore } from "@/lib/storage/store";
 import { useMsgs } from "@/lib/i18n/LocaleProvider";
 import { chromeMsgs } from "@/lib/i18n/messages/chrome";
 import { cn } from "@/lib/utils";
@@ -17,11 +19,13 @@ import { cn } from "@/lib/utils";
  * look something up in, not a place they live — and it keeps a top-bar
  * shortcut on mobile (see AppNav) so it is still one tap away.
  */
-const TABS: {
+type Tab = {
   href: string;
-  msgKey: "navToday" | "navHistory" | "navPlan" | "navLearn";
+  msgKey: "navToday" | "navHistory" | "navPlan" | "navLearn" | "navFoods" | "navSafety";
   icon: React.ReactNode;
-}[] = [
+};
+
+const TABS: Tab[] = [
   {
     href: "/today",
     msgKey: "navToday",
@@ -65,10 +69,40 @@ const TABS: {
   },
 ];
 
+/**
+ * Caregiver mode strips the bar to what a helper needs: today's foods, the
+ * food reference, and the emergency guide. No log FAB — the planner logs.
+ */
+const CAREGIVER_TABS: Tab[] = [
+  TABS[0], // Today
+  {
+    href: "/foods",
+    msgKey: "navFoods",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden="true">
+        <path d="M15 3c2 0 4 2 4 5 0 6-4 13-7 13S5 14 5 8c0-3 2-5 4-5 1.2 0 2.2.5 3 1.5C12.8 3.5 13.8 3 15 3Z" />
+        <path d="M12 4.5V2" />
+      </svg>
+    ),
+  },
+  {
+    href: "/safety",
+    msgKey: "navSafety",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden="true">
+        <path d="M12 3l8 3v5c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-3Z" />
+        <path d="M12 8v5M9.5 10.5h5" />
+      </svg>
+    ),
+  },
+];
+
 export function MobileTabBar() {
   const m = useMsgs(chromeMsgs);
   const pathname = usePathname();
-  const tab = (t: (typeof TABS)[number]) => {
+  const hydrated = useHydrated();
+  const caregiver = useGuideStore((s) => s.caregiverMode) && hydrated;
+  const tab = (t: Tab) => {
     const active = pathname === t.href || pathname.startsWith(`${t.href}/`);
     return (
       <Link
@@ -91,17 +125,23 @@ export function MobileTabBar() {
       className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
       <div className="mx-auto flex max-w-md items-center px-2">
-        {TABS.slice(0, 2).map(tab)}
-        <Link
-          href="/log"
-          aria-label={m.navLogAria}
-          className="mx-1 -mt-4 flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="size-6" aria-hidden="true">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-        </Link>
-        {TABS.slice(2).map(tab)}
+        {caregiver ? (
+          CAREGIVER_TABS.map(tab)
+        ) : (
+          <>
+            {TABS.slice(0, 2).map(tab)}
+            <Link
+              href="/log"
+              aria-label={m.navLogAria}
+              className="mx-1 -mt-4 flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="size-6" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+            </Link>
+            {TABS.slice(2).map(tab)}
+          </>
+        )}
       </div>
     </nav>
   );
