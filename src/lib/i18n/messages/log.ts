@@ -87,6 +87,11 @@ export const checkInOfferMsgs = {
     en: "Want a reminder to check on how this went down?",
     zh: "要不要设个提醒，回头看看这餐吃得怎么样？",
   },
+  /** Where a scheduled reminder actually shows up — set before scheduling. */
+  remindersWhere: {
+    en: "Reminders pop up on your Today screen — and arrive as a push notification on this device when you're signed in.",
+    zh: "提醒会出现在「今天」页面——登录后还会以推送通知的形式发送到这台设备。",
+  },
   /** Why the schedule button is inert until something is picked. */
   schedulePickFirst: {
     en: "Pick at least one reminder above to schedule it.",

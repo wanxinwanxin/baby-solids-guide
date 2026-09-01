@@ -148,13 +148,20 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
     );
   }
 
+  // An allergen exposure is exactly when a check-in matters most, so that
+  // variant gets the honey warning treatment instead of a quiet grey box.
+  const allergen = !!food.commonAllergen;
   return (
-    <div className="space-y-3 rounded-lg border p-4 text-sm">
-      <p className="font-medium">
-        {food.commonAllergen
-          ? fmt(t.allergenPrompt, { food: food.name })
-          : t.genericPrompt}
+    <div
+      className={cn(
+        "space-y-3 rounded-xl border p-4 text-sm",
+        allergen ? "border-honey/60 bg-accent/40" : "border-primary/30 bg-secondary/30",
+      )}
+    >
+      <p className={cn("font-semibold", allergen && "text-base")}>
+        {allergen ? fmt(t.allergenPrompt, { food: food.name }) : t.genericPrompt}
       </p>
+      <p className="text-[13px] leading-relaxed text-muted-foreground">{t.remindersWhere}</p>
       <div className="flex flex-wrap gap-2">
         {CHECKIN_PRESETS.map((p) => (
           <button
@@ -164,7 +171,9 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
             aria-pressed={selected.has(p.id)}
             className={cn(
               "min-h-9 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-              selected.has(p.id) ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/60",
+              selected.has(p.id)
+                ? "border-primary bg-primary text-primary-foreground"
+                : "bg-card hover:border-primary/60",
             )}
           >
             {checkinPresetLabel(p.id, locale)}
@@ -175,10 +184,9 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
         <p className="text-xs text-muted-foreground">{t.schedulePickFirst}</p>
       )}
       <Button
-        size="sm"
         disabled={selected.size === 0}
         onClick={schedule}
-        className="bg-primary text-primary-foreground hover:bg-primary/85"
+        className="min-h-11 w-full bg-primary font-bold text-primary-foreground shadow-sm hover:bg-primary/85 sm:w-auto sm:px-6"
       >
         {selected.size === 1 ? t.scheduleOne : t.scheduleMany}
       </Button>
