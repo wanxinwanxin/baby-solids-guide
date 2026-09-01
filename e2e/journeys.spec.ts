@@ -236,7 +236,7 @@ test.describe("logging journey", () => {
 
     // Log carrot
     await page.goto("/log?food=carrot");
-    await expect(page.getByText("Carrot")).toBeVisible();
+    await expect(page.getByText("Carrot", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Lots!" }).click();
     await page.getByRole("button", { name: "😍 Loved" }).click();
     await page.getByRole("button", { name: "Save log" }).click();
