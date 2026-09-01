@@ -73,6 +73,7 @@ export function JournalEntry({
   const deleteLog = useGuideStore((s) => s.deleteLog);
 
   const [editing, setEditing] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [details, setDetails] = useState<LogDetails>({});
   const [photo, setPhoto] = useState<PhotoState>({ kind: "none" });
   const [amount, setAmount] = useState<AmountEaten>(log.amountEaten);
@@ -90,6 +91,7 @@ export function JournalEntry({
     setAmount(log.amountEaten);
     setEnjoyment(log.enjoyment);
     setPhotoFailed(false);
+    setConfirmingDelete(false);
     setEditing(true);
   }
 
@@ -183,23 +185,17 @@ export function JournalEntry({
           )}
         </div>
 
-        <div className="flex shrink-0 flex-col items-end gap-1">
+        {/* One action on the row. Delete lives inside the edit panel so two
+            tiny targets never sit a thumb-width apart on a phone. */}
+        <div className="flex shrink-0 items-start">
           <button
             type="button"
             onClick={editing ? () => setEditing(false) : startEditing}
             aria-expanded={editing}
             aria-label={fmt(j.editEntryAria, { food: foodName, date: log.date })}
-            className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+            className="inline-flex min-h-9 items-center rounded-full border px-3 text-xs font-medium text-muted-foreground hover:border-primary/60 hover:text-foreground"
           >
             {editing ? j.cancel : j.editEntry}
-          </button>
-          <button
-            type="button"
-            onClick={() => deleteLog(log.id)}
-            className="text-xs text-muted-foreground underline-offset-2 hover:underline"
-            aria-label={fmt(t.deleteLogAria, { food: log.foodSlug, date: log.date })}
-          >
-            {t.deleteBtn}
           </button>
         </div>
       </div>
@@ -233,13 +229,37 @@ export function JournalEntry({
             onPhotoChange={setPhoto}
           />
           {photoFailed && <p className="text-xs text-destructive">{td.photoFailed}</p>}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" onClick={() => void saveEdits()}>
               {j.saveChanges}
             </Button>
             <Button size="sm" variant="outline" onClick={() => setEditing(false)}>
               {j.cancel}
             </Button>
+            {confirmingDelete ? (
+              <span className="ml-auto flex items-center gap-2 text-xs">
+                <span>{t.deleteEntryConfirm}</span>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => deleteLog(log.id)}
+                  aria-label={fmt(t.deleteLogAria, { food: log.foodSlug, date: log.date })}
+                >
+                  {t.yesDelete}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setConfirmingDelete(false)}>
+                  {t.keepEntry}
+                </Button>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(true)}
+                className="ml-auto inline-flex min-h-9 items-center text-xs text-destructive underline-offset-2 hover:underline"
+              >
+                {t.deleteEntry}
+              </button>
+            )}
           </div>
         </div>
       )}

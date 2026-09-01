@@ -30,7 +30,11 @@ export const historyMsgs = {
   mostLogged: { en: "Most-logged foods", zh: "记录最多的食物" },
   ateLine: { en: "· ate {amount} · {band}", zh: "· {amount} · {band}" },
   gagging: { en: "gagging", zh: "干呕" },
-  deleteBtn: { en: "delete", zh: "删除" },
+  /** Delete lives inside the edit panel — see JournalEntry. */
+  deleteEntry: { en: "Delete entry", zh: "删除记录" },
+  deleteEntryConfirm: { en: "Delete this entry?", zh: "确定删除这条记录吗？" },
+  yesDelete: { en: "Yes, delete", zh: "是的，删除" },
+  keepEntry: { en: "Keep it", zh: "保留" },
   deleteLogAria: {
     en: "Delete log of {food} on {date}",
     zh: "删除 {date} 的 {food} 记录",
