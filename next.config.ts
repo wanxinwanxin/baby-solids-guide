@@ -1,6 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return [
+      {
+        // Channel attribution. The view counter stores pathnames only (no
+        // query strings), so each channel gets its own path that serves the
+        // landing page in place. The URL stays /reddit in the browser, the
+        // beacon records it, and the page's canonical still points at "/".
+        source: "/reddit",
+        destination: "/",
+      },
+    ];
+  },
   async redirects() {
     return [
       {
