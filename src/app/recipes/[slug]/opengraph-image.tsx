@@ -32,7 +32,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ fontSize: 36, fontWeight: 700 }}>{BRAND}</div>
-          <div style={{ fontSize: 28, opacity: 0.85 }}>recipe · {bands}</div>
+          <div style={{ fontSize: 28, opacity: 0.85 }}>{`recipe · ${bands}`}</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <div style={{ fontSize: 80, fontWeight: 700, lineHeight: 1.05 }}>{name}</div>

@@ -30,12 +30,13 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ fontSize: 36, fontWeight: 700 }}>{BRAND}</div>
-          <div style={{ fontSize: 28, opacity: 0.85 }}>safe texture · {band}</div>
+          <div style={{ fontSize: 28, opacity: 0.85 }}>{`safe texture · ${band}`}</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          {/* satori rejects elements with 2+ child nodes unless display is
+              explicit — keep the emoji and name as ONE text child. */}
           <div style={{ fontSize: 84, fontWeight: 700 }}>
-            {food?.emoji ? `${food.emoji} ` : ""}
-            {name}
+            {food?.emoji ? `${food.emoji} ${name}` : name}
           </div>
           <div style={{ fontSize: 34, lineHeight: 1.4, opacity: 0.95, maxWidth: 1000 }}>
             {form.length > 180 ? `${form.slice(0, 177)}…` : form}
