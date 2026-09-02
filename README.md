@@ -6,11 +6,11 @@ A **free, open, science-based guide for starting your baby on solid foods** — 
 
 ## What it does
 
-- **Texture-first food guidance** — 63 foods, each with a measurably precise safe form per age band (6–8m / 9–12m / 12–24m), a physical pass/fail test (the "squish test"), prep steps, common mistakes, original cut diagrams, and kitchen tips for actually achieving the texture.
+- **Texture-first food guidance** — 153 foods (plus 40 recipes), each with a measurably precise safe form per age band (6–8m / 9–12m / 12–24m), a physical pass/fail test (the "squish test"), prep steps, common mistakes, original cut diagrams, and kitchen tips for actually achieving the texture.
 - **Dynamic daily plan** — a deterministic recommendation engine prioritizes iron-rich foods, paces the 9 common allergens (one at a time, risk-stratified per the NIAID guidelines), nudges texture progression, re-queues refused foods, and hard-blocks unsafe items (honey <12m, unmodified choking hazards, …).
 - **Meets you where you are** — a fresh-start wizard *and* a mid-journey import flow (tap what you've tried, set allergen statuses, pick a texture stage, or restore a JSON backup).
 - **Allergy playbooks** — a reaction triage table from "that's normal gagging" to a full-screen **call-911 interrupt**, an allergen tracker, and per-allergen introduction programs.
-- **Free & private** — no accounts, no ads, no trackers. Everything lives in your browser; export/import JSON any time.
+- **Free & private** — no ads, no individual tracking (page loads are counted in aggregate only). Everything lives in your browser by default; an optional account adds cross-device sync, and JSON export/import works any time.
 
 ## Science & sourcing
 
