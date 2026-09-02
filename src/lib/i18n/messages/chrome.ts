@@ -21,6 +21,8 @@ export const chromeMsgs = {
   navMain: { en: "Main", zh: "主导航" },
   navPrimary: { en: "Primary", zh: "主导航" },
   tagline: { en: "free, science-based baby solids guide", zh: "免费、科学的宝宝辅食指南" },
+  share: { en: "Share", zh: "分享" },
+  shareCopied: { en: "Link copied", zh: "链接已复制" },
   siteDescription: {
     en: "A free, open, science-based guide for starting your baby on solid foods: exact safe textures for every food, dynamic daily recommendations, and allergy playbooks grounded in NIAID and AAP guidance.",
     zh: "一份免费、开放、以科学为依据的宝宝辅食添加指南：每种食物在各月龄的安全质地、每日动态推荐，以及基于 NIAID 和 AAP 指南的过敏原引入方案。",

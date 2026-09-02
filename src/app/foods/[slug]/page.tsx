@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { JsonLd } from "@/components/JsonLd";
+import { ShareButton } from "@/components/ShareButton";
 import { PrepBands } from "./PrepBands";
 
 export function generateStaticParams() {
@@ -125,6 +126,9 @@ export default async function FoodPage({ params }: { params: Promise<{ slug: str
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">{food.name}</h1>
           <Badge className="border-transparent bg-accent text-accent-foreground">{category}</Badge>
           {food.firstFoodPick && <Badge variant="secondary">{t.greatFirstFood}</Badge>}
+          <span className="ml-auto">
+            <ShareButton title={food.name} path={`/foods/${food.slug}`} />
+          </span>
         </div>
 
         <div className="overflow-x-auto rounded-2xl border bg-card">

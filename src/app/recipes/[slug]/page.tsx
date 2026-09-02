@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { JsonLd } from "@/components/JsonLd";
+import { ShareButton } from "@/components/ShareButton";
 import { BRAND } from "@/lib/brand";
 import { getLocale } from "@/lib/i18n/server";
 import { msg, pick } from "@/lib/i18n/config";
@@ -81,6 +82,9 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
           {recipe.ironPairing && <Badge variant="secondary">{t.ironLong}</Badge>}
           <span className="font-data text-[11px] text-muted-foreground">
             {recipe.bands.map((b) => bandLabel(b, locale)).join(" · ")}
+          </span>
+          <span className="ml-auto">
+            <ShareButton title={recipe.name} path={`/recipes/${recipe.slug}`} />
           </span>
         </div>
       </div>
