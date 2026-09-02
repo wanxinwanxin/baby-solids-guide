@@ -17,9 +17,12 @@ import {
   LANDING_QUESTION_CARDS,
   landingMsgs,
 } from "@/lib/i18n/messages/landing";
+import { chromeMsgs } from "@/lib/i18n/messages/chrome";
 import { getLocale } from "@/lib/i18n/server";
 import { localizeFood, localizeGuides } from "@/lib/l10n";
 import { cn } from "@/lib/utils";
+import { BRAND } from "@/lib/brand";
+import { JsonLd } from "@/components/JsonLd";
 
 const GITHUB_URL = "https://github.com/wanxinwanxin/baby-solids-guide";
 
@@ -69,8 +72,27 @@ export default async function LandingPage() {
     locale,
   );
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
   return (
     <div className="space-y-16 pt-6 sm:space-y-20">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: BRAND,
+          url: siteUrl,
+          description: msg(chromeMsgs.siteDescription, locale),
+          inLanguage: ["en", "zh-CN"],
+          publisher: {
+            "@type": "Organization",
+            name: BRAND,
+            url: siteUrl,
+            logo: `${siteUrl}/icon.svg`,
+            sameAs: [GITHUB_URL],
+          },
+        }}
+      />
       {/* Hero */}
       <section className="grid items-center gap-10 md:grid-cols-[1.05fr_0.95fr]">
         <div className="flex flex-col gap-6">

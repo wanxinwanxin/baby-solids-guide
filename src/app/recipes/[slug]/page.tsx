@@ -6,6 +6,8 @@ import { foodBySlug } from "../../../../content/foods";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { JsonLd } from "@/components/JsonLd";
+import { BRAND } from "@/lib/brand";
 import { getLocale } from "@/lib/i18n/server";
 import { msg, pick } from "@/lib/i18n/config";
 import { bandLabel } from "@/lib/i18n/labels";
@@ -43,8 +45,29 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
   const t = pick(recipesMsgs, locale);
   const recipe = localizeRecipe(base, locale);
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const ingredientNames = recipe.foods.map((s) => {
+    const f = foodBySlug.get(s);
+    return f ? localizeFood(f, locale).name : s;
+  });
+
   return (
     <div className="mx-auto max-w-2xl space-y-7">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Recipe",
+          name: recipe.name,
+          description: recipe.whyItWorks,
+          image: [`${siteUrl}/recipes/${recipe.slug}/opengraph-image`],
+          inLanguage: locale === "zh" ? "zh-CN" : "en",
+          recipeCategory: "Baby food",
+          keywords: recipe.bands.join(", "),
+          recipeIngredient: ingredientNames,
+          recipeInstructions: recipe.steps.map((step) => ({ "@type": "HowToStep", text: step })),
+          author: { "@type": "Organization", name: BRAND, url: siteUrl },
+        }}
+      />
       <div className="space-y-3">
         <p className="font-data text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
           <Link href="/recipes" className="hover:text-foreground">

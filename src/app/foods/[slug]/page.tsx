@@ -6,12 +6,13 @@ import { allFoods, foodBySlug } from "../../../../content/foods";
 import { allRecipes } from "../../../../content/recipes";
 import { fmt, msg, pick } from "@/lib/i18n/config";
 import { getLocale } from "@/lib/i18n/server";
-import { allergenLabel, categoryLabel, nutrientLabel } from "@/lib/i18n/labels";
+import { allergenLabel, bandLabel, categoryLabel, nutrientLabel } from "@/lib/i18n/labels";
 import { foodDetailMsgs } from "@/lib/i18n/messages/food-detail";
 import { localizeFood, localizeRecipes } from "@/lib/l10n";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { JsonLd } from "@/components/JsonLd";
 import { PrepBands } from "./PrepBands";
 
 export function generateStaticParams() {
@@ -70,8 +71,36 @@ export default async function FoodPage({ params }: { params: Promise<{ slug: str
     .sort((a, b) => a.name.localeCompare(b.name))
     .slice(0, 8);
 
+  const faqEntries = [
+    ...food.prepSpecs.map((spec) => ({
+      "@type": "Question",
+      name: fmt(msg(foodDetailMsgs.faqServe, locale), {
+        name: food.name,
+        age: bandLabel(spec.band, locale),
+      }),
+      acceptedAnswer: { "@type": "Answer", text: spec.form },
+    })),
+    ...(food.chokingNotes
+      ? [
+          {
+            "@type": "Question",
+            name: fmt(msg(foodDetailMsgs.faqChoking, locale), { name: food.name }),
+            acceptedAnswer: { "@type": "Answer", text: food.chokingNotes },
+          },
+        ]
+      : []),
+  ];
+
   return (
     <article className="space-y-10">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          inLanguage: locale === "zh" ? "zh-CN" : "en",
+          mainEntity: faqEntries,
+        }}
+      />
       <header className="space-y-4">
         <nav
           aria-label={t.breadcrumbLabel}

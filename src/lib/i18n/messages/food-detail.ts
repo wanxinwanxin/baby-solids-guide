@@ -11,6 +11,15 @@ export const foodDetailMsgs = {
     en: "{name} for babies — safe texture by age",
     zh: "宝宝吃{name}——按月龄的安全形态",
   },
+  // FAQPage JSON-LD questions (structured data only, never rendered).
+  faqServe: {
+    en: "How do I serve {name} to a baby at {age}?",
+    zh: "{age}的宝宝怎么吃{name}？",
+  },
+  faqChoking: {
+    en: "Is {name} a choking hazard for babies?",
+    zh: "{name}会造成宝宝窒息风险吗？",
+  },
   breadcrumbLabel: { en: "Breadcrumb", zh: "面包屑导航" },
   breadcrumbFoods: { en: "Foods", zh: "食物库" },
   greatFirstFood: { en: "Great first food", zh: "优选第一口辅食" },
