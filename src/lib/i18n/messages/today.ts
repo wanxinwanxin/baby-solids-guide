@@ -85,8 +85,8 @@ export const todayMsgs = {
   // ——— Account / backup nudges ———
   saveDataTitle: { en: "Save {name}'s data", zh: "保存 {name} 的数据" },
   accountBody: {
-    en: "{n} logs live only on this device. Sign in once and everything follows you to any phone or laptop — free, no tracking.",
-    zh: "{n} 条记录只保存在这台设备上。登录一次，数据就会跟着你出现在任何手机或电脑上——免费，也不追踪你。",
+    en: "{n} logs live only on this device. Sign in once and everything follows you to any phone or laptop — free, no individual tracking.",
+    zh: "{n} 条记录只保存在这台设备上。登录一次，数据就会跟着你出现在任何手机或电脑上——免费，也不会跟踪个人。",
   },
   accountLink: { en: "Sign in with Google or email →", zh: "用 Google 或邮箱登录 →" },
   backupTitle: { en: "Back up {name}'s history", zh: "备份 {name} 的记录" },

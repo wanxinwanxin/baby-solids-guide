@@ -1,4 +1,4 @@
-import { jsonb, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { integer, jsonb, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 
 /**
@@ -99,6 +99,23 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   keys: jsonb("keys").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * ROADMAP D5 option 2 — aggregate page counting. One row per (UTC day, path),
+ * incremented server-side. Deliberately NOTHING else: no cookies, no IP, no
+ * user agent, no session or user linkage — so "no individual tracking" stays
+ * literally true. `day` is an ISO "YYYY-MM-DD" string; ISO dates compare
+ * correctly as text.
+ */
+export const pageViews = pgTable(
+  "page_views",
+  {
+    day: text("day").notNull(),
+    path: text("path").notNull(),
+    n: integer("n").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.day, t.path] })],
+);
 
 export const reminders = pgTable("reminders", {
   id: uuid("id").primaryKey().defaultRandom(),

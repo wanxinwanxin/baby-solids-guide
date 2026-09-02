@@ -4,6 +4,7 @@ import Link from "next/link";
 import { BRAND, BRAND_TAGLINE, SUPPORT_EMAIL } from "@/lib/brand";
 import { AppNav } from "@/components/AppNav";
 import { MobileTabBar } from "@/components/MobileTabBar";
+import { PageViewPing } from "@/components/PageViewPing";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { SyncProvider } from "@/components/SyncProvider";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
@@ -54,6 +55,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="antialiased">
         <LocaleProvider locale={locale}>
           <ServiceWorkerRegister />
+          <PageViewPing />
           <SyncProvider />
           <AppNav />
           <main className="mx-auto w-full max-w-4xl px-4 pb-16 pt-6">{children}</main>

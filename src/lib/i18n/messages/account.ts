@@ -30,8 +30,8 @@ export const accountMsgs = {
   },
   // Signed-in view.
   syncedExplainer: {
-    en: "Your babies' profiles and logs sync to this account and follow you to any device. Nothing else is stored — no analytics, no tracking.",
-    zh: "宝宝的档案和记录会同步到这个账户，换设备也随时跟着你。除此之外什么都不存——没有分析统计，也没有跟踪。",
+    en: "Your babies' profiles and logs sync to this account and follow you to any device. Nothing else is stored — no ads, no individual tracking.",
+    zh: "宝宝的档案和记录会同步到这个账户，换设备也随时跟着你。除此之外什么都不存——没有广告，也不会跟踪个人。",
   },
   /** Honest freshness line: when this device last heard from the server. */
   lastChecked: { en: "Last checked for updates at {time}.", zh: "上次检查更新：{time}。" },
@@ -55,8 +55,8 @@ export const accountMsgs = {
   // Signed-out view.
   saveTitle: { en: "Save your data", zh: "保存你的数据" },
   saveLede: {
-    en: "An account keeps your baby's history safe across devices and browser cleanups. Free, no ads, no tracking — and guest mode keeps working if you skip this.",
-    zh: "有了账户，宝宝的记录在换设备、清理浏览器时也不会丢。免费、无广告、无跟踪——就算跳过这一步，访客模式也照常可用。",
+    en: "An account keeps your baby's history safe across devices and browser cleanups. Free, no ads, no individual tracking — and guest mode keeps working if you skip this.",
+    zh: "有了账户，宝宝的记录在换设备、清理浏览器时也不会丢。免费、无广告、不跟踪个人——就算跳过这一步，访客模式也照常可用。",
   },
   tabSignIn: { en: "Sign in", zh: "登录" },
   tabCreate: { en: "Create account", zh: "创建账户" },

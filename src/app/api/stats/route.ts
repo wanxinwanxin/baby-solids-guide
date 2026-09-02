@@ -1,4 +1,4 @@
-import { count, countDistinct, gte, sql } from "drizzle-orm";
+import { count, countDistinct, desc, gte, sql } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 
 /**
@@ -48,8 +48,30 @@ export async function GET(req: Request) {
     .from(schema.user)
     .where(sql`${schema.user.emailVerified} = true`);
 
+  // D5 option 2 — aggregate page views (path + UTC day, nothing else).
+  const sinceDay = (days: number) => since(days).toISOString().slice(0, 10);
+  const viewSum = sql<number>`coalesce(sum(${schema.pageViews.n}), 0)::int`;
+  const [views7d] = await db
+    .select({ n: viewSum })
+    .from(schema.pageViews)
+    .where(gte(schema.pageViews.day, sinceDay(7)));
+  const [views30d] = await db
+    .select({ n: viewSum })
+    .from(schema.pageViews)
+    .where(gte(schema.pageViews.day, sinceDay(30)));
+  const topPaths7d = await db
+    .select({ path: schema.pageViews.path, n: viewSum })
+    .from(schema.pageViews)
+    .where(gte(schema.pageViews.day, sinceDay(7)))
+    .groupBy(schema.pageViews.path)
+    .orderBy(desc(viewSum))
+    .limit(15);
+
   return Response.json({
-    note: "Signed-in accounts only — guests are local-first and never touch the server.",
+    note: "Signed-in accounts only — guests are local-first and never touch the server. Page views are aggregate (path + day), guests included, nothing individual.",
+    pageViews7d: views7d.n,
+    pageViews30d: views30d.n,
+    topPaths7d,
     users: users.n,
     newUsers7d: newUsers7d.n,
     verifiedUsers: verifiedUsers.n,

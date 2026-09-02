@@ -48,8 +48,8 @@ export const aboutMsgs = {
   retrieved: { en: "(retrieved {date})", zh: "（检索于 {date}）" },
   privacyTitle: { en: "Privacy", zh: "隐私" },
   privacyBody: {
-    en: "Everything you enter — your baby's profile and every log — lives in your browser's storage on your device. There is no account, no server database, no analytics, no trackers, and no ads. The Export button gives you a complete JSON copy of your data; \"Delete all data\" on the History page removes everything instantly. If you clear your browser data, your logs go with it, so export a backup now and then.",
-    zh: "你输入的一切——宝宝的档案和每一条记录——都只保存在你设备上的浏览器存储里。没有账号、没有服务器数据库、没有数据分析、没有跟踪器、也没有广告。“导出”按钮可以给你一份完整的 JSON 数据副本；历史页面上的“删除所有数据”会立即清除全部数据。如果你清除了浏览器数据，记录也会一起消失，所以记得时不时导出一份备份。",
+    en: "Everything you enter — your baby's profile and every log — lives in your browser's storage on your device. An account is optional and only syncs that same data to your other devices. There are no ads, no cookies for analytics, and no individual tracking: the server counts page loads in aggregate only (which page, on which day — never who). The Export button gives you a complete JSON copy of your data; \"Delete all data\" on the History page removes everything instantly. If you clear your browser data, your logs go with it, so export a backup now and then.",
+    zh: "你输入的一切——宝宝的档案和每一条记录——都只保存在你设备上的浏览器存储里。账户是可选的，只用于把这些数据同步到你的其他设备。没有广告、没有用于分析的 Cookie、也不会跟踪个人：服务器只做汇总的页面计数（哪个页面、哪一天——从不记录是谁）。“导出”按钮可以给你一份完整的 JSON 数据副本；历史页面上的“删除所有数据”会立即清除全部数据。如果你清除了浏览器数据，记录也会一起消失，所以记得时不时导出一份备份。",
   },
   contactTitle: { en: "Getting in touch", zh: "联系我们" },
   contactBody: {
