@@ -24,7 +24,11 @@ export async function generateMetadata({
   if (!program) return {};
   const locale = await getLocale();
   const localized = localizeAllergen(program, locale);
-  return { title: fmt(msg(allergensMsgs.introducing, locale), { name: localized.name }) };
+  return {
+    title: fmt(msg(allergensMsgs.introducing, locale), { name: localized.name }),
+    description: localized.firstServe,
+    alternates: { canonical: `/allergens/${id}` },
+  };
 }
 
 export default async function AllergenPage({ params }: { params: Promise<{ id: string }> }) {

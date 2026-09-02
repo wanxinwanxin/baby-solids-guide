@@ -12,6 +12,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = pick(aboutMsgs, locale);
   return {
     title: t.metaTitle,
+    description: t.metaDescription,
+    alternates: { canonical: "/about" },
   };
 }
 

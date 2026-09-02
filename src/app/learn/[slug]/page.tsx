@@ -21,7 +21,7 @@ export async function generateMetadata({
   if (!base) return {};
   const locale = await getLocale();
   const guide = localizeGuide(base, locale);
-  return { title: guide.title, description: guide.summary };
+  return { title: guide.title, description: guide.summary, alternates: { canonical: `/learn/${slug}` } };
 }
 
 export default async function GuidePage({ params }: { params: Promise<{ slug: string }> }) {

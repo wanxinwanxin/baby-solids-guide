@@ -11,6 +11,10 @@ export const aboutMsgs = {
     en: "Sources, methodology & privacy",
     zh: "来源、方法论与隐私",
   },
+  metaDescription: {
+    en: "Where every OpenSolids recommendation comes from: the primary sources, the methodology behind textures and allergen schedules, and the local-first privacy model.",
+    zh: "OpenSolids 每条建议的依据：一手来源、质地与过敏原引入方案背后的方法论，以及本地优先的隐私模型。",
+  },
   title: { en: "About OpenSolids", zh: "关于 OpenSolids" },
   whatTitle: { en: "What this is", zh: "这是什么" },
   what1: {

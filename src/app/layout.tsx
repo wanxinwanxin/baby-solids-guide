@@ -30,6 +30,8 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s · ${BRAND}`,
     },
     description: t.siteDescription,
+    openGraph: { siteName: BRAND, type: "website" },
+    twitter: { card: "summary_large_image" },
     manifest: "/manifest.webmanifest",
     // The label under the icon when iOS adds this to the home screen — without
     // it Safari uses the full <title>, which is far too long to fit.

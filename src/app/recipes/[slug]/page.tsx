@@ -25,7 +25,13 @@ export async function generateMetadata({
   const base = recipeBySlug.get(slug);
   const locale = await getLocale();
   const t = pick(recipesMsgs, locale);
-  return { title: base ? localizeRecipe(base, locale).name : t.recipeFallback };
+  if (!base) return { title: t.recipeFallback };
+  const recipe = localizeRecipe(base, locale);
+  return {
+    title: recipe.name,
+    description: recipe.whyItWorks,
+    alternates: { canonical: `/recipes/${slug}` },
+  };
 }
 
 export default async function RecipePage({ params }: { params: Promise<{ slug: string }> }) {

@@ -31,6 +31,7 @@ export async function generateMetadata({
   return {
     title: fmt(msg(foodDetailMsgs.metaTitle, locale), { name: food.name }),
     description: food.prepSpecs[0].form,
+    alternates: { canonical: `/foods/${slug}` },
   };
 }
 

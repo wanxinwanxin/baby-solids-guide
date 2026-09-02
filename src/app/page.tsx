@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { allFoods, foodBySlug } from "../../content/foods";
 import { allGuides } from "../../content/guides";
@@ -21,6 +22,10 @@ import { localizeFood, localizeGuides } from "@/lib/l10n";
 import { cn } from "@/lib/utils";
 
 const GITHUB_URL = "https://github.com/wanxinwanxin/baby-solids-guide";
+
+// Title and description come from the root layout; the landing page only
+// pins its canonical URL so crawlers fold query-string variants into "/".
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 /**
  * The 12–24m banana is served whole / in large hand-held pieces and carries no

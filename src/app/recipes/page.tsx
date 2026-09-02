@@ -12,7 +12,7 @@ import { localizeRecipes } from "@/lib/l10n";
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   const t = pick(recipesMsgs, locale);
-  return { title: t.metaTitle, description: t.metaDescription };
+  return { title: t.metaTitle, description: t.metaDescription, alternates: { canonical: "/recipes" } };
 }
 
 export default async function RecipesPage() {
