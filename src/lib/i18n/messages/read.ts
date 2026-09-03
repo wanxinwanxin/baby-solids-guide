@@ -18,6 +18,7 @@ export const readMsgs = {
     en: "Pinyin above each line, so anyone can read along.",
     zh: "每句上方标注拼音，谁都能跟着读。",
   },
+  groupCurated: { en: "启蒙精选 · Starter picks", zh: "启蒙精选" },
   kindRhyme: { en: "nursery rhyme", zh: "童谣" },
   kindPoem: { en: "poem", zh: "诗" },
   kindSonnet: { en: "sonnet", zh: "十四行诗" },

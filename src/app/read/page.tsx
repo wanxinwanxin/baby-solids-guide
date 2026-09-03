@@ -52,12 +52,29 @@ export default async function ReadPage() {
     </section>
   );
 
+  // Curated starter picks first, then the 唐诗三百首 poems grouped by form.
+  const groupOrder = [
+    t.groupCurated,
+    ...Array.from(new Set(chinesePoems.map((p) => p.form).filter((f): f is string => !!f))),
+  ];
+  const groups = groupOrder.map((label) => ({
+    label,
+    poems: chinesePoems.filter((p) => (p.form ?? t.groupCurated) === label),
+  }));
+
   const chinese = (
-    <section className="space-y-3">
-      <h2 className="text-xl font-bold">{t.chineseSection}</h2>
-      <p className="text-sm text-muted-foreground">{t.chineseSectionNote}</p>
-      <div className="space-y-2">
-        {chinesePoems.map((p) => (
+    <section className="space-y-5">
+      <div className="space-y-1">
+        <h2 className="text-xl font-bold">{t.chineseSection}</h2>
+        <p className="text-sm text-muted-foreground">{t.chineseSectionNote}</p>
+      </div>
+      {groups.map((group) => (
+        <section key={group.label} className="space-y-2">
+          <h3 className="font-data text-[12px] uppercase tracking-[0.12em] text-muted-foreground">
+            {group.label} · {group.poems.length}
+          </h3>
+          <div className="space-y-2">
+            {group.poems.map((p) => (
           <details key={p.slug} className="group rounded-2xl border bg-card px-5 py-3.5">
             <summary className="flex cursor-pointer list-none flex-wrap items-baseline gap-x-3 gap-y-1">
               <span className="text-[15px] font-bold">{p.title}</span>
@@ -74,8 +91,10 @@ export default async function ReadPage() {
               ))}
             </div>
           </details>
-        ))}
-      </div>
+            ))}
+          </div>
+        </section>
+      ))}
     </section>
   );
 

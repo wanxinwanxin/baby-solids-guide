@@ -31,6 +31,8 @@ export const chinesePoemSchema = z.object({
   pinyinTitle: z.string().min(1),
   author: z.string().min(1),
   dynasty: z.string().min(1),
+  /** Regulated form (五言绝句…) for generated poems; curated picks omit it. */
+  form: z.string().min(1).optional(),
   lines: z.array(chinesePoemLineSchema).min(2),
 });
 export type ChinesePoem = z.infer<typeof chinesePoemSchema>;
