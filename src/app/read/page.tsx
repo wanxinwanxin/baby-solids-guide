@@ -36,10 +36,11 @@ export default async function ReadPage() {
               </span>
             </summary>
             <div className="mt-3 space-y-4 pb-1.5">
-              {p.stanzas.map((stanza) => (
-                <p key={stanza[0]} className="text-[15px] leading-relaxed">
-                  {stanza.map((line) => (
-                    <span key={line} className="block">
+              {/* Rhymes repeat lines verbatim, so positions are the only stable keys. */}
+              {p.stanzas.map((stanza, si) => (
+                <p key={si} className="text-[15px] leading-relaxed">
+                  {stanza.map((line, li) => (
+                    <span key={li} className="block">
                       {line}
                     </span>
                   ))}
@@ -83,8 +84,8 @@ export default async function ReadPage() {
               </span>
             </summary>
             <div className="mt-3 space-y-3 pb-1.5">
-              {p.lines.map((line) => (
-                <div key={line.hanzi}>
+              {p.lines.map((line, li) => (
+                <div key={li}>
                   <div className="font-data text-[12px] text-muted-foreground">{line.pinyin}</div>
                   <div className="text-[17px] leading-relaxed tracking-wide">{line.hanzi}</div>
                 </div>
