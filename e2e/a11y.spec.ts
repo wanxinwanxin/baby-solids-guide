@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 
 /** Phase 15 — accessibility gate: 0 critical violations on the key routes. */
 
-const ROUTES = ["/", "/foods", "/foods/carrot", "/learn", "/learn/why-solids", "/safety", "/log", "/plan", "/allergens", "/history"];
+const ROUTES = ["/", "/foods", "/foods/carrot", "/learn", "/learn/why-solids", "/safety", "/log", "/plan", "/allergens", "/history", "/more"];
 
 for (const route of ROUTES) {
   test(`axe: no critical violations on ${route}`, async ({ page }) => {

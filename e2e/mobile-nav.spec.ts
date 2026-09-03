@@ -35,7 +35,7 @@ test.describe("Mobile chrome", () => {
 
     const bar = page.getByRole("navigation", { name: /Primary/i });
     await expect(bar.getByRole("link")).toHaveCount(5); // 4 tabs + the log button
-    for (const label of ["Today", "History", "Plan", "Learn"]) {
+    for (const label of ["Today", "History", "Plan", "More"]) {
       await expect(bar.getByRole("link", { name: label, exact: true })).toBeVisible();
     }
     await expect(bar.getByRole("link", { name: "Foods", exact: true })).toHaveCount(0);
@@ -43,5 +43,27 @@ test.describe("Mobile chrome", () => {
     // Foods stays one tap away from every page.
     await page.getByRole("banner").getByRole("link", { name: "Foods" }).click();
     await page.waitForURL("**/foods");
+  });
+
+  test("the More tab reaches everything the bar dropped", async ({ page }) => {
+    await completeOnboarding(page);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/today");
+
+    const bar = page.getByRole("navigation", { name: /Primary/i });
+    await bar.getByRole("link", { name: "More", exact: true }).click();
+    await page.waitForURL("**/more");
+    const main = page.getByRole("main");
+    for (const label of ["Learn", "Allergens", "Insights", "Safety", "Read to baby"]) {
+      await expect(main.getByRole("link", { name: new RegExp(label) })).toBeVisible();
+    }
+
+    // A destination that lives behind More keeps the tab lit while open.
+    await main.getByRole("link", { name: /Learn/ }).click();
+    await page.waitForURL("**/learn");
+    await expect(bar.getByRole("link", { name: "More", exact: true })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 });

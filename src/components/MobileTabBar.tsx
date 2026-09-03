@@ -10,20 +10,25 @@ import { cn } from "@/lib/utils";
 
 /**
  * Mobile bottom tab bar (design sheet 08): Today · History · +Log FAB · Plan ·
- * Learn. Desktop keeps the top nav; this renders only below md. All targets
+ * More. Desktop keeps the top nav; this renders only below md. All targets
  * ≥ 44px per the acceptance criteria.
  *
  * Four tabs, two either side of the log button. Adding History made it five,
  * which pushed the FAB off centre and left the bar looking lopsided. Foods
  * came out instead of History because the food library is a reference people
  * look something up in, not a place they live — and it keeps a top-bar
- * shortcut on mobile (see AppNav) so it is still one tap away.
+ * shortcut on mobile (see AppNav) so it is still one tap away. Learn later
+ * gave its slot to More (/more): phones had no path to Allergens, Insights,
+ * or the extras, and Learn sits first on the More page.
  */
 type Tab = {
   href: string;
-  msgKey: "navToday" | "navHistory" | "navPlan" | "navLearn" | "navFoods" | "navSafety";
+  msgKey: "navToday" | "navHistory" | "navPlan" | "navMore" | "navFoods" | "navSafety";
   icon: React.ReactNode;
 };
+
+/** Routes that live behind the More tab — they light it up while open. */
+const MORE_PREFIXES = ["/more", "/learn", "/allergens", "/insights", "/read", "/safety"];
 
 const TABS: Tab[] = [
   {
@@ -58,12 +63,13 @@ const TABS: Tab[] = [
     ),
   },
   {
-    href: "/learn",
-    msgKey: "navLearn",
+    href: "/more",
+    msgKey: "navMore",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden="true">
-        <path d="M12 6c-2-1.5-4.5-2-8-2v14c3.5 0 6 .5 8 2 2-1.5 4.5-2 8-2V4c-3.5 0-6 .5-8 2Z" />
-        <path d="M12 6v14" />
+      <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" className="size-5" aria-hidden="true">
+        <circle cx="5" cy="12" r="1.8" />
+        <circle cx="12" cy="12" r="1.8" />
+        <circle cx="19" cy="12" r="1.8" />
       </svg>
     ),
   },
@@ -103,11 +109,15 @@ export function MobileTabBar() {
   const hydrated = useHydrated();
   const caregiver = useGuideStore((s) => s.caregiverMode) && hydrated;
   const tab = (t: Tab) => {
-    const active = pathname === t.href || pathname.startsWith(`${t.href}/`);
+    const active =
+      t.href === "/more" && !caregiver
+        ? MORE_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+        : pathname === t.href || pathname.startsWith(`${t.href}/`);
     return (
       <Link
         key={t.href}
         href={t.href}
+        {...(t.href === "/more" ? { "data-tour": "more" } : {})}
         className={cn(
           "flex min-h-11 min-w-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1.5 text-[11px] font-medium",
           active ? "text-primary" : "text-muted-foreground",
