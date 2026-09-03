@@ -71,6 +71,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 {t.footerSafety}
               </Link>{" "}
               ·{" "}
+              <Link href="/read" className="underline underline-offset-2">
+                {t.navRead}
+              </Link>{" "}
+              ·{" "}
               <Link href="/account" className="underline underline-offset-2">
                 {t.footerAccount}
               </Link>{" "}

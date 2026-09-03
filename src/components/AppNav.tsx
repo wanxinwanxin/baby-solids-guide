@@ -48,6 +48,7 @@ const moreLinks = (t: NavMsgs) => [
   { href: "/allergens", label: t.navAllergens },
   { href: "/insights", label: t.navInsights },
   { href: "/safety", label: t.navSafety },
+  { href: "/read", label: t.navRead },
 ];
 
 /**
