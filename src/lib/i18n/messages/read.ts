@@ -13,7 +13,7 @@ export const readMsgs = {
     zh: "宝宝不需要听懂——需要的是你的声音、节奏和重复。等饭出锅前念一首就很好。这里的作品都属于公共领域。",
   },
   englishSection: { en: "Rhymes & poems in English", zh: "英文童谣与诗歌" },
-  chineseSection: { en: "唐诗 · Chinese poems with pinyin", zh: "唐诗（带拼音）" },
+  chineseSection: { en: "古诗 · Chinese poems with pinyin", zh: "古诗（带拼音）" },
   chineseSectionNote: {
     en: "Pinyin above each line, so anyone can read along.",
     zh: "每句上方标注拼音，谁都能跟着读。",

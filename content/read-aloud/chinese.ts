@@ -1,7 +1,7 @@
 import type { ChinesePoem } from "@/content-schema/read-aloud";
 
 /**
- * 唐诗启蒙 — the classical poems Chinese families recite to small children,
+ * 古诗启蒙 — the classical poems Chinese families recite to small children,
  * with full-line pinyin so hard characters never stop the reader. All texts
  * are Tang/classical works, long in the public domain. Pinyin follows the
  * children's-book convention of marking tone sandhi (yí dào, bú jìn).
@@ -176,6 +176,136 @@ export const chinesePoems: ChinesePoem[] = [
       { hanzi: "白云生处有人家。", pinyin: "bái yún shēng chù yǒu rén jiā." },
       { hanzi: "停车坐爱枫林晚，", pinyin: "tíng chē zuò ài fēng lín wǎn," },
       { hanzi: "霜叶红于二月花。", pinyin: "shuāng yè hóng yú èr yuè huā." },
+    ],
+  },
+  {
+    slug: "lu-zhai",
+    title: "鹿柴",
+    pinyinTitle: "lù zhài",
+    author: "王维",
+    dynasty: "唐",
+    lines: [
+      { hanzi: "空山不见人，", pinyin: "kōng shān bú jiàn rén," },
+      { hanzi: "但闻人语响。", pinyin: "dàn wén rén yǔ xiǎng." },
+      { hanzi: "返景入深林，", pinyin: "fǎn jǐng rù shēn lín," },
+      { hanzi: "复照青苔上。", pinyin: "fù zhào qīng tái shàng." },
+    ],
+  },
+  {
+    slug: "zao-fa-bai-di-cheng",
+    title: "早发白帝城",
+    pinyinTitle: "zǎo fā bái dì chéng",
+    author: "李白",
+    dynasty: "唐",
+    lines: [
+      { hanzi: "朝辞白帝彩云间，", pinyin: "zhāo cí bái dì cǎi yún jiān," },
+      { hanzi: "千里江陵一日还。", pinyin: "qiān lǐ jiāng líng yí rì huán." },
+      { hanzi: "两岸猿声啼不住，", pinyin: "liǎng àn yuán shēng tí bú zhù," },
+      { hanzi: "轻舟已过万重山。", pinyin: "qīng zhōu yǐ guò wàn chóng shān." },
+    ],
+  },
+  {
+    slug: "jue-ju-chi-ri",
+    title: "绝句·迟日江山丽",
+    pinyinTitle: "jué jù · chí rì jiāng shān lì",
+    author: "杜甫",
+    dynasty: "唐",
+    lines: [
+      { hanzi: "迟日江山丽，", pinyin: "chí rì jiāng shān lì," },
+      { hanzi: "春风花草香。", pinyin: "chūn fēng huā cǎo xiāng." },
+      { hanzi: "泥融飞燕子，", pinyin: "ní róng fēi yàn zǐ," },
+      { hanzi: "沙暖睡鸳鸯。", pinyin: "shā nuǎn shuì yuān yāng." },
+    ],
+  },
+  {
+    slug: "feng",
+    title: "风",
+    pinyinTitle: "fēng",
+    author: "李峤",
+    dynasty: "唐",
+    lines: [
+      { hanzi: "解落三秋叶，", pinyin: "jiě luò sān qiū yè," },
+      { hanzi: "能开二月花。", pinyin: "néng kāi èr yuè huā." },
+      { hanzi: "过江千尺浪，", pinyin: "guò jiāng qiān chǐ làng," },
+      { hanzi: "入竹万竿斜。", pinyin: "rù zhú wàn gān xié." },
+    ],
+  },
+  {
+    slug: "xun-yin-zhe-bu-yu",
+    title: "寻隐者不遇",
+    pinyinTitle: "xún yǐn zhě bú yù",
+    author: "贾岛",
+    dynasty: "唐",
+    lines: [
+      { hanzi: "松下问童子，", pinyin: "sōng xià wèn tóng zǐ," },
+      { hanzi: "言师采药去。", pinyin: "yán shī cǎi yào qù." },
+      { hanzi: "只在此山中，", pinyin: "zhǐ zài cǐ shān zhōng," },
+      { hanzi: "云深不知处。", pinyin: "yún shēn bù zhī chù." },
+    ],
+  },
+  {
+    slug: "hua",
+    title: "画",
+    pinyinTitle: "huà",
+    author: "王维（传）",
+    dynasty: "唐",
+    lines: [
+      { hanzi: "远看山有色，", pinyin: "yuǎn kàn shān yǒu sè," },
+      { hanzi: "近听水无声。", pinyin: "jìn tīng shuǐ wú shēng." },
+      { hanzi: "春去花还在，", pinyin: "chūn qù huā hái zài," },
+      { hanzi: "人来鸟不惊。", pinyin: "rén lái niǎo bù jīng." },
+    ],
+  },
+  {
+    slug: "shan-cun-yong-huai",
+    title: "山村咏怀",
+    pinyinTitle: "shān cūn yǒng huái",
+    author: "邵雍",
+    dynasty: "宋",
+    lines: [
+      { hanzi: "一去二三里，", pinyin: "yí qù èr sān lǐ," },
+      { hanzi: "烟村四五家。", pinyin: "yān cūn sì wǔ jiā." },
+      { hanzi: "亭台六七座，", pinyin: "tíng tái liù qī zuò," },
+      { hanzi: "八九十枝花。", pinyin: "bā jiǔ shí zhī huā." },
+    ],
+  },
+  {
+    slug: "xiao-chi",
+    title: "小池",
+    pinyinTitle: "xiǎo chí",
+    author: "杨万里",
+    dynasty: "宋",
+    lines: [
+      { hanzi: "泉眼无声惜细流，", pinyin: "quán yǎn wú shēng xī xì liú," },
+      { hanzi: "树阴照水爱晴柔。", pinyin: "shù yīn zhào shuǐ ài qíng róu." },
+      { hanzi: "小荷才露尖尖角，", pinyin: "xiǎo hé cái lù jiān jiān jiǎo," },
+      { hanzi: "早有蜻蜓立上头。", pinyin: "zǎo yǒu qīng tíng lì shàng tóu." },
+    ],
+  },
+  {
+    slug: "suo-jian",
+    title: "所见",
+    pinyinTitle: "suǒ jiàn",
+    author: "袁枚",
+    dynasty: "清",
+    lines: [
+      { hanzi: "牧童骑黄牛，", pinyin: "mù tóng qí huáng niú," },
+      { hanzi: "歌声振林樾。", pinyin: "gē shēng zhèn lín yuè." },
+      { hanzi: "意欲捕鸣蝉，", pinyin: "yì yù bǔ míng chán," },
+      { hanzi: "忽然闭口立。", pinyin: "hū rán bì kǒu lì." },
+    ],
+  },
+  {
+    slug: "cun-ju",
+    title: "村居",
+    pinyinTitle: "cūn jū",
+    author: "高鼎",
+    dynasty: "清",
+    lines: [
+      { hanzi: "草长莺飞二月天，", pinyin: "cǎo zhǎng yīng fēi èr yuè tiān," },
+      { hanzi: "拂堤杨柳醉春烟。", pinyin: "fú dī yáng liǔ zuì chūn yān." },
+      { hanzi: "儿童散学归来早，", pinyin: "ér tóng sàn xué guī lái zǎo," },
+      { hanzi: "忙趁东风放纸鸢。", pinyin: "máng chèn dōng fēng fàng zhǐ yuān." },
     ],
   },
   {

@@ -253,6 +253,155 @@ export const englishPieces: EnglishPiece[] = [
     ]
   },
   {
+    "slug": "wee-willie-winkie",
+    "title": "Wee Willie Winkie",
+    "author": "Traditional",
+    "kind": "rhyme",
+    "stanzas": [
+      [
+        "Wee Willie Winkie runs through the town,",
+        "Upstairs and downstairs, in his nightgown;",
+        "Rapping at the window, crying through the lock,",
+        "\"Are the children in their beds? Now it's eight o'clock.\""
+      ]
+    ]
+  },
+  {
+    "slug": "see-saw-margery-daw",
+    "title": "See-Saw, Margery Daw",
+    "author": "Traditional",
+    "kind": "rhyme",
+    "stanzas": [
+      [
+        "See-saw, Margery Daw,",
+        "Sold her bed and lay upon straw."
+      ]
+    ]
+  },
+  {
+    "slug": "one-two-buckle-my-shoe",
+    "title": "One, Two, Buckle My Shoe",
+    "author": "Traditional",
+    "kind": "rhyme",
+    "stanzas": [
+      [
+        "One, two,",
+        "Buckle my shoe;",
+        "Three, four,",
+        "Knock at the door;",
+        "Five, six,",
+        "Pick up sticks;",
+        "Seven, eight,",
+        "Lay them straight;",
+        "Nine, ten,",
+        "A good, fat hen;",
+        "Eleven, twelve,",
+        "Dig and delve;",
+        "Thirteen, fourteen,",
+        "Maids a-courting;",
+        "Fifteen, sixteen,",
+        "Maids in the kitchen;",
+        "Seventeen, eighteen,",
+        "Maids a-waiting;",
+        "Nineteen, twenty,",
+        "My plate's empty."
+      ]
+    ]
+  },
+  {
+    "slug": "old-king-cole",
+    "title": "Old King Cole",
+    "author": "Traditional",
+    "kind": "rhyme",
+    "stanzas": [
+      [
+        "Old King Cole",
+        "Was a merry old soul,",
+        "And a merry old soul was he;",
+        "He called for his pipe,",
+        "And he called for his bowl,",
+        "And he called for his fiddlers three!",
+        "And every fiddler, he had a fine fiddle,",
+        "And a very fine fiddle had he.",
+        "\"Twee tweedle dee, tweedle dee,\" went the fiddlers.",
+        "Oh, there's none so rare",
+        "As can compare",
+        "With King Cole and his fiddlers three."
+      ]
+    ]
+  },
+  {
+    "slug": "pease-porridge",
+    "title": "Pease Porridge Hot",
+    "author": "Traditional",
+    "kind": "rhyme",
+    "stanzas": [
+      [
+        "Pease porridge hot,",
+        "Pease porridge cold,",
+        "Pease porridge in the pot,",
+        "Nine days old.",
+        "Some like it hot,",
+        "Some like it cold,",
+        "Some like it in the pot,",
+        "Nine days old."
+      ]
+    ]
+  },
+  {
+    "slug": "to-market",
+    "title": "To Market, to Market",
+    "author": "Traditional",
+    "kind": "rhyme",
+    "stanzas": [
+      [
+        "To market, to market, to buy a fat pig.",
+        "Home again, home again, jiggety jig.",
+        "To market, to market, to buy a fat hog,",
+        "Home again, home again, jiggety jog.",
+        "To market, to market, to buy a plum bun,",
+        "Home again, home again, market is done."
+      ]
+    ]
+  },
+  {
+    "slug": "come-out-to-play",
+    "title": "Girls and Boys, Come Out to Play",
+    "author": "Traditional",
+    "kind": "rhyme",
+    "stanzas": [
+      [
+        "Girls and boys, come out to play,",
+        "The moon doth shine as bright as day;",
+        "Leave your supper, and leave your sleep,",
+        "And come with your playfellows into the street.",
+        "Come with a whoop, come with a call,",
+        "Come with a good will or not at all.",
+        "Up the ladder and down the wall,",
+        "A half-penny roll will serve us all.",
+        "You find milk, and I'll find flour,",
+        "And we'll have a pudding in half an hour."
+      ]
+    ]
+  },
+  {
+    "slug": "going-to-st-ives",
+    "title": "As I Was Going to St. Ives",
+    "author": "Traditional",
+    "kind": "rhyme",
+    "stanzas": [
+      [
+        "As I was going to St. Ives",
+        "I met a man with seven wives.",
+        "Every wife had seven sacks,",
+        "Every sack had seven cats,",
+        "Every cat had seven kits.",
+        "Kits, cats, sacks, and wives,",
+        "How many were going to St. Ives?"
+      ]
+    ]
+  },
+  {
     "slug": "the-swing",
     "title": "The Swing",
     "author": "Robert Louis Stevenson",
@@ -275,6 +424,302 @@ export const englishPieces: EnglishPiece[] = [
         "Down on the roof so brown--",
         "Up in the air I go flying again,",
         "Up in the air and down!"
+      ]
+    ]
+  },
+  {
+    "slug": "my-shadow",
+    "title": "My Shadow",
+    "author": "Robert Louis Stevenson",
+    "kind": "poem",
+    "stanzas": [
+      [
+        "I have a little shadow that goes in and out with me,",
+        "And what can be the use of him is more than I can see.",
+        "He is very, very like me from the heels up to the head;",
+        "And I see him jump before me, when I jump into my bed."
+      ],
+      [
+        "The funniest thing about him is the way he likes to grow--",
+        "Not at all like proper children, which is always very slow;",
+        "For he sometimes shoots up taller like an india-rubber ball,",
+        "And he sometimes gets so little that there's none of him at all."
+      ],
+      [
+        "He hasn't got a notion of how children ought to play,",
+        "And can only make a fool of me in every sort of way.",
+        "He stays so close beside me, he's a coward you can see;",
+        "I'd think shame to stick to nursie as that shadow sticks to me!"
+      ],
+      [
+        "One morning, very early, before the sun was up,",
+        "I rose and found the shining dew on every buttercup;",
+        "But my lazy little shadow, like an arrant sleepy-head,",
+        "Had stayed at home behind me and was fast asleep in bed."
+      ]
+    ]
+  },
+  {
+    "slug": "the-cow",
+    "title": "The Cow",
+    "author": "Robert Louis Stevenson",
+    "kind": "poem",
+    "stanzas": [
+      [
+        "The friendly cow all red and white,",
+        "I love with all my heart:",
+        "She gives me cream with all her might,",
+        "To eat with apple-tart."
+      ],
+      [
+        "She wanders lowing here and there,",
+        "And yet she cannot stray,",
+        "All in the pleasant open air,",
+        "The pleasant light of day;"
+      ],
+      [
+        "And blown by all the winds that pass",
+        "And wet with all the showers,",
+        "She walks among the meadow grass",
+        "And eats the meadow flowers."
+      ]
+    ]
+  },
+  {
+    "slug": "the-moon",
+    "title": "The Moon",
+    "author": "Robert Louis Stevenson",
+    "kind": "poem",
+    "stanzas": [
+      [
+        "The moon has a face like the clock in the hall;",
+        "She shines on thieves on the garden wall,",
+        "On streets and field and harbour quays,",
+        "And birdies asleep in the forks of the trees."
+      ],
+      [
+        "The squalling cat and the squeaking mouse,",
+        "The howling dog by the door of the house,",
+        "The bat that lies in bed at noon,",
+        "All love to be out by the light of the moon."
+      ],
+      [
+        "But all of the things that belong to the day",
+        "Cuddle to sleep to be out of her way;",
+        "And flowers and children close their eyes",
+        "Till up in the morning the sun shall arise."
+      ]
+    ]
+  },
+  {
+    "slug": "bed-in-summer",
+    "title": "Bed in Summer",
+    "author": "Robert Louis Stevenson",
+    "kind": "poem",
+    "stanzas": [
+      [
+        "In winter I get up at night",
+        "And dress by yellow candle-light.",
+        "In summer, quite the other way,",
+        "I have to go to bed by day."
+      ],
+      [
+        "I have to go to bed and see",
+        "The birds still hopping on the tree,",
+        "Or hear the grown-up people's feet",
+        "Still going past me in the street."
+      ],
+      [
+        "And does it not seem hard to you,",
+        "When all the sky is clear and blue,",
+        "And I should like so much to play,",
+        "To have to go to bed by day?"
+      ]
+    ]
+  },
+  {
+    "slug": "at-the-sea-side",
+    "title": "At the Sea-Side",
+    "author": "Robert Louis Stevenson",
+    "kind": "poem",
+    "stanzas": [
+      [
+        "When I was down beside the sea",
+        "A wooden spade they gave to me",
+        "To dig the sandy shore."
+      ],
+      [
+        "My holes were empty like a cup.",
+        "In every hole the sea came up,",
+        "Till it could come no more."
+      ]
+    ]
+  },
+  {
+    "slug": "time-to-rise",
+    "title": "Time to Rise",
+    "author": "Robert Louis Stevenson",
+    "kind": "poem",
+    "stanzas": [
+      [
+        "A birdie with a yellow bill",
+        "Hopped upon the window sill,",
+        "Cocked his shining eye and said:",
+        "\"Ain't you 'shamed, you sleepy-head!\""
+      ]
+    ]
+  },
+  {
+    "slug": "duck-and-the-kangaroo",
+    "title": "The Duck and the Kangaroo",
+    "author": "Edward Lear",
+    "kind": "poem",
+    "stanzas": [
+      [
+        "Said the Duck to the Kangaroo,",
+        "\"Good gracious! how you hop",
+        "Over the fields, and the water too,",
+        "As if you never would stop!",
+        "My life is a bore in this nasty pond;",
+        "And I long to go out in the world beyond:",
+        "I wish I could hop like you,\"",
+        "Said the Duck to the Kangaroo."
+      ],
+      [
+        "\"Please give me a ride on your back,\"",
+        "Said the Duck to the Kangaroo:",
+        "\"I would sit quite still, and say nothing but 'Quack'",
+        "The whole of the long day through;",
+        "And we 'd go the Dee, and the Jelly Bo Lee,",
+        "Over the land, and over the sea:",
+        "Please take me a ride! oh, do!\"",
+        "Said the Duck to the Kangaroo."
+      ],
+      [
+        "Said the Kangaroo to the Duck,",
+        "\"This requires some little reflection.",
+        "Perhaps, on the whole, it might bring me luck;",
+        "And there seems but one objection;",
+        "Which is, if you'll let me speak so bold,",
+        "Your feet are unpleasantly wet and cold,",
+        "And would probably give me the roo-",
+        "Matiz,\" said the Kangaroo."
+      ],
+      [
+        "Said the Duck, \"As I sate on the rocks,",
+        "I have thought over that completely;",
+        "And I bought four pairs of worsted socks,",
+        "Which fit my web-feet neatly;",
+        "And, to keep out the cold, I've bought a cloak;",
+        "And every day a cigar I'll smoke;",
+        "All to follow my own dear true",
+        "Love of a Kangaroo.\""
+      ],
+      [
+        "Said the Kangaroo, \"I'm ready,",
+        "All in the moonlight pale;",
+        "But to balance me well, dear Duck, sit steady,",
+        "And quite at the end of my tail.\"",
+        "So away they went with a hop and a bound;",
+        "And they hopped the whole world three times round.",
+        "And who so happy, oh! who,",
+        "As the Duck and the Kangaroo?"
+      ]
+    ]
+  },
+  {
+    "slug": "the-lamb",
+    "title": "The Lamb",
+    "author": "William Blake",
+    "kind": "poem",
+    "stanzas": [
+      [
+        "Little Lamb, who made thee",
+        "Dost thou know who made thee,",
+        "Gave thee life, and bid thee feed",
+        "By the stream and o'er the mead;",
+        "Gave thee clothing of delight,",
+        "Softest clothing, woolly, bright;",
+        "Gave thee such a tender voice,",
+        "Making all the vales rejoice?",
+        "Little Lamb, who made thee?",
+        "Dost thou know who made thee?"
+      ],
+      [
+        "Little Lamb, I'll tell thee;",
+        "Little Lamb, I'll tell thee:",
+        "He is called by thy name,",
+        "For He calls Himself a Lamb",
+        "He is meek, and He is mild,",
+        "He became a little child.",
+        "I a child, and thou a lamb,",
+        "We are called by His name.",
+        "Little Lamb, God bless thee!",
+        "Little Lamb, God bless thee!"
+      ]
+    ]
+  },
+  {
+    "slug": "daffodils",
+    "title": "Daffodils",
+    "author": "William Wordsworth",
+    "kind": "poem",
+    "stanzas": [
+      [
+        "I wandered lonely as a cloud",
+        "That floats on high o'er vales and hills,",
+        "When all at once I saw a crowd,",
+        "A host, of golden daffodils;",
+        "Beside the lake, beneath the trees,",
+        "Fluttering and dancing in the breeze."
+      ],
+      [
+        "Continuous as the stars that shine",
+        "And twinkle on the milky way,",
+        "They stretched in never-ending line",
+        "Along the margin of a bay:",
+        "Ten thousand saw I at a glance,",
+        "Tossing their heads in sprightly dance."
+      ],
+      [
+        "The waves beside them danced, but they",
+        "Out-did the sparkling leaves in glee;",
+        "A poet could not be but gay,",
+        "In such a jocund company!",
+        "I gazed—and gazed—but little thought",
+        "What wealth the show to me had brought:"
+      ],
+      [
+        "For oft, when on my couch I lie",
+        "In vacant or in pensive mood,",
+        "They flash upon that inward eye",
+        "Which is the bliss of solitude;",
+        "And then my heart with pleasure fills,",
+        "And dances with the daffodils."
+      ]
+    ]
+  },
+  {
+    "slug": "sonnet-116",
+    "title": "Sonnet 116",
+    "author": "William Shakespeare",
+    "kind": "sonnet",
+    "stanzas": [
+      [
+        "Let me not to the marriage of true minds",
+        "Admit impediments. Love is not love",
+        "Which alters when it alteration finds,",
+        "Or bends with the remover to remove:",
+        "O, no! it is an ever-fixed mark,",
+        "That looks on tempests and is never shaken;",
+        "It is the star to every wandering bark,",
+        "Whose worth's unknown, although his height be taken.",
+        "Love's not Time's fool, though rosy lips and cheeks",
+        "Within his bending sickle's compass come;",
+        "Love alters not with his brief hours and weeks,",
+        "But bears it out even to the edge of doom.",
+        "If this be error and upon me prov'd,",
+        "I never writ, nor no man ever lov'd."
       ]
     ]
   },
