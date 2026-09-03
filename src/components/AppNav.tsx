@@ -10,8 +10,11 @@ import { useAuthEnabled } from "@/components/SyncProvider";
 import { BRAND } from "@/lib/brand";
 import { BrandMark } from "@/components/BrandMark";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { SearchButton } from "@/components/SearchButton";
+import { startTour } from "@/components/Tour";
 import { useMsgs } from "@/lib/i18n/LocaleProvider";
 import { chromeMsgs } from "@/lib/i18n/messages/chrome";
+import { tourMsgs } from "@/lib/i18n/messages/tour";
 import { cn } from "@/lib/utils";
 
 /**
@@ -48,8 +51,10 @@ const moreLinks = (t: NavMsgs) => [
   { href: "/allergens", label: t.navAllergens },
   { href: "/insights", label: t.navInsights },
   { href: "/safety", label: t.navSafety },
-  { href: "/read", label: t.navRead },
 ];
+
+/** Auxiliary shelf: nice-to-haves that are not part of the feeding loop. */
+const extrasLinks = (t: NavMsgs) => [{ href: "/read", label: t.navRead }];
 
 /**
  * The account entry lives where people expect it: the top-right corner of
@@ -109,7 +114,9 @@ function BabySwitcher() {
 
 function MoreMenu({ pathname }: { pathname: string }) {
   const t = useMsgs(chromeMsgs);
+  const tour = useMsgs(tourMsgs);
   const MORE = moreLinks(t);
+  const EXTRAS = extrasLinks(t);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -127,13 +134,31 @@ function MoreMenu({ pathname }: { pathname: string }) {
       document.removeEventListener("keydown", onKey);
     };
   }, [open]);
-  const activeInMore = MORE.some((l) => pathname === l.href || pathname.startsWith(`${l.href}/`));
+  const activeInMore = [...MORE, ...EXTRAS].some(
+    (l) => pathname === l.href || pathname.startsWith(`${l.href}/`),
+  );
+  const menuLink = (l: { href: string; label: string }) => (
+    <Link
+      key={l.href}
+      role="menuitem"
+      href={l.href}
+      onClick={() => setOpen(false)}
+      className={cn(
+        "block rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted",
+        (pathname === l.href || pathname.startsWith(`${l.href}/`)) &&
+          "bg-secondary text-secondary-foreground",
+      )}
+    >
+      {l.label}
+    </Link>
+  );
   return (
     <div ref={ref} className="relative">
       <button
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
+        data-tour="more"
         onClick={() => setOpen((v) => !v)}
         className={cn(
           "flex items-center gap-1 rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
@@ -150,21 +175,22 @@ function MoreMenu({ pathname }: { pathname: string }) {
           role="menu"
           className="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border bg-popover p-1.5 shadow-lg"
         >
-          {MORE.map((l) => (
-            <Link
-              key={l.href}
-              role="menuitem"
-              href={l.href}
-              onClick={() => setOpen(false)}
-              className={cn(
-                "block rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted",
-                (pathname === l.href || pathname.startsWith(`${l.href}/`)) &&
-                  "bg-secondary text-secondary-foreground",
-              )}
-            >
-              {l.label}
-            </Link>
-          ))}
+          {MORE.map(menuLink)}
+          <p className="mt-1 border-t px-3 pb-0.5 pt-2 font-data text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+            {t.navExtras}
+          </p>
+          {EXTRAS.map(menuLink)}
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              startTour();
+            }}
+            className="block w-full rounded-lg px-3 py-2 text-left text-sm text-foreground hover:bg-muted"
+          >
+            {tour.showMeAround}
+          </button>
         </div>
       )}
     </div>
@@ -182,15 +208,22 @@ export function AppNav() {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-4xl items-center gap-1 px-3">
-        <Link href="/" className="mr-2 flex shrink-0 items-center gap-2 text-base font-bold text-foreground">
+        <Link
+          href="/"
+          aria-label={BRAND}
+          className="mr-2 flex shrink-0 items-center gap-2 text-base font-bold text-foreground"
+        >
           <BrandMark size={26} />
-          {BRAND}
+          {/* The wordmark yields its space to the search button on the
+              narrowest phones — the mark plus aria-label still identify it. */}
+          <span className="hidden min-[440px]:inline">{BRAND}</span>
         </Link>
-        <nav className="hidden items-center gap-0.5 md:flex" aria-label={t.navMain}>
+        <nav className="hidden items-center gap-0.5 md:flex" aria-label={t.navMain} data-tour="primary-nav">
           {PRIMARY.map((l) => (
             <Link
               key={l.href}
               href={l.href}
+              {...(l.href === "/foods" ? { "data-tour": "foods" } : {})}
               className={cn(
                 "rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
                 (pathname === l.href || pathname.startsWith(`${l.href}/`)) &&
@@ -204,6 +237,7 @@ export function AppNav() {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <BabySwitcher />
+          <SearchButton />
           {/* The bottom tab bar has room for four tabs either side of the log
               button, so Foods lives here on mobile — a reference people look
               things up in, one tap from every page. */}
@@ -212,6 +246,7 @@ export function AppNav() {
           <Link
             href="/foods"
             aria-label={t.navFoods}
+            data-tour="foods"
             className="flex size-9 shrink-0 items-center justify-center rounded-full border text-muted-foreground hover:border-primary/60 hover:text-foreground md:hidden"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden="true">
@@ -222,6 +257,7 @@ export function AppNav() {
           )}
           <Link
             href="/safety"
+            data-tour="emergency"
             className="rounded-full border border-destructive/40 px-3 py-1.5 text-xs font-semibold text-destructive md:hidden"
           >
             {t.navEmergency}
@@ -229,6 +265,7 @@ export function AppNav() {
           {!caregiver && (
             <Link
               href="/log"
+              data-tour="log"
               className="hidden rounded-full bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-deep md:inline-flex dark:hover:bg-primary/80"
             >
               {t.navLog}

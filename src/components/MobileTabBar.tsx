@@ -122,6 +122,7 @@ export function MobileTabBar() {
   return (
     <nav
       aria-label={m.navPrimary}
+      data-tour="tabbar"
       className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
       <div className="mx-auto flex max-w-md items-center px-2">
@@ -133,6 +134,7 @@ export function MobileTabBar() {
             <Link
               href="/log"
               aria-label={m.navLogAria}
+              data-tour="log"
               className="mx-1 -mt-4 flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="size-6" aria-hidden="true">

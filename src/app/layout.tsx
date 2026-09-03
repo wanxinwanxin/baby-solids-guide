@@ -7,6 +7,7 @@ import { MobileTabBar } from "@/components/MobileTabBar";
 import { PageViewPing } from "@/components/PageViewPing";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { SyncProvider } from "@/components/SyncProvider";
+import { TourController } from "@/components/Tour";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 import { fmt, pick } from "@/lib/i18n/config";
 import { getLocale } from "@/lib/i18n/server";
@@ -58,6 +59,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <PageViewPing />
           <SyncProvider />
           <AppNav />
+          <TourController />
           <main className="mx-auto w-full max-w-4xl px-4 pb-16 pt-6">{children}</main>
           <MobileTabBar />
           <footer className="border-t px-4 py-6 pb-24 text-center text-xs text-muted-foreground md:pb-6">

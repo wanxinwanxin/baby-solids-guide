@@ -22,6 +22,7 @@ export function LanguageToggle({ className }: { className?: string }) {
       type="button"
       lang={next}
       aria-label={next === "zh" ? "切换到中文" : "Switch to English"}
+      data-tour="language"
       onClick={() => {
         document.cookie = `${LOCALE_COOKIE}=${next}; path=/; max-age=${LOCALE_COOKIE_MAX_AGE}; samesite=lax`;
         startTransition(() => router.refresh());

@@ -8,6 +8,7 @@ export const chromeMsgs = {
   navPlan: { en: "Plan", zh: "计划" },
   navLearn: { en: "Learn", zh: "学习" },
   navMore: { en: "More", zh: "更多" },
+  navExtras: { en: "Extras", zh: "其他功能" },
   navRead: { en: "Read to baby", zh: "读给宝宝" },
   navAllergens: { en: "Allergens", zh: "过敏原" },
   navHistory: { en: "History", zh: "历史" },

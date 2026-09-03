@@ -27,6 +27,7 @@ import { InstallPrompt } from "@/components/InstallPrompt";
 import { NutrientBenefits, NutrientProfile } from "@/components/NutrientProfile";
 import { ComingUp } from "@/components/plan/PlanSteps";
 import { PushOptIn } from "@/components/PushOptIn";
+import { TourOffer } from "@/components/Tour";
 import { useAuthEnabled, useSyncStatus } from "@/components/SyncProvider";
 import { useSession } from "@/lib/auth-client";
 import { useGuideStore } from "@/lib/storage/store";
@@ -390,6 +391,7 @@ export default function TodayPage() {
 
   return (
     <div className="space-y-6">
+      <TourOffer />
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
