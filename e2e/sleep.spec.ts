@@ -64,6 +64,42 @@ test("predicts a window from a wake anchor and logs a session", async ({ page })
   await expect(page.getByText(/Total:/)).toBeVisible();
 });
 
+test("a session can be edited with typed times, and deleted from the edit panel", async ({
+  page,
+}) => {
+  await completeOnboarding(page);
+  await page.goto("/sleep");
+  await page.getByRole("button", { name: "Just now" }).click();
+  await page.getByRole("button", { name: "Fell asleep now" }).click();
+  await page.getByRole("button", { name: "Woke up now" }).click();
+
+  const row = page
+    .locator("li")
+    .filter({ has: page.getByRole("button", { name: /^Edit the sleep/ }) })
+    .first();
+  // The row has one action: Edit. No delete button sits next to it.
+  await expect(row.getByRole("button", { name: "Delete" })).toHaveCount(0);
+  await row.getByRole("button", { name: /^Edit/ }).click();
+
+  // Times are typed, not scrolled — free text like "1:00 pm" parses.
+  await row.getByLabel(/Fell asleep — Time/).fill("1:00 pm");
+  await row.getByLabel(/Woke up — Time/).fill("1:45 pm");
+  await row.getByRole("button", { name: "Save" }).click();
+  await expect(row.getByText(/1:00\sPM – 1:45\sPM/)).toBeVisible();
+  await expect(row.getByText("45 min")).toBeVisible();
+
+  // Nonsense time is flagged, and the save is refused.
+  await row.getByRole("button", { name: /^Edit/ }).click();
+  await row.getByLabel(/Woke up — Time/).fill("banana");
+  await expect(row.getByText(/Enter a time like/)).toBeVisible();
+
+  // Delete lives inside the edit panel, behind a confirm.
+  await row.getByRole("button", { name: "Delete" }).click();
+  await expect(row.getByText("Delete this sleep?")).toBeVisible();
+  await row.getByRole("button", { name: "Yes, delete" }).click();
+  await expect(page.getByText("No sleep logged today yet.")).toBeVisible();
+});
+
 test("reaches /sleep from the More page", async ({ page }) => {
   await completeOnboarding(page);
   await page.goto("/more");

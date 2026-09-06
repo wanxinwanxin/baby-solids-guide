@@ -83,7 +83,6 @@ export const sleepMsgs = {
   todayEmpty: { en: "No sleep logged today yet.", zh: "今天还没有睡眠记录。" },
   totalToday: { en: "Total: {dur}", zh: "合计：{dur}" },
   ongoing: { en: "ongoing", zh: "进行中" },
-  deleteBtn: { en: "Delete", zh: "删除" },
 
   // Manual entry
   addTitle: { en: "Add a sleep by hand", zh: "手动补记一段睡眠" },
@@ -94,6 +93,30 @@ export const sleepMsgs = {
     en: "The wake time must come after the sleep time.",
     zh: "醒来时间必须晚于入睡时间。",
   },
+
+  // Typed time fields
+  dateLabel: { en: "Date", zh: "日期" },
+  timeLabel: { en: "Time", zh: "时间" },
+  timePlaceholder: { en: "7:35 pm", zh: "19:35" },
+  timeInvalid: {
+    en: "Enter a time like 7:35 pm or 19:35.",
+    zh: "请输入时间，例如 19:35 或 下午7:35。",
+  },
+  futureTime: { en: "That time is in the future.", zh: "这个时间还没有到。" },
+
+  // Edit a session
+  editEntry: { en: "Edit", zh: "编辑" },
+  editAria: { en: "Edit the sleep that started at {time}", zh: "编辑 {time} 开始的睡眠" },
+  cancel: { en: "Cancel", zh: "取消" },
+  saveChanges: { en: "Save", zh: "保存" },
+  stillAsleepNote: {
+    en: "Leave the wake time empty while the sleep is still going.",
+    zh: "如果这段睡眠还在进行，醒来时间留空即可。",
+  },
+  deleteEntry: { en: "Delete", zh: "删除" },
+  deleteConfirm: { en: "Delete this sleep?", zh: "删除这段睡眠？" },
+  yesDelete: { en: "Yes, delete", zh: "确认删除" },
+  keepEntry: { en: "Keep", zh: "保留" },
 
   // Notes
   localNote: {

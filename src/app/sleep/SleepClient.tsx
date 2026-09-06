@@ -19,21 +19,140 @@ import { useSleepStore } from "@/lib/sleep/store";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { DateTimeField } from "./DateTimeField";
 
 const MIN = 60 * 1000;
-
-/** "YYYY-MM-DDTHH:MM" on the device clock, for datetime-local inputs. */
-function toInputValue(d: Date): string {
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
-}
 
 const localDateKey = (iso: string) => {
   const d = new Date(iso);
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 };
+
+/**
+ * One logged sleep. Mirrors the journal rows: a single Edit action on the
+ * row, and delete lives inside the edit panel (with a confirm step) so two
+ * tiny targets never sit a thumb-width apart on a phone.
+ */
+function SessionRow({
+  session,
+  nowMs,
+  onUpdate,
+  onDelete,
+}: {
+  session: SleepSession;
+  nowMs: number;
+  onUpdate: (id: string, patch: Partial<Omit<SleepSession, "id" | "babyId">>) => void;
+  onDelete: (id: string) => void;
+}) {
+  const locale = useLocale();
+  const t = useMsgs(sleepMsgs);
+  const [editing, setEditing] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [editStart, setEditStart] = useState<Date | null>(null);
+  const [editEnd, setEditEnd] = useState<Date | null>(null);
+  const [error, setError] = useState<"time" | "order" | null>(null);
+
+  const startMs = new Date(session.start).getTime();
+  const endMs = session.end ? new Date(session.end).getTime() : null;
+
+  function startEditing() {
+    setEditStart(new Date(session.start));
+    setEditEnd(session.end ? new Date(session.end) : null);
+    setConfirmingDelete(false);
+    setError(null);
+    setEditing(true);
+  }
+
+  function saveEdits() {
+    if (!editStart) {
+      setError("time");
+      return;
+    }
+    if (editEnd && editEnd.getTime() <= editStart.getTime()) {
+      setError("order");
+      return;
+    }
+    onUpdate(session.id, {
+      start: editStart.toISOString(),
+      end: editEnd ? editEnd.toISOString() : undefined,
+    });
+    setEditing(false);
+  }
+
+  return (
+    <li className="rounded-xl border px-4 py-2.5">
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-data text-sm">
+          {formatTime(startMs, locale)} – {endMs === null ? t.ongoing : formatTime(endMs, locale)}
+          <span className="ml-2 text-muted-foreground">
+            {formatDuration(((endMs ?? nowMs) - startMs) / MIN, locale)}
+          </span>
+        </span>
+        <button
+          type="button"
+          onClick={editing ? () => setEditing(false) : startEditing}
+          aria-expanded={editing}
+          aria-label={fmt(t.editAria, { time: formatTime(startMs, locale) })}
+          className="inline-flex min-h-9 shrink-0 items-center rounded-full border px-3 text-xs font-medium text-muted-foreground hover:border-primary/60 hover:text-foreground"
+        >
+          {editing ? t.cancel : t.editEntry}
+        </button>
+      </div>
+
+      {editing && (
+        <div className="mt-3 space-y-3 border-t pt-3">
+          <div className="flex flex-wrap gap-4">
+            <DateTimeField
+              id={`edit-${session.id}-start`}
+              label={t.addStart}
+              initial={editStart}
+              onChange={setEditStart}
+            />
+            <DateTimeField
+              id={`edit-${session.id}-end`}
+              label={t.addEnd}
+              initial={editEnd}
+              onChange={setEditEnd}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">{t.stillAsleepNote}</p>
+          {error && (
+            <p className="text-sm text-destructive">
+              {error === "order" ? t.addInvalid : t.timeInvalid}
+            </p>
+          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" onClick={saveEdits}>
+              {t.saveChanges}
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setEditing(false)}>
+              {t.cancel}
+            </Button>
+            {confirmingDelete ? (
+              <span className="ml-auto flex items-center gap-2 text-xs">
+                <span>{t.deleteConfirm}</span>
+                <Button size="sm" variant="destructive" onClick={() => onDelete(session.id)}>
+                  {t.yesDelete}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setConfirmingDelete(false)}>
+                  {t.keepEntry}
+                </Button>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(true)}
+                className="ml-auto inline-flex min-h-9 items-center text-xs text-destructive underline-offset-2 hover:underline"
+              >
+                {t.deleteEntry}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </li>
+  );
+}
 
 export function SleepClient() {
   const hydrated = useHydrated();
@@ -46,6 +165,7 @@ export function SleepClient() {
   const fellAsleep = useSleepStore((s) => s.fellAsleep);
   const wokeUp = useSleepStore((s) => s.wokeUp);
   const addSession = useSleepStore((s) => s.addSession);
+  const updateSession = useSleepStore((s) => s.updateSession);
   const deleteSession = useSleepStore((s) => s.deleteSession);
   const setWakeAnchor = useSleepStore((s) => s.setWakeAnchor);
 
@@ -56,10 +176,13 @@ export function SleepClient() {
     return () => clearInterval(id);
   }, []);
 
-  const [wakeInput, setWakeInput] = useState("");
-  const [addStart, setAddStart] = useState("");
-  const [addEnd, setAddEnd] = useState("");
+  const [wakeAt, setWakeAt] = useState<Date | null>(null);
+  const [wakeError, setWakeError] = useState(false);
+  const [addStart, setAddStart] = useState<Date | null>(null);
+  const [addEnd, setAddEnd] = useState<Date | null>(null);
   const [addError, setAddError] = useState(false);
+  // Remount key: clears the add fields after a successful add.
+  const [addFormKey, setAddFormKey] = useState(0);
 
   const babySessions = useMemo(
     () => (baby ? sessions.filter((s) => s.babyId === baby.id) : []),
@@ -108,22 +231,32 @@ export function SleepClient() {
     return sum + Math.max(0, end - new Date(s.start).getTime()) / MIN;
   }, 0);
 
+  const submitWakeAnchor = () => {
+    if (!wakeAt) return;
+    if (wakeAt.getTime() > nowMs) {
+      setWakeError(true);
+      return;
+    }
+    setWakeError(false);
+    setWakeAnchor(baby.id, wakeAt.toISOString());
+  };
+
   const submitManualAdd = () => {
-    if (!addStart || !addEnd || new Date(addEnd) <= new Date(addStart)) {
+    if (!addStart || !addEnd || addEnd.getTime() <= addStart.getTime()) {
       setAddError(true);
       return;
     }
-    const session: SleepSession = {
+    addSession({
       id: crypto.randomUUID(),
       babyId: baby.id,
-      start: new Date(addStart).toISOString(),
-      end: new Date(addEnd).toISOString(),
+      start: addStart.toISOString(),
+      end: addEnd.toISOString(),
       updatedAt: new Date().toISOString(),
-    };
-    addSession(session);
-    setAddStart("");
-    setAddEnd("");
+    });
+    setAddStart(null);
+    setAddEnd(null);
     setAddError(false);
+    setAddFormKey((k) => k + 1);
   };
 
   const statusCard = open ? (
@@ -176,33 +309,16 @@ export function SleepClient() {
         <CardTitle>{t.askLastWake}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <Button onClick={() => setWakeAnchor(baby.id, new Date().toISOString())}>
+          {t.justWokeBtn}
+        </Button>
         <div className="flex flex-wrap items-end gap-3">
-          <Button onClick={() => setWakeAnchor(baby.id, new Date().toISOString())}>
-            {t.justWokeBtn}
+          <DateTimeField id="wake-anchor" label={t.orPickTime} onChange={setWakeAt} />
+          <Button variant="outline" disabled={!wakeAt} onClick={submitWakeAnchor}>
+            {t.setWakeBtn}
           </Button>
-          <div className="space-y-1">
-            <Label htmlFor="sleep-wake-at">{t.orPickTime}</Label>
-            <div className="flex gap-2">
-              <Input
-                id="sleep-wake-at"
-                type="datetime-local"
-                value={wakeInput}
-                max={toInputValue(now)}
-                onChange={(e) => setWakeInput(e.target.value)}
-                className="w-auto"
-              />
-              <Button
-                variant="outline"
-                disabled={!wakeInput}
-                onClick={() => {
-                  if (wakeInput) setWakeAnchor(baby.id, new Date(wakeInput).toISOString());
-                }}
-              >
-                {t.setWakeBtn}
-              </Button>
-            </div>
-          </div>
         </div>
+        {wakeError && <p className="text-sm text-destructive">{t.futureTime}</p>}
         <Button variant="outline" onClick={() => fellAsleep(baby.id, new Date().toISOString())}>
           {t.fellAsleepBtn}
         </Button>
@@ -274,29 +390,15 @@ export function SleepClient() {
           ) : (
             <>
               <ul className="space-y-2">
-                {todaySessions.map((s) => {
-                  const endMs = s.end ? new Date(s.end).getTime() : null;
-                  return (
-                    <li
-                      key={s.id}
-                      className="flex items-center justify-between gap-3 rounded-xl border px-4 py-2.5"
-                    >
-                      <span className="font-data text-sm">
-                        {formatTime(new Date(s.start).getTime(), locale)} –{" "}
-                        {endMs === null ? t.ongoing : formatTime(endMs, locale)}
-                        <span className="ml-2 text-muted-foreground">
-                          {formatDuration(
-                            ((endMs ?? nowMs) - new Date(s.start).getTime()) / MIN,
-                            locale,
-                          )}
-                        </span>
-                      </span>
-                      <Button variant="ghost" size="sm" onClick={() => deleteSession(s.id)}>
-                        {t.deleteBtn}
-                      </Button>
-                    </li>
-                  );
-                })}
+                {todaySessions.map((s) => (
+                  <SessionRow
+                    key={s.id}
+                    session={s}
+                    nowMs={nowMs}
+                    onUpdate={updateSession}
+                    onDelete={deleteSession}
+                  />
+                ))}
               </ul>
               <p className="text-sm text-muted-foreground">
                 {fmt(t.totalToday, { dur: formatDuration(totalTodayMin, locale) })}
@@ -306,26 +408,10 @@ export function SleepClient() {
 
           <details className="pt-1">
             <summary className="cursor-pointer text-sm font-bold">{t.addTitle}</summary>
-            <div className="mt-3 flex flex-wrap items-end gap-3">
-              <div className="space-y-1">
-                <Label htmlFor="sleep-add-start">{t.addStart}</Label>
-                <Input
-                  id="sleep-add-start"
-                  type="datetime-local"
-                  value={addStart}
-                  onChange={(e) => setAddStart(e.target.value)}
-                  className="w-auto"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="sleep-add-end">{t.addEnd}</Label>
-                <Input
-                  id="sleep-add-end"
-                  type="datetime-local"
-                  value={addEnd}
-                  onChange={(e) => setAddEnd(e.target.value)}
-                  className="w-auto"
-                />
+            <div key={addFormKey} className="mt-3 space-y-3">
+              <div className="flex flex-wrap gap-4">
+                <DateTimeField id="add-start" label={t.addStart} onChange={setAddStart} />
+                <DateTimeField id="add-end" label={t.addEnd} onChange={setAddEnd} />
               </div>
               <Button variant="outline" onClick={submitManualAdd}>
                 {t.addBtn}

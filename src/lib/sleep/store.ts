@@ -29,6 +29,8 @@ type SleepState = {
   /** Close the open session, or record a wake anchor when none is open. */
   wokeUp: (babyId: string, atIso: string) => void;
   addSession: (s: SleepSession) => void;
+  /** Patch one session in place (edits); id and babyId stay pinned. */
+  updateSession: (id: string, patch: Partial<Omit<SleepSession, "id" | "babyId">>) => void;
   deleteSession: (id: string) => void;
   setWakeAnchor: (babyId: string, atIso: string) => void;
 };
@@ -77,6 +79,14 @@ export const useSleepStore = create<SleepState>()(
 
       addSession: (session) => {
         set({ sessions: prune([...get().sessions.filter((s) => s.id !== session.id), session]) });
+      },
+
+      updateSession: (id, patch) => {
+        set({
+          sessions: get().sessions.map((s) =>
+            s.id === id ? { ...s, ...patch, id: s.id, babyId: s.babyId, updatedAt: now() } : s,
+          ),
+        });
       },
 
       deleteSession: (id) => {
