@@ -104,6 +104,15 @@ const FEATURES: Feature[] = [
     keywords: ["choking", "gagging", "cpr", "911", "first aid", "窒息", "干呕", "急救", "紧急"],
   },
   {
+    href: "/sleep",
+    en: "Sleep windows",
+    zh: "睡眠时段",
+    keywords: [
+      "sleep", "nap", "naps", "bedtime", "wake window", "tired", "drowsy",
+      "睡眠", "小睡", "午睡", "就寝", "哄睡", "清醒时长", "犯困",
+    ],
+  },
+  {
     href: "/read",
     en: "Read to baby",
     zh: "读给宝宝",

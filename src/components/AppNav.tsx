@@ -54,7 +54,10 @@ const moreLinks = (t: NavMsgs) => [
 ];
 
 /** Auxiliary shelf: nice-to-haves that are not part of the feeding loop. */
-const extrasLinks = (t: NavMsgs) => [{ href: "/read", label: t.navRead }];
+const extrasLinks = (t: NavMsgs) => [
+  { href: "/read", label: t.navRead },
+  { href: "/sleep", label: t.navSleep },
+];
 
 /**
  * The account entry lives where people expect it: the top-right corner of

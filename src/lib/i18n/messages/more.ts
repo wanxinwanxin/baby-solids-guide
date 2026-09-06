@@ -25,5 +25,9 @@ export const moreMsgs = {
   descInsights: { en: "Progress, variety, and patterns from your logs", zh: "从记录中看进度、多样性和规律" },
   descSafety: { en: "Gagging vs. choking, and what to do", zh: "干呕与窒息的分辨和处理" },
   descRead: { en: "Rhymes and 古诗 to read aloud, with pinyin", zh: "童谣与古诗，带拼音朗读" },
+  descSleep: {
+    en: "Nap and bedtime windows from your baby's rhythm",
+    zh: "根据宝宝节律推算小睡与就寝时段",
+  },
   descTour: { en: "A 30-second walkthrough of the app", zh: "30 秒了解应用" },
 } satisfies Msgs;

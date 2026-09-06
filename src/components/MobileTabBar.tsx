@@ -28,7 +28,7 @@ type Tab = {
 };
 
 /** Routes that live behind the More tab — they light it up while open. */
-const MORE_PREFIXES = ["/more", "/learn", "/allergens", "/insights", "/read", "/safety"];
+const MORE_PREFIXES = ["/more", "/learn", "/allergens", "/insights", "/read", "/safety", "/sleep"];
 
 const TABS: Tab[] = [
   {

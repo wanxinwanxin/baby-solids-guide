@@ -37,7 +37,10 @@ export default async function MorePage() {
     { href: "/insights", label: nav.navInsights, desc: t.descInsights },
     { href: "/safety", label: nav.navSafety, desc: t.descSafety },
   ];
-  const extras = [{ href: "/read", label: nav.navRead, desc: t.descRead }];
+  const extras = [
+    { href: "/read", label: nav.navRead, desc: t.descRead },
+    { href: "/sleep", label: nav.navSleep, desc: t.descSleep },
+  ];
 
   const row = (l: { href: string; label: string; desc: string }) => (
     <Link
