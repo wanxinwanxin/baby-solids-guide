@@ -51,10 +51,17 @@ test("predicts a window from a wake anchor and logs a session", async ({ page })
   await expect(page.getByText(/Still learning your baby's pattern/)).toBeVisible();
   await expect(page.getByText(/Estimated bedtime tonight/)).toBeVisible();
 
-  // Fall asleep → asleep state; wake up → session in today's list.
-  await page.getByRole("button", { name: "Fell asleep now" }).click();
+  // Fall asleep never assumes "now": the button opens a typed time field
+  // prefilled with the current clock, so a late logger can backdate it.
+  await page.getByRole("button", { name: "Fell asleep", exact: true }).click();
+  await page.locator("#fell-asleep-time").fill("12:01 am");
+  await page.getByRole("button", { name: "Start", exact: true }).click();
   await expect(page.getByText(/Asleep for/)).toBeVisible();
-  await page.getByRole("button", { name: "Woke up now" }).click();
+  await expect(page.getByText(/since 12:01\sAM/)).toBeVisible();
+
+  // Waking up confirms a time the same way (prefilled with now).
+  await page.getByRole("button", { name: "Woke up", exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByText(WINDOW_TITLE)).toBeVisible();
   await expect(page.getByText(/Total:/)).toBeVisible();
   await expect(page.getByText("No sleep logged today yet.")).toHaveCount(0);
@@ -70,8 +77,10 @@ test("a session can be edited with typed times, and deleted from the edit panel"
   await completeOnboarding(page);
   await page.goto("/sleep");
   await page.getByRole("button", { name: "Just now" }).click();
-  await page.getByRole("button", { name: "Fell asleep now" }).click();
-  await page.getByRole("button", { name: "Woke up now" }).click();
+  await page.getByRole("button", { name: "Fell asleep", exact: true }).click();
+  await page.getByRole("button", { name: "Start", exact: true }).click();
+  await page.getByRole("button", { name: "Woke up", exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
 
   const row = page
     .locator("li")

@@ -154,6 +154,85 @@ function SessionRow({
   );
 }
 
+/**
+ * A logging action that never assumes "now": the button opens a typed time
+ * field prefilled with the current clock, because parents usually get their
+ * hands free a few minutes after the baby actually fell asleep or woke up.
+ */
+function TimeConfirm({
+  id,
+  buttonLabel,
+  buttonVariant = "default",
+  fieldLabel,
+  confirmLabel,
+  validate,
+  onConfirm,
+}: {
+  id: string;
+  buttonLabel: string;
+  buttonVariant?: "default" | "outline";
+  fieldLabel: string;
+  confirmLabel: string;
+  /** Returns an error message to show, or null to accept. */
+  validate?: (d: Date) => string | null;
+  onConfirm: (d: Date) => void;
+}) {
+  const t = useMsgs(sleepMsgs);
+  const [openedAt, setOpenedAt] = useState<Date | null>(null);
+  const [value, setValue] = useState<Date | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!openedAt) {
+    return (
+      <Button
+        variant={buttonVariant}
+        onClick={() => {
+          const at = new Date();
+          setOpenedAt(at);
+          setValue(at);
+          setError(null);
+        }}
+      >
+        {buttonLabel}
+      </Button>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-end gap-3">
+        <DateTimeField
+          key={openedAt.getTime()}
+          id={id}
+          label={fieldLabel}
+          initial={openedAt}
+          onChange={setValue}
+        />
+        <Button
+          disabled={!value}
+          onClick={() => {
+            if (!value) return;
+            const err = validate?.(value) ?? null;
+            if (err) {
+              setError(err);
+              return;
+            }
+            onConfirm(value);
+            setOpenedAt(null);
+            setError(null);
+          }}
+        >
+          {confirmLabel}
+        </Button>
+        <Button variant="outline" onClick={() => setOpenedAt(null)}>
+          {t.cancel}
+        </Button>
+      </div>
+      {error && <p className="text-sm text-destructive">{error}</p>}
+    </div>
+  );
+}
+
 export function SleepClient() {
   const hydrated = useHydrated();
   const baby = useActiveBaby();
@@ -273,7 +352,18 @@ export function SleepClient() {
             ({fmt(t.asleepSince, { time: formatTime(new Date(open.start).getTime(), locale) })})
           </span>
         </p>
-        <Button onClick={() => wokeUp(baby.id, new Date().toISOString())}>{t.wokeUpBtn}</Button>
+        <TimeConfirm
+          id="woke-up"
+          buttonLabel={t.wokeUpBtn}
+          fieldLabel={t.addEnd}
+          confirmLabel={t.saveChanges}
+          validate={(d) => {
+            if (d.getTime() <= new Date(open.start).getTime()) return t.addInvalid;
+            if (d.getTime() > Date.now() + MIN) return t.futureTime;
+            return null;
+          }}
+          onConfirm={(d) => wokeUp(baby.id, d.toISOString())}
+        />
       </CardContent>
     </Card>
   ) : prediction ? (
@@ -298,9 +388,14 @@ export function SleepClient() {
               ? t.stateOpen
               : t.statePast}
         </p>
-        <Button onClick={() => fellAsleep(baby.id, new Date().toISOString())}>
-          {t.fellAsleepBtn}
-        </Button>
+        <TimeConfirm
+          id="fell-asleep"
+          buttonLabel={t.fellAsleepBtn}
+          fieldLabel={t.addStart}
+          confirmLabel={t.startBtn}
+          validate={(d) => (d.getTime() > Date.now() + MIN ? t.futureTime : null)}
+          onConfirm={(d) => fellAsleep(baby.id, d.toISOString())}
+        />
       </CardContent>
     </Card>
   ) : (
@@ -319,9 +414,15 @@ export function SleepClient() {
           </Button>
         </div>
         {wakeError && <p className="text-sm text-destructive">{t.futureTime}</p>}
-        <Button variant="outline" onClick={() => fellAsleep(baby.id, new Date().toISOString())}>
-          {t.fellAsleepBtn}
-        </Button>
+        <TimeConfirm
+          id="fell-asleep-cold"
+          buttonLabel={t.fellAsleepBtn}
+          buttonVariant="outline"
+          fieldLabel={t.addStart}
+          confirmLabel={t.startBtn}
+          validate={(d) => (d.getTime() > Date.now() + MIN ? t.futureTime : null)}
+          onConfirm={(d) => fellAsleep(baby.id, d.toISOString())}
+        />
       </CardContent>
     </Card>
   );
