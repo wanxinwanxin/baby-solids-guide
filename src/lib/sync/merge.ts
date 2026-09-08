@@ -1,5 +1,13 @@
 import type { SyncSnapshot } from "@/lib/storage/store";
-import type { AllergenOverride, BabyProfile, CheckIn, ExposureLog, Plan } from "@/lib/storage/types";
+import type {
+  AllergenOverride,
+  BabyProfile,
+  CareLog,
+  CheckIn,
+  ExposureLog,
+  Plan,
+  SleepSession,
+} from "@/lib/storage/types";
 
 /**
  * Phase 6 — snapshot merge with entity-level last-write-wins.
@@ -72,6 +80,14 @@ export function mergeSnapshots(server: SyncSnapshot, client: SyncSnapshot): Sync
   const deletedBabyIds = [...new Set([...server.deletedBabyIds, ...client.deletedBabyIds])];
   const deletedLogs = new Set(deletedLogIds);
   const deletedBabies = new Set(deletedBabyIds);
+  // Sleep + care landed 2026-09-08: a snapshot from an older client (or a
+  // server row written before the migration) simply lacks the arrays.
+  const deletedSleepIds = [
+    ...new Set([...(server.deletedSleepIds ?? []), ...(client.deletedSleepIds ?? [])]),
+  ];
+  const deletedCareLogIds = [
+    ...new Set([...(server.deletedCareLogIds ?? []), ...(client.deletedCareLogIds ?? [])]),
+  ];
 
   const babies = lwwById<BabyProfile>(server.babies, client.babies, (b) => b.id, deletedBabies);
   const babyIds = new Set(babies.map((b) => b.id));
@@ -99,7 +115,33 @@ export function mergeSnapshots(server: SyncSnapshot, client: SyncSnapshot): Sync
     babyIds.has(p.babyId),
   );
 
-  return { babies, logs, overrides, checkIns, plans, deletedLogIds, deletedBabyIds };
+  const sleepSessions = lwwById<SleepSession>(
+    server.sleepSessions ?? [],
+    client.sleepSessions ?? [],
+    (s) => s.id,
+    new Set(deletedSleepIds),
+  ).filter((s) => babyIds.has(s.babyId));
+
+  const careLogs = lwwById<CareLog>(
+    server.careLogs ?? [],
+    client.careLogs ?? [],
+    (c) => c.id,
+    new Set(deletedCareLogIds),
+  ).filter((c) => babyIds.has(c.babyId));
+
+  return {
+    babies,
+    logs,
+    overrides,
+    checkIns,
+    plans,
+    sleepSessions,
+    careLogs,
+    deletedLogIds,
+    deletedBabyIds,
+    deletedSleepIds,
+    deletedCareLogIds,
+  };
 }
 
 /**
@@ -115,8 +157,12 @@ export function snapshotFingerprint(s: SyncSnapshot): string {
     sorted(s.overrides.map((o) => `${o.babyId}:${o.allergenId}@${o.status}`)),
     sorted(s.checkIns.map((c) => `${c.id}@${c.status}`)),
     sorted(s.plans.map((p) => `${p.babyId}@${p.updatedAt ?? ""}:${p.entries.length}`)),
+    sorted((s.sleepSessions ?? []).map((r) => `${r.id}@${r.updatedAt ?? ""}:${r.end ?? "open"}`)),
+    sorted((s.careLogs ?? []).map((r) => `${r.id}@${r.updatedAt ?? ""}`)),
     sorted(s.deletedLogIds),
     sorted(s.deletedBabyIds),
+    sorted(s.deletedSleepIds ?? []),
+    sorted(s.deletedCareLogIds ?? []),
   ].join("||");
 }
 
@@ -141,6 +187,10 @@ export const EMPTY_SNAPSHOT: SyncSnapshot = {
   overrides: [],
   checkIns: [],
   plans: [],
+  sleepSessions: [],
+  careLogs: [],
   deletedLogIds: [],
   deletedBabyIds: [],
+  deletedSleepIds: [],
+  deletedCareLogIds: [],
 };

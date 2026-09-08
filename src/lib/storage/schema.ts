@@ -90,6 +90,29 @@ export const planSchema = z.object({
   updatedAt: isoDateTime.optional(),
 });
 
+export const sleepSessionSchema = z.object({
+  id: z.string().min(1),
+  babyId: z.string().min(1),
+  start: isoDateTime,
+  end: isoDateTime.optional(),
+  updatedAt: isoDateTime.optional(),
+});
+
+export const careLogSchema = z.object({
+  id: z.string().min(1),
+  babyId: z.string().min(1),
+  kind: z.enum(["formula", "diaper"]),
+  at: isoDateTime,
+  // Bounded like exposure quantities: a slipped decimal can't sync as a
+  // 5-liter bottle.
+  amount: z
+    .object({ value: z.number().positive().max(2000), unit: z.enum(["ml", "oz"]) })
+    .optional(),
+  diaper: z.enum(["wet", "dirty", "mixed", "dry"]).optional(),
+  notes: z.string().optional(),
+  updatedAt: isoDateTime.optional(),
+});
+
 export const exportEnvelopeV1Schema = z.object({
   schemaVersion: z.literal(1),
   exportedAt: z.string(),
@@ -108,4 +131,11 @@ export const exportEnvelopeV2Schema = z.object({
   checkIns: z.array(z.unknown()),
   plans: z.array(z.unknown()),
   deletedLogIds: z.array(z.string()),
+  // Added 2026-09-08 (sleep + care sync). Optional with defaults so exports
+  // from older app versions still import, and the schemaVersion stays 2 so
+  // older app versions can still read new exports (they drop the extras).
+  sleepSessions: z.array(z.unknown()).default([]),
+  careLogs: z.array(z.unknown()).default([]),
+  deletedSleepIds: z.array(z.string()).default([]),
+  deletedCareLogIds: z.array(z.string()).default([]),
 });

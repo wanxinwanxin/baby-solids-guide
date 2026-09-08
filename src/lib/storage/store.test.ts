@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { BabyProfile, ExposureLog } from "./types";
-import { migrateV1ToV2, newId, selectPlanForActive, useGuideStore } from "./store";
+import { importLegacySleep, migrateV1ToV2, newId, selectPlanForActive, useGuideStore } from "./store";
 
 const makeBaby = (id = "b1", nickname = "Testling"): BabyProfile => ({
   id,
@@ -260,5 +260,77 @@ describe("updateLog (journal edits)", () => {
     seed();
     useGuideStore.getState().updateLog("nope", { time: "10:00" });
     expect(useGuideStore.getState().logs).toHaveLength(1);
+  });
+});
+
+describe("importLegacySleep (v4 migration source)", () => {
+  it("imports sessions from the old os-sleep persist envelope", () => {
+    const raw = JSON.stringify({
+      state: {
+        sessions: [
+          { id: "s1", babyId: "b1", start: "2026-09-06T20:00:00.000Z", end: "2026-09-07T06:00:00.000Z" },
+          { id: "s2", babyId: "b1", start: "2026-09-07T09:00:00.000Z" }, // open session
+        ],
+        wakeAnchors: { b1: "2026-09-07T06:00:00.000Z" },
+      },
+      version: 1,
+    });
+    const sessions = importLegacySleep(raw);
+    expect(sessions.map((s) => s.id)).toEqual(["s1", "s2"]);
+    expect(sessions[1].end).toBeUndefined();
+  });
+
+  it("drops invalid rows and survives garbage", () => {
+    const raw = JSON.stringify({
+      state: { sessions: [{ id: "ok", babyId: "b1", start: "2026-09-07T09:00:00.000Z" }, { nope: true }] },
+    });
+    expect(importLegacySleep(raw).map((s) => s.id)).toEqual(["ok"]);
+    expect(importLegacySleep("{{{broken")).toEqual([]);
+    expect(importLegacySleep(null)).toEqual([]);
+    expect(importLegacySleep(JSON.stringify({ state: { sessions: "no" } }))).toEqual([]);
+  });
+});
+
+describe("sleep + care in the synced store", () => {
+  it("add/update/delete stamp updatedAt and leave tombstones", () => {
+    const s = useGuideStore.getState();
+    s.addSleepSession({ id: "sl1", babyId: "b1", start: "2026-09-07T09:00:00.000Z" });
+    expect(useGuideStore.getState().sleepSessions[0].updatedAt).toBeTruthy();
+
+    useGuideStore.getState().updateSleepSession("sl1", { end: "2026-09-07T10:00:00.000Z" });
+    expect(useGuideStore.getState().sleepSessions[0].end).toBe("2026-09-07T10:00:00.000Z");
+
+    useGuideStore.getState().addCareLog({
+      id: "c1",
+      babyId: "b1",
+      kind: "diaper",
+      at: "2026-09-07T11:00:00.000Z",
+      diaper: "wet",
+    });
+    useGuideStore.getState().deleteCareLog("c1");
+    useGuideStore.getState().deleteSleepSession("sl1");
+    const st = useGuideStore.getState();
+    expect(st.careLogs).toHaveLength(0);
+    expect(st.sleepSessions).toHaveLength(0);
+    expect(st.deletedCareLogIds).toEqual(["c1"]);
+    expect(st.deletedSleepIds).toEqual(["sl1"]);
+  });
+
+  it("export → reset → import roundtrips sleep and care rows", () => {
+    useGuideStore.getState().addSleepSession({ id: "sl2", babyId: "b1", start: "2026-09-07T09:00:00.000Z" });
+    useGuideStore.getState().addCareLog({
+      id: "c2",
+      babyId: "b1",
+      kind: "formula",
+      at: "2026-09-07T12:00:00.000Z",
+      amount: { value: 4, unit: "oz" },
+    });
+    const json = useGuideStore.getState().exportJson();
+    useGuideStore.getState().reset();
+    const result = useGuideStore.getState().importJson(json);
+    expect(result.ok).toBe(true);
+    const st = useGuideStore.getState();
+    expect(st.sleepSessions.map((r) => r.id)).toEqual(["sl2"]);
+    expect(st.careLogs[0]?.amount?.unit).toBe("oz");
   });
 });

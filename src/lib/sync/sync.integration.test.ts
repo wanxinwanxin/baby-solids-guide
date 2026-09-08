@@ -99,6 +99,46 @@ describe("sync server persistence (pglite)", () => {
     expect(pulled.plans[0].entries[0].foodSlug).toBe("beef");
   });
 
+  it("sleep sessions + care logs roundtrip and tombstone correctly", async () => {
+    const UUID_SLEEP = "33333333-3333-4333-8333-333333333331";
+    const UUID_CARE = "33333333-3333-4333-8333-333333333332";
+    const client = snapWith({
+      babies: [baby(UUID_A)],
+      sleepSessions: [
+        {
+          id: UUID_SLEEP,
+          babyId: UUID_A,
+          start: "2026-09-07T20:00:00.000Z",
+          end: "2026-09-08T06:00:00.000Z",
+          updatedAt: "2026-09-08T06:00:00.000Z",
+        },
+      ],
+      careLogs: [
+        {
+          id: UUID_CARE,
+          babyId: UUID_A,
+          kind: "formula",
+          at: "2026-09-08T09:00:00.000Z",
+          amount: { value: 120, unit: "ml" },
+          updatedAt: "2026-09-08T09:00:00.000Z",
+        },
+      ],
+    });
+    await saveSnapshot(db, "user-a", mergeSnapshots(await loadSnapshot(db, "user-a"), client));
+
+    const pulled = await loadSnapshot(db, "user-a");
+    expect(pulled.sleepSessions.map((s) => s.id)).toContain(UUID_SLEEP);
+    expect(pulled.careLogs[0]?.amount?.value).toBe(120);
+
+    // Tombstone the session from a second push; it stays dead on later pulls.
+    const withDelete = snapWith({ babies: [baby(UUID_A)], deletedSleepIds: [UUID_SLEEP] });
+    await saveSnapshot(db, "user-a", mergeSnapshots(await loadSnapshot(db, "user-a"), withDelete));
+    const afterDelete = await loadSnapshot(db, "user-a");
+    expect(afterDelete.sleepSessions.map((s) => s.id)).not.toContain(UUID_SLEEP);
+    expect(afterDelete.deletedSleepIds).toContain(UUID_SLEEP);
+    expect(afterDelete.careLogs).toHaveLength(1);
+  });
+
   it("authorization isolation: user B sees nothing of user A's data", async () => {
     const forB = await loadSnapshot(db, "user-b");
     expect(forB.babies).toEqual([]);

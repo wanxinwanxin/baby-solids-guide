@@ -128,6 +128,40 @@ export type ExposureLog = {
   updatedAt?: string; // ISO datetime — LWW sync ordering (Phase 6)
 };
 
+/**
+ * One sleep (nap or night), synced per family like exposure logs. Times are
+ * ISO datetimes from the device clock. An absent `end` means the baby is
+ * asleep right now — the open session travels through sync too, so a second
+ * device can close it.
+ */
+export type SleepSession = {
+  id: string;
+  babyId: string;
+  start: string;
+  end?: string;
+  updatedAt?: string; // ISO datetime — LWW sync ordering
+};
+
+export type DiaperKind = "wet" | "dirty" | "mixed" | "dry";
+export type FormulaUnit = "ml" | "oz";
+
+/**
+ * A non-food care event — a formula bottle or a diaper change — so the
+ * whole family sees the day in one app. `amount` is set for kind "formula",
+ * `diaper` for kind "diaper".
+ */
+export type CareLog = {
+  id: string;
+  babyId: string;
+  kind: "formula" | "diaper";
+  /** ISO datetime, device clock. */
+  at: string;
+  amount?: { value: number; unit: FormulaUnit };
+  diaper?: DiaperKind;
+  notes?: string;
+  updatedAt?: string; // ISO datetime — LWW sync ordering
+};
+
 export type AllergenStatus =
   | "not-started"
   | "introducing"
@@ -195,6 +229,11 @@ export type ExportEnvelope = {
   checkIns: CheckIn[];
   plans: Plan[];
   deletedLogIds: string[];
+  /** Present since 2026-09-08; older exports simply lack them. */
+  sleepSessions?: SleepSession[];
+  careLogs?: CareLog[];
+  deletedSleepIds?: string[];
+  deletedCareLogIds?: string[];
 };
 
 export type ImportResult =

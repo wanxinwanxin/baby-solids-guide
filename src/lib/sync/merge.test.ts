@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { BabyProfile, ExposureLog, Plan } from "@/lib/storage/types";
+import type { BabyProfile, CareLog, ExposureLog, Plan, SleepSession } from "@/lib/storage/types";
 import type { SyncSnapshot } from "@/lib/storage/store";
 import { EMPTY_SNAPSHOT, mergeSnapshots, snapshotVersion } from "./merge";
 
@@ -197,5 +197,88 @@ describe("mergeSnapshots — LWW matrix (ROADMAP Part II §6)", () => {
     const once = mergeSnapshots(server, EMPTY_SNAPSHOT);
     const twice = mergeSnapshots(once, once);
     expect(twice).toEqual(once);
+  });
+});
+
+// ——— Sleep sessions + care logs (2026-09-08) ———
+
+const sleep = (id: string, babyId: string, updatedAt?: string, end?: string): SleepSession => ({
+  id,
+  babyId,
+  start: "2026-09-07T20:00:00.000Z",
+  ...(end ? { end } : {}),
+  updatedAt,
+});
+
+const care = (id: string, babyId: string, updatedAt?: string): CareLog => ({
+  id,
+  babyId,
+  kind: "formula",
+  at: "2026-09-07T09:00:00.000Z",
+  amount: { value: 120, unit: "ml" },
+  updatedAt,
+});
+
+describe("mergeSnapshots — sleep sessions + care logs", () => {
+  const b = baby("b1", "Kid", "2026-08-01T00:00:00Z");
+
+  it("merges per id with LWW, like exposure logs", () => {
+    const server = snap({
+      babies: [b],
+      sleepSessions: [sleep("s1", "b1", "2026-09-07T20:30:00Z", "2026-09-07T21:00:00.000Z")],
+    });
+    // The other parent closed the same session later (a second device can
+    // end a nap the first device started).
+    const client = snap({
+      babies: [b],
+      sleepSessions: [sleep("s1", "b1", "2026-09-07T21:40:00Z", "2026-09-07T21:30:00.000Z")],
+    });
+    const merged = mergeSnapshots(server, client);
+    expect(merged.sleepSessions).toHaveLength(1);
+    expect(merged.sleepSessions[0].end).toBe("2026-09-07T21:30:00.000Z");
+  });
+
+  it("tombstones are final and travel in both directions", () => {
+    const server = snap({ babies: [b], careLogs: [care("c1", "b1", "2026-09-07T10:00:00Z")] });
+    const client = snap({ babies: [b], deletedCareLogIds: ["c1"] });
+    const merged = mergeSnapshots(server, client);
+    expect(merged.careLogs).toHaveLength(0);
+    expect(merged.deletedCareLogIds).toEqual(["c1"]);
+  });
+
+  it("a snapshot from an older client (fields absent) never destroys server rows", () => {
+    const server = snap({
+      babies: [b],
+      sleepSessions: [sleep("s1", "b1", "2026-09-07T20:30:00Z")],
+      careLogs: [care("c1", "b1", "2026-09-07T10:00:00Z")],
+    });
+    const oldClient = {
+      babies: [b],
+      logs: [],
+      overrides: [],
+      checkIns: [],
+      plans: [],
+      deletedLogIds: [],
+      deletedBabyIds: [],
+    } as unknown as SyncSnapshot;
+    const merged = mergeSnapshots(server, oldClient);
+    expect(merged.sleepSessions.map((s) => s.id)).toEqual(["s1"]);
+    expect(merged.careLogs.map((c) => c.id)).toEqual(["c1"]);
+    expect(merged.deletedSleepIds).toEqual([]);
+  });
+
+  it("rows for babies outside the merged set are dropped", () => {
+    const server = snap({ babies: [b] });
+    const client = snap({ babies: [b], careLogs: [care("c9", "someone-elses-baby")] });
+    expect(mergeSnapshots(server, client).careLogs).toHaveLength(0);
+  });
+
+  it("snapshotVersion changes when a sleep session changes", () => {
+    const a = snap({ babies: [b], sleepSessions: [sleep("s1", "b1", "2026-09-07T20:30:00Z")] });
+    const later = snap({
+      babies: [b],
+      sleepSessions: [sleep("s1", "b1", "2026-09-07T21:40:00Z", "2026-09-07T21:30:00.000Z")],
+    });
+    expect(snapshotVersion(a)).not.toBe(snapshotVersion(later));
   });
 });

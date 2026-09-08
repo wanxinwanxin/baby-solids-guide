@@ -4,20 +4,24 @@ import type { AllergenId } from "@/content-schema/food";
 import type {
   AllergenOverride,
   BabyProfile,
+  CareLog,
   CheckIn,
   ExportEnvelope,
   ExposureLog,
   ImportResult,
   Plan,
+  SleepSession,
   TextureStage,
 } from "./types";
 import {
   allergenOverrideSchema,
+  careLogSchema,
   checkInSchema,
   exportEnvelopeV1Schema,
   exportEnvelopeV2Schema,
   exposureLogSchema,
   planSchema,
+  sleepSessionSchema,
 } from "./schema";
 import { migrateLegacyPlan } from "@/lib/planner";
 import { mergeSnapshots } from "@/lib/sync/merge";
@@ -36,8 +40,13 @@ export type GuideState = {
   overrides: AllergenOverride[];
   checkIns: CheckIn[];
   plans: Plan[];
+  /** Sleep + care (2026-09-08): synced per family, same LWW rules as logs. */
+  sleepSessions: SleepSession[];
+  careLogs: CareLog[];
   deletedLogIds: string[];
   deletedBabyIds: string[];
+  deletedSleepIds: string[];
+  deletedCareLogIds: string[];
   lastExportAt?: string;
   backupNudgeSnoozedUntil?: string;
   /**
@@ -70,6 +79,13 @@ export type GuideState = {
   resolveCheckIn: (id: string, status: "done" | "dismissed") => void;
   setPlan: (plan: Plan) => void;
   clearPlan: (babyId: string) => void;
+  addSleepSession: (s: SleepSession) => void;
+  /** Patch one session in place; id and babyId stay pinned. */
+  updateSleepSession: (id: string, patch: Partial<Omit<SleepSession, "id" | "babyId">>) => void;
+  deleteSleepSession: (id: string) => void;
+  addCareLog: (l: CareLog) => void;
+  updateCareLog: (id: string, patch: Partial<Omit<CareLog, "id" | "babyId">>) => void;
+  deleteCareLog: (id: string) => void;
   snoozeBackupNudge: (untilIso: string) => void;
   /** Hide one note. The condition behind it stays in force. */
   dismissNotice: (key: string) => void;
@@ -90,13 +106,41 @@ export type SyncSnapshot = {
   overrides: AllergenOverride[];
   checkIns: CheckIn[];
   plans: Plan[];
+  sleepSessions: SleepSession[];
+  careLogs: CareLog[];
   deletedLogIds: string[];
   deletedBabyIds: string[];
+  deletedSleepIds: string[];
+  deletedCareLogIds: string[];
 };
 
 export function snapshotOf(s: GuideState): SyncSnapshot {
-  const { babies, logs, overrides, checkIns, plans, deletedLogIds, deletedBabyIds } = s;
-  return { babies, logs, overrides, checkIns, plans, deletedLogIds, deletedBabyIds };
+  const {
+    babies,
+    logs,
+    overrides,
+    checkIns,
+    plans,
+    sleepSessions,
+    careLogs,
+    deletedLogIds,
+    deletedBabyIds,
+    deletedSleepIds,
+    deletedCareLogIds,
+  } = s;
+  return {
+    babies,
+    logs,
+    overrides,
+    checkIns,
+    plans,
+    sleepSessions,
+    careLogs,
+    deletedLogIds,
+    deletedBabyIds,
+    deletedSleepIds,
+    deletedCareLogIds,
+  };
 }
 
 // ——— Selectors (pure; usable with useGuideStore(selector)) ———
@@ -137,6 +181,27 @@ const memoryStorage = (() => {
 })();
 
 export const STORAGE_KEY = "opensolids-v1";
+/** Pre-v4 device-local sleep store (zustand persist envelope). */
+export const LEGACY_SLEEP_KEY = "os-sleep";
+
+/**
+ * Parse the old device-local sleep store's raw localStorage value into
+ * sessions for the synced store. Exported for tests; tolerant of anything —
+ * a broken value imports as an empty list, never a crash during hydration.
+ */
+export function importLegacySleep(raw: string | null): SleepSession[] {
+  if (!raw) return [];
+  try {
+    const rows: unknown = JSON.parse(raw)?.state?.sessions;
+    if (!Array.isArray(rows)) return [];
+    return rows.flatMap((r) => {
+      const p = sleepSessionSchema.safeParse(r);
+      return p.success ? [p.data as SleepSession] : [];
+    });
+  } catch {
+    return [];
+  }
+}
 
 const EMPTY = {
   babies: [] as BabyProfile[],
@@ -145,8 +210,12 @@ const EMPTY = {
   overrides: [] as AllergenOverride[],
   checkIns: [] as CheckIn[],
   plans: [] as Plan[],
+  sleepSessions: [] as SleepSession[],
+  careLogs: [] as CareLog[],
   deletedLogIds: [] as string[],
   deletedBabyIds: [] as string[],
+  deletedSleepIds: [] as string[],
+  deletedCareLogIds: [] as string[],
   lastExportAt: undefined as string | undefined,
   backupNudgeSnoozedUntil: undefined as string | undefined,
   dismissedNotices: [] as string[],
@@ -198,6 +267,8 @@ export const useGuideStore = create<GuideState>()(
           overrides: get().overrides.filter((o) => o.babyId !== id),
           checkIns: get().checkIns.filter((c) => c.babyId !== id),
           plans: get().plans.filter((p) => p.babyId !== id),
+          sleepSessions: get().sleepSessions.filter((s) => s.babyId !== id),
+          careLogs: get().careLogs.filter((c) => c.babyId !== id),
           deletedBabyIds: [...new Set([...get().deletedBabyIds, id])],
         });
       },
@@ -287,6 +358,37 @@ export const useGuideStore = create<GuideState>()(
           ),
         }),
 
+      addSleepSession: (s) =>
+        set({ sleepSessions: [...get().sleepSessions, { ...s, updatedAt: now() }] }),
+
+      updateSleepSession: (id, patch) =>
+        set({
+          sleepSessions: get().sleepSessions.map((s) =>
+            s.id === id ? { ...s, ...patch, id: s.id, babyId: s.babyId, updatedAt: now() } : s,
+          ),
+        }),
+
+      deleteSleepSession: (id) =>
+        set({
+          sleepSessions: get().sleepSessions.filter((s) => s.id !== id),
+          deletedSleepIds: [...new Set([...get().deletedSleepIds, id])],
+        }),
+
+      addCareLog: (l) => set({ careLogs: [...get().careLogs, { ...l, updatedAt: now() }] }),
+
+      updateCareLog: (id, patch) =>
+        set({
+          careLogs: get().careLogs.map((l) =>
+            l.id === id ? { ...l, ...patch, id: l.id, babyId: l.babyId, updatedAt: now() } : l,
+          ),
+        }),
+
+      deleteCareLog: (id) =>
+        set({
+          careLogs: get().careLogs.filter((l) => l.id !== id),
+          deletedCareLogIds: [...new Set([...get().deletedCareLogIds, id])],
+        }),
+
       snoozeBackupNudge: (untilIso) => set({ backupNudgeSnoozedUntil: untilIso }),
 
       dismissNotice: (key) =>
@@ -299,7 +401,19 @@ export const useGuideStore = create<GuideState>()(
       reset: () => set({ ...EMPTY }),
 
       exportJson: () => {
-        const { babies, activeBabyId, logs, overrides, checkIns, plans, deletedLogIds } = get();
+        const {
+          babies,
+          activeBabyId,
+          logs,
+          overrides,
+          checkIns,
+          plans,
+          sleepSessions,
+          careLogs,
+          deletedLogIds,
+          deletedSleepIds,
+          deletedCareLogIds,
+        } = get();
         const envelope: ExportEnvelope = {
           schemaVersion: 2,
           exportedAt: now(),
@@ -310,6 +424,10 @@ export const useGuideStore = create<GuideState>()(
           checkIns,
           plans,
           deletedLogIds,
+          sleepSessions,
+          careLogs,
+          deletedSleepIds,
+          deletedCareLogIds,
         };
         set({ lastExportAt: now() });
         return JSON.stringify(envelope, null, 2);
@@ -349,6 +467,8 @@ export const useGuideStore = create<GuideState>()(
           const overrides = parseRows<AllergenOverride>(d.overrides, allergenOverrideSchema, "override");
           const checkIns = parseRows<CheckIn>(d.checkIns, checkInSchema, "check-in");
           const plans = parseRows<Plan>(d.plans, planSchema, "plan");
+          const sleepSessions = parseRows<SleepSession>(d.sleepSessions, sleepSessionSchema, "sleep");
+          const careLogs = parseRows<CareLog>(d.careLogs, careLogSchema, "care");
           set({
             babies: d.babies,
             activeBabyId: d.activeBabyId ?? d.babies[0]?.id ?? null,
@@ -356,7 +476,11 @@ export const useGuideStore = create<GuideState>()(
             overrides,
             checkIns,
             plans,
+            sleepSessions,
+            careLogs,
             deletedLogIds: d.deletedLogIds,
+            deletedSleepIds: d.deletedSleepIds,
+            deletedCareLogIds: d.deletedCareLogIds,
           });
           return { ok: true, logsImported: logs.length, skipped };
         }
@@ -379,16 +503,34 @@ export const useGuideStore = create<GuideState>()(
     }),
     {
       name: STORAGE_KEY,
-      version: 3,
+      version: 4,
       migrate: (persisted, version) => {
-        const state = (
+        let state = (
           version < 2 ? migrateV1ToV2(persisted) : persisted
         ) as unknown as GuideState;
         if (version < 3) {
           // v3 gave plan entries a dayIndex. Without one, every food in a
           // week reads as starting on the same day and the board keeps the
           // old four-a-week packing.
-          return { ...state, plans: (state.plans ?? []).map(migrateLegacyPlan) };
+          state = { ...state, plans: (state.plans ?? []).map(migrateLegacyPlan) };
+        }
+        if (version < 4) {
+          // v4 moved sleep into the synced store. Adopt whatever this device
+          // logged under the old device-local key so no sleep data is lost.
+          state = {
+            ...state,
+            sleepSessions: importLegacySleep(
+              typeof window !== "undefined" ? window.localStorage.getItem(LEGACY_SLEEP_KEY) : null,
+            ),
+            careLogs: [],
+            deletedSleepIds: [],
+            deletedCareLogIds: [],
+          };
+          try {
+            if (typeof window !== "undefined") window.localStorage.removeItem(LEGACY_SLEEP_KEY);
+          } catch {
+            // Removal is a cleanup, never a blocker.
+          }
         }
         return state;
       },
@@ -402,8 +544,12 @@ export const useGuideStore = create<GuideState>()(
         overrides,
         checkIns,
         plans,
+        sleepSessions,
+        careLogs,
         deletedLogIds,
         deletedBabyIds,
+        deletedSleepIds,
+        deletedCareLogIds,
         lastExportAt,
         backupNudgeSnoozedUntil,
         dismissedNotices,
@@ -415,8 +561,12 @@ export const useGuideStore = create<GuideState>()(
         overrides,
         checkIns,
         plans,
+        sleepSessions,
+        careLogs,
         deletedLogIds,
         deletedBabyIds,
+        deletedSleepIds,
+        deletedCareLogIds,
         lastExportAt,
         backupNudgeSnoozedUntil,
         dismissedNotices,

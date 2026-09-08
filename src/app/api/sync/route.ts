@@ -5,9 +5,11 @@ import { getDb } from "@/lib/db";
 import {
   allergenOverrideSchema,
   babyProfileSchema,
+  careLogSchema,
   checkInSchema,
   exposureLogSchema,
   planSchema,
+  sleepSessionSchema,
 } from "@/lib/storage/schema";
 import type { SyncSnapshot } from "@/lib/storage/store";
 import { mergeSnapshots, snapshotVersion } from "@/lib/sync/merge";
@@ -21,6 +23,13 @@ const snapshotSchema = z.object({
   plans: z.array(planSchema).max(20),
   deletedLogIds: z.array(z.string()).max(20000),
   deletedBabyIds: z.array(z.string()).max(100),
+  // Sleep + care sync (2026-09-08): defaults keep pushes from older client
+  // bundles valid — their empty arrays merge as "no local rows", so the
+  // server copies survive untouched.
+  sleepSessions: z.array(sleepSessionSchema).max(20000).default([]),
+  careLogs: z.array(careLogSchema).max(20000).default([]),
+  deletedSleepIds: z.array(z.string()).max(20000).default([]),
+  deletedCareLogIds: z.array(z.string()).max(20000).default([]),
 });
 
 async function requireUser() {

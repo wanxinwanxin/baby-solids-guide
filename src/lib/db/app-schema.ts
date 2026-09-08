@@ -25,6 +25,28 @@ export const exposureLogs = pgTable("exposure_logs", {
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
+/** Sleep sessions (2026-09-08) — same shape and LWW/tombstone rules as logs. */
+export const sleepSessions = pgTable("sleep_sessions", {
+  id: uuid("id").primaryKey(),
+  babyId: uuid("baby_id")
+    .notNull()
+    .references(() => babies.id, { onDelete: "cascade" }),
+  payload: jsonb("payload").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+});
+
+/** Care logs (formula bottles + diapers, 2026-09-08) — same rules as logs. */
+export const careLogs = pgTable("care_logs", {
+  id: uuid("id").primaryKey(),
+  babyId: uuid("baby_id")
+    .notNull()
+    .references(() => babies.id, { onDelete: "cascade" }),
+  payload: jsonb("payload").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+});
+
 export const allergenOverrides = pgTable(
   "allergen_overrides",
   {

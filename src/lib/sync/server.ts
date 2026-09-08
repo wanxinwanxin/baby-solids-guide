@@ -2,9 +2,18 @@ import { and, eq, inArray } from "drizzle-orm";
 import type { Db } from "@/lib/db";
 import { schema } from "@/lib/db";
 import type { SyncSnapshot } from "@/lib/storage/store";
-import type { AllergenOverride, BabyProfile, CheckIn, ExposureLog, Plan } from "@/lib/storage/types";
+import type {
+  AllergenOverride,
+  BabyProfile,
+  CareLog,
+  CheckIn,
+  ExposureLog,
+  Plan,
+  SleepSession,
+} from "@/lib/storage/types";
 
-const { babies, babyMembers, exposureLogs, allergenOverrides, checkIns, plans } = schema;
+const { babies, babyMembers, exposureLogs, allergenOverrides, checkIns, plans, sleepSessions, careLogs } =
+  schema;
 
 const ts = (v?: string) => (v ? new Date(v) : new Date(0));
 
@@ -29,7 +38,7 @@ export async function loadSnapshot(db: Db, userId: string): Promise<SyncSnapshot
     babyIds.length === 0 ? [] : await db.select().from(babies).where(inArray(babies.id, babyIds));
   const children =
     babyIds.length === 0
-      ? { logRows: [], overrideRows: [], checkInRows: [], planRows: [] }
+      ? { logRows: [], overrideRows: [], checkInRows: [], planRows: [], sleepRows: [], careRows: [] }
       : {
           logRows: await db.select().from(exposureLogs).where(inArray(exposureLogs.babyId, babyIds)),
           overrideRows: await db
@@ -38,6 +47,8 @@ export async function loadSnapshot(db: Db, userId: string): Promise<SyncSnapshot
             .where(inArray(allergenOverrides.babyId, babyIds)),
           checkInRows: await db.select().from(checkIns).where(inArray(checkIns.babyId, babyIds)),
           planRows: await db.select().from(plans).where(inArray(plans.babyId, babyIds)),
+          sleepRows: await db.select().from(sleepSessions).where(inArray(sleepSessions.babyId, babyIds)),
+          careRows: await db.select().from(careLogs).where(inArray(careLogs.babyId, babyIds)),
         };
 
   return {
@@ -46,8 +57,12 @@ export async function loadSnapshot(db: Db, userId: string): Promise<SyncSnapshot
     overrides: children.overrideRows.map((r) => r.payload as AllergenOverride),
     checkIns: children.checkInRows.map((r) => r.payload as CheckIn),
     plans: children.planRows.map((r) => r.payload as Plan),
+    sleepSessions: children.sleepRows.filter((r) => !r.deletedAt).map((r) => r.payload as SleepSession),
+    careLogs: children.careRows.filter((r) => !r.deletedAt).map((r) => r.payload as CareLog),
     deletedLogIds: children.logRows.filter((r) => !!r.deletedAt).map((r) => r.id),
     deletedBabyIds: [],
+    deletedSleepIds: children.sleepRows.filter((r) => !!r.deletedAt).map((r) => r.id),
+    deletedCareLogIds: children.careRows.filter((r) => !!r.deletedAt).map((r) => r.id),
   };
 }
 
@@ -119,6 +134,49 @@ export async function saveSnapshot(db: Db, userId: string, snap: SyncSnapshot): 
             inArray(exposureLogs.id, snap.deletedLogIds),
             inArray(exposureLogs.babyId, snapBabyIds),
           ),
+        );
+    }
+
+    // Sleep sessions + care logs: identical upsert + tombstone handling.
+    for (const s of snap.sleepSessions ?? []) {
+      if (!snapBabyIds.includes(s.babyId)) continue;
+      await tx
+        .insert(sleepSessions)
+        .values({ id: s.id, babyId: s.babyId, payload: s, updatedAt: ts(s.updatedAt) })
+        .onConflictDoUpdate({
+          target: sleepSessions.id,
+          set: { payload: s, updatedAt: ts(s.updatedAt), deletedAt: null },
+          setWhere: inArray(sleepSessions.babyId, snapBabyIds),
+        });
+    }
+    if ((snap.deletedSleepIds ?? []).length > 0) {
+      await tx
+        .update(sleepSessions)
+        .set({ deletedAt: new Date() })
+        .where(
+          and(
+            inArray(sleepSessions.id, snap.deletedSleepIds),
+            inArray(sleepSessions.babyId, snapBabyIds),
+          ),
+        );
+    }
+    for (const c of snap.careLogs ?? []) {
+      if (!snapBabyIds.includes(c.babyId)) continue;
+      await tx
+        .insert(careLogs)
+        .values({ id: c.id, babyId: c.babyId, payload: c, updatedAt: ts(c.updatedAt) })
+        .onConflictDoUpdate({
+          target: careLogs.id,
+          set: { payload: c, updatedAt: ts(c.updatedAt), deletedAt: null },
+          setWhere: inArray(careLogs.babyId, snapBabyIds),
+        });
+    }
+    if ((snap.deletedCareLogIds ?? []).length > 0) {
+      await tx
+        .update(careLogs)
+        .set({ deletedAt: new Date() })
+        .where(
+          and(inArray(careLogs.id, snap.deletedCareLogIds), inArray(careLogs.babyId, snapBabyIds)),
         );
     }
 
