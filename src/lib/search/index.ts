@@ -104,6 +104,15 @@ const FEATURES: Feature[] = [
     keywords: ["choking", "gagging", "cpr", "911", "first aid", "窒息", "干呕", "急救", "紧急"],
   },
   {
+    href: "/care",
+    en: "Bottles & diapers",
+    zh: "奶瓶与尿布",
+    keywords: [
+      "formula", "bottle", "feed", "milk", "diaper", "poop", "pee", "nappy", "change",
+      "配方奶", "奶瓶", "喂奶", "奶量", "尿布", "换尿布", "大便", "小便", "拉屎",
+    ],
+  },
+  {
     href: "/sleep",
     en: "Sleep windows",
     zh: "睡眠时段",

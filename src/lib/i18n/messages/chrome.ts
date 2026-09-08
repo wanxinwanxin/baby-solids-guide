@@ -11,6 +11,7 @@ export const chromeMsgs = {
   navExtras: { en: "Extras", zh: "其他功能" },
   navRead: { en: "Read to baby", zh: "读给宝宝" },
   navSleep: { en: "Sleep windows", zh: "睡眠时段" },
+  navCare: { en: "Bottles & diapers", zh: "奶瓶与尿布" },
   navAllergens: { en: "Allergens", zh: "过敏原" },
   navHistory: { en: "History", zh: "历史" },
   navInsights: { en: "Insights", zh: "洞察" },

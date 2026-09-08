@@ -40,6 +40,7 @@ export default async function MorePage() {
   const extras = [
     { href: "/read", label: nav.navRead, desc: t.descRead },
     { href: "/sleep", label: nav.navSleep, desc: t.descSleep },
+    { href: "/care", label: nav.navCare, desc: t.descCare },
   ];
 
   const row = (l: { href: string; label: string; desc: string }) => (

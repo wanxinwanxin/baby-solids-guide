@@ -57,6 +57,7 @@ const moreLinks = (t: NavMsgs) => [
 const extrasLinks = (t: NavMsgs) => [
   { href: "/read", label: t.navRead },
   { href: "/sleep", label: t.navSleep },
+  { href: "/care", label: t.navCare },
 ];
 
 /**
