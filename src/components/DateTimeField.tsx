@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
-import { sleepMsgs } from "@/lib/i18n/messages/sleep";
+import { datetimeMsgs } from "@/lib/i18n/messages/datetime";
 import { formatTime } from "@/lib/sleep/model";
 import { combineDateClock, localDateIso, parseClockText } from "@/lib/sleep/time";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,7 @@ export function DateTimeField({
   onChange: (d: Date | null) => void;
 }) {
   const locale = useLocale();
-  const t = useMsgs(sleepMsgs);
+  const t = useMsgs(datetimeMsgs);
   const [dateStr, setDateStr] = useState(() => localDateIso(initial ?? new Date()));
   const [timeText, setTimeText] = useState(() =>
     initial ? formatTime(initial.getTime(), locale) : "",

@@ -66,7 +66,7 @@ test("predicts a window from a wake anchor and logs a session", async ({ page })
   await expect(page.getByText(/Total:/)).toBeVisible();
   await expect(page.getByText("No sleep logged today yet.")).toHaveCount(0);
 
-  // The log survives a reload (device-local persistence).
+  // The log survives a reload (persisted, and now synced when signed in).
   await page.reload();
   await expect(page.getByText(/Total:/)).toBeVisible();
 });

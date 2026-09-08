@@ -2,103 +2,31 @@
 
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { SleepSession } from "./model";
 
 /**
- * Sleep log — device-local on purpose (like photos and dismissedNotices).
- * Sessions never enter the sync snapshot or the export envelope: the sleep
- * predictor is an Extra, and syncing a high-frequency log deserves its own
- * migration plan. The store prunes itself to the prediction lookback plus a
- * generous margin, so localStorage stays small.
+ * Device-local sleep leftovers. Sessions moved into the synced GuideStore on
+ * 2026-09-08 (persist v4 imports them from the old "os-sleep" key). What
+ * stays here is the wake anchor: "when did the baby last wake" as told to
+ * THIS device before any session existed — transient bootstrap state, not
+ * family data, so it never enters the sync snapshot.
  */
 
-const MIN = 60 * 1000;
-const KEEP_DAYS = 60;
-
-type SleepState = {
-  sessions: SleepSession[];
-  /**
-   * Last known wake-up per baby (ISO datetime) — the anchor used when no
-   * completed session tells us. Set on first run ("baby just woke up") and
-   * by wokeUp() when nothing was marked asleep.
-   */
+type SleepAnchorState = {
+  /** babyId → ISO datetime of the last known wake-up. */
   wakeAnchors: Record<string, string>;
-
-  /** Open a session now (or at the given time). No-op while one is open. */
-  fellAsleep: (babyId: string, atIso: string) => void;
-  /** Close the open session, or record a wake anchor when none is open. */
-  wokeUp: (babyId: string, atIso: string) => void;
-  addSession: (s: SleepSession) => void;
-  /** Patch one session in place (edits); id and babyId stay pinned. */
-  updateSession: (id: string, patch: Partial<Omit<SleepSession, "id" | "babyId">>) => void;
-  deleteSession: (id: string) => void;
   setWakeAnchor: (babyId: string, atIso: string) => void;
 };
 
-const now = () => new Date().toISOString();
-
-function prune(sessions: SleepSession[]): SleepSession[] {
-  const cutoff = Date.now() - KEEP_DAYS * 24 * 60 * MIN;
-  return sessions.filter((s) => !s.end || new Date(s.start).getTime() >= cutoff);
-}
-
-export const useSleepStore = create<SleepState>()(
+export const useSleepStore = create<SleepAnchorState>()(
   persist(
     (set, get) => ({
-      sessions: [],
       wakeAnchors: {},
-
-      fellAsleep: (babyId, atIso) => {
-        if (get().sessions.some((s) => s.babyId === babyId && !s.end)) return;
-        const session: SleepSession = {
-          id: crypto.randomUUID(),
-          babyId,
-          start: atIso,
-          updatedAt: now(),
-        };
-        set({ sessions: prune([...get().sessions, session]) });
-      },
-
-      wokeUp: (babyId, atIso) => {
-        const open = get().sessions.find((s) => s.babyId === babyId && !s.end);
-        if (!open) {
-          get().setWakeAnchor(babyId, atIso);
-          return;
-        }
-        // A wake before the sleep start is a mis-tap: keep 1 minute of sleep.
-        const end =
-          new Date(atIso).getTime() > new Date(open.start).getTime()
-            ? atIso
-            : new Date(new Date(open.start).getTime() + MIN).toISOString();
-        set({
-          sessions: get().sessions.map((s) =>
-            s.id === open.id ? { ...s, end, updatedAt: now() } : s,
-          ),
-        });
-      },
-
-      addSession: (session) => {
-        set({ sessions: prune([...get().sessions.filter((s) => s.id !== session.id), session]) });
-      },
-
-      updateSession: (id, patch) => {
-        set({
-          sessions: get().sessions.map((s) =>
-            s.id === id ? { ...s, ...patch, id: s.id, babyId: s.babyId, updatedAt: now() } : s,
-          ),
-        });
-      },
-
-      deleteSession: (id) => {
-        set({ sessions: get().sessions.filter((s) => s.id !== id) });
-      },
-
       setWakeAnchor: (babyId, atIso) => {
         set({ wakeAnchors: { ...get().wakeAnchors, [babyId]: atIso } });
       },
     }),
     {
-      name: "os-sleep",
+      name: "os-sleep-anchors",
       version: 1,
       storage: createJSONStorage(() => localStorage),
     },

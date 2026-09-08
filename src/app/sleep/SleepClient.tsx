@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { correctedAgeMonths } from "@/lib/age";
-import { useActiveBaby, useHydrated } from "@/lib/hooks";
+import { useActiveBaby, useActiveSleepSessions, useHydrated } from "@/lib/hooks";
 import { fmt } from "@/lib/i18n/config";
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
+import { datetimeMsgs } from "@/lib/i18n/messages/datetime";
 import { sleepMsgs } from "@/lib/i18n/messages/sleep";
 import {
   PERSONALIZED_AT,
@@ -16,10 +17,12 @@ import {
   type SleepSession,
 } from "@/lib/sleep/model";
 import { useSleepStore } from "@/lib/sleep/store";
+import { newId, useGuideStore } from "@/lib/storage/store";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DateTimeField } from "./DateTimeField";
+import { DateTimeField } from "@/components/DateTimeField";
+import { TimeConfirm } from "@/components/TimeConfirm";
 
 const MIN = 60 * 1000;
 
@@ -46,6 +49,7 @@ function SessionRow({
 }) {
   const locale = useLocale();
   const t = useMsgs(sleepMsgs);
+  const dt = useMsgs(datetimeMsgs);
   const [editing, setEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [editStart, setEditStart] = useState<Date | null>(null);
@@ -118,7 +122,7 @@ function SessionRow({
           <p className="text-xs text-muted-foreground">{t.stillAsleepNote}</p>
           {error && (
             <p className="text-sm text-destructive">
-              {error === "order" ? t.addInvalid : t.timeInvalid}
+              {error === "order" ? t.addInvalid : dt.timeInvalid}
             </p>
           )}
           <div className="flex flex-wrap items-center gap-2">
@@ -154,98 +158,18 @@ function SessionRow({
   );
 }
 
-/**
- * A logging action that never assumes "now": the button opens a typed time
- * field prefilled with the current clock, because parents usually get their
- * hands free a few minutes after the baby actually fell asleep or woke up.
- */
-function TimeConfirm({
-  id,
-  buttonLabel,
-  buttonVariant = "default",
-  fieldLabel,
-  confirmLabel,
-  validate,
-  onConfirm,
-}: {
-  id: string;
-  buttonLabel: string;
-  buttonVariant?: "default" | "outline";
-  fieldLabel: string;
-  confirmLabel: string;
-  /** Returns an error message to show, or null to accept. */
-  validate?: (d: Date) => string | null;
-  onConfirm: (d: Date) => void;
-}) {
-  const t = useMsgs(sleepMsgs);
-  const [openedAt, setOpenedAt] = useState<Date | null>(null);
-  const [value, setValue] = useState<Date | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  if (!openedAt) {
-    return (
-      <Button
-        variant={buttonVariant}
-        onClick={() => {
-          const at = new Date();
-          setOpenedAt(at);
-          setValue(at);
-          setError(null);
-        }}
-      >
-        {buttonLabel}
-      </Button>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-end gap-3">
-        <DateTimeField
-          key={openedAt.getTime()}
-          id={id}
-          label={fieldLabel}
-          initial={openedAt}
-          onChange={setValue}
-        />
-        <Button
-          disabled={!value}
-          onClick={() => {
-            if (!value) return;
-            const err = validate?.(value) ?? null;
-            if (err) {
-              setError(err);
-              return;
-            }
-            onConfirm(value);
-            setOpenedAt(null);
-            setError(null);
-          }}
-        >
-          {confirmLabel}
-        </Button>
-        <Button variant="outline" onClick={() => setOpenedAt(null)}>
-          {t.cancel}
-        </Button>
-      </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
-    </div>
-  );
-}
-
 export function SleepClient() {
   const hydrated = useHydrated();
   const baby = useActiveBaby();
   const locale = useLocale();
   const t = useMsgs(sleepMsgs);
 
-  const sessions = useSleepStore((s) => s.sessions);
+  // Sessions live in the synced family store; the wake anchor stays local.
+  const babySessions = useActiveSleepSessions();
+  const addSleepSession = useGuideStore((s) => s.addSleepSession);
+  const updateSleepSession = useGuideStore((s) => s.updateSleepSession);
+  const deleteSleepSession = useGuideStore((s) => s.deleteSleepSession);
   const wakeAnchors = useSleepStore((s) => s.wakeAnchors);
-  const fellAsleep = useSleepStore((s) => s.fellAsleep);
-  const wokeUp = useSleepStore((s) => s.wokeUp);
-  const addSession = useSleepStore((s) => s.addSession);
-  const updateSession = useSleepStore((s) => s.updateSession);
-  const deleteSession = useSleepStore((s) => s.deleteSession);
   const setWakeAnchor = useSleepStore((s) => s.setWakeAnchor);
 
   // The window card counts down, so the page re-reads the clock periodically.
@@ -263,10 +187,6 @@ export function SleepClient() {
   // Remount key: clears the add fields after a successful add.
   const [addFormKey, setAddFormKey] = useState(0);
 
-  const babySessions = useMemo(
-    () => (baby ? sessions.filter((s) => s.babyId === baby.id) : []),
-    [sessions, baby],
-  );
   const open = useMemo(() => openSession(babySessions), [babySessions]);
   const ageMonths = baby ? correctedAgeMonths(baby, now) : 0;
   const prediction = useMemo(
@@ -310,6 +230,11 @@ export function SleepClient() {
     return sum + Math.max(0, end - new Date(s.start).getTime()) / MIN;
   }, 0);
 
+  const logFellAsleep = (d: Date) => {
+    if (openSession(babySessions)) return;
+    addSleepSession({ id: newId(), babyId: baby.id, start: d.toISOString() });
+  };
+
   const submitWakeAnchor = () => {
     if (!wakeAt) return;
     if (wakeAt.getTime() > nowMs) {
@@ -325,12 +250,11 @@ export function SleepClient() {
       setAddError(true);
       return;
     }
-    addSession({
-      id: crypto.randomUUID(),
+    addSleepSession({
+      id: newId(),
       babyId: baby.id,
       start: addStart.toISOString(),
       end: addEnd.toISOString(),
-      updatedAt: new Date().toISOString(),
     });
     setAddStart(null);
     setAddEnd(null);
@@ -362,7 +286,7 @@ export function SleepClient() {
             if (d.getTime() > Date.now() + MIN) return t.futureTime;
             return null;
           }}
-          onConfirm={(d) => wokeUp(baby.id, d.toISOString())}
+          onConfirm={(d) => updateSleepSession(open.id, { end: d.toISOString() })}
         />
       </CardContent>
     </Card>
@@ -394,7 +318,7 @@ export function SleepClient() {
           fieldLabel={t.addStart}
           confirmLabel={t.startBtn}
           validate={(d) => (d.getTime() > Date.now() + MIN ? t.futureTime : null)}
-          onConfirm={(d) => fellAsleep(baby.id, d.toISOString())}
+          onConfirm={logFellAsleep}
         />
       </CardContent>
     </Card>
@@ -421,7 +345,7 @@ export function SleepClient() {
           fieldLabel={t.addStart}
           confirmLabel={t.startBtn}
           validate={(d) => (d.getTime() > Date.now() + MIN ? t.futureTime : null)}
-          onConfirm={(d) => fellAsleep(baby.id, d.toISOString())}
+          onConfirm={logFellAsleep}
         />
       </CardContent>
     </Card>
@@ -496,8 +420,8 @@ export function SleepClient() {
                     key={s.id}
                     session={s}
                     nowMs={nowMs}
-                    onUpdate={updateSession}
-                    onDelete={deleteSession}
+                    onUpdate={updateSleepSession}
+                    onDelete={deleteSleepSession}
                   />
                 ))}
               </ul>
@@ -524,7 +448,7 @@ export function SleepClient() {
       </Card>
 
       <div className="space-y-1 text-xs text-muted-foreground">
-        <p>{t.localNote}</p>
+        <p>{t.syncNote}</p>
         <p>{t.medicalNote}</p>
       </div>
     </div>

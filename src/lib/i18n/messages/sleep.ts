@@ -95,14 +95,6 @@ export const sleepMsgs = {
     zh: "醒来时间必须晚于入睡时间。",
   },
 
-  // Typed time fields
-  dateLabel: { en: "Date", zh: "日期" },
-  timeLabel: { en: "Time", zh: "时间" },
-  timePlaceholder: { en: "7:35 pm", zh: "19:35" },
-  timeInvalid: {
-    en: "Enter a time like 7:35 pm or 19:35.",
-    zh: "请输入时间，例如 19:35 或 下午7:35。",
-  },
   futureTime: { en: "That time is in the future.", zh: "这个时间还没有到。" },
 
   // Edit a session
@@ -120,9 +112,9 @@ export const sleepMsgs = {
   keepEntry: { en: "Keep", zh: "保留" },
 
   // Notes
-  localNote: {
-    en: "The sleep log stays on this device. It does not sync to your family yet.",
-    zh: "睡眠记录仅保存在本机，暂不与家人同步。",
+  syncNote: {
+    en: "With a signed-in family account, the sleep log and predictions stay in step on every member's device.",
+    zh: "登录家庭账户后，睡眠记录和预测会在所有成员的设备间保持同步。",
   },
   medicalNote: {
     en: "This is an educational guide, not medical advice. Talk to your pediatrician about sleep concerns.",

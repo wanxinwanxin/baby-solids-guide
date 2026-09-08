@@ -1,4 +1,5 @@
 import type { Locale } from "@/lib/i18n/config";
+import type { SleepSession } from "@/lib/storage/types";
 
 /**
  * Sleep window predictor — the pure engine behind /sleep.
@@ -16,15 +17,7 @@ import type { Locale } from "@/lib/i18n/config";
  * injected `now` so they are unit-testable.
  */
 
-export type SleepSession = {
-  id: string;
-  babyId: string;
-  /** ISO datetime from the device clock. */
-  start: string;
-  /** Absent while the baby is asleep (an open session). */
-  end?: string;
-  updatedAt?: string;
-};
+export type { SleepSession };
 
 const MIN = 60 * 1000;
 const HOUR = 60 * MIN;

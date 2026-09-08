@@ -1,7 +1,15 @@
 "use client";
 
 import { useMemo, useSyncExternalStore } from "react";
-import type { AllergenOverride, BabyProfile, CheckIn, ExposureLog, Plan } from "@/lib/storage/types";
+import type {
+  AllergenOverride,
+  BabyProfile,
+  CareLog,
+  CheckIn,
+  ExposureLog,
+  Plan,
+  SleepSession,
+} from "@/lib/storage/types";
 import { isEmptyPlan, useGuideStore } from "@/lib/storage/store";
 
 const emptySubscribe = () => () => {};
@@ -44,6 +52,24 @@ export function useActiveCheckIns(): CheckIn[] {
   const baby = useActiveBaby();
   const checkIns = useGuideStore((s) => s.checkIns);
   return useMemo(() => (baby ? checkIns.filter((c) => c.babyId === baby.id) : []), [checkIns, baby]);
+}
+
+export function useActiveSleepSessions(): SleepSession[] {
+  const baby = useActiveBaby();
+  const sessions = useGuideStore((s) => s.sleepSessions);
+  return useMemo(
+    () => (baby ? sessions.filter((s) => s.babyId === baby.id) : []),
+    [sessions, baby],
+  );
+}
+
+export function useActiveCareLogs(): CareLog[] {
+  const baby = useActiveBaby();
+  const careLogs = useGuideStore((s) => s.careLogs);
+  return useMemo(
+    () => (baby ? careLogs.filter((l) => l.babyId === baby.id) : []),
+    [careLogs, baby],
+  );
 }
 
 export function useActivePlan(): Plan | null {
