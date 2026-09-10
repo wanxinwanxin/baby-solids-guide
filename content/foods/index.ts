@@ -34,6 +34,7 @@ import cherries from "./cherries";
 import chiaSeeds from "./chia-seeds";
 import chicken from "./chicken";
 import chickpeas from "./chickpeas";
+import chineseYam from "./chinese-yam";
 import cilantro from "./cilantro";
 import cinnamon from "./cinnamon";
 import clementine from "./clementine";
@@ -193,6 +194,7 @@ export const allFoods: Food[] = [
   chiaSeeds,
   chicken,
   chickpeas,
+  chineseYam,
   cilantro,
   cinnamon,
   clementine,

@@ -7,9 +7,11 @@ import path from "node:path";
 
 const FOODS_DIR = path.join(process.cwd(), "content", "foods");
 
+// search-terms.ts is a generated sibling (not a food) — never import it as one.
+const NON_FOOD = new Set(["index.ts", "search-terms.ts"]);
 const files = fs
   .readdirSync(FOODS_DIR)
-  .filter((f) => f.endsWith(".ts") && f !== "index.ts")
+  .filter((f) => f.endsWith(".ts") && !NON_FOOD.has(f))
   .sort();
 
 const toIdent = (file: string) =>

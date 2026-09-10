@@ -34,6 +34,7 @@ import cherries from "./cherries";
 import chiaSeeds from "./chia-seeds";
 import chicken from "./chicken";
 import chickpeas from "./chickpeas";
+import chineseYam from "./chinese-yam";
 import cilantro from "./cilantro";
 import cinnamon from "./cinnamon";
 import clementine from "./clementine";
@@ -190,6 +191,7 @@ export const ZH_FOODS: Record<string, FoodL10n> = {
   [chiaSeeds.slug]: chiaSeeds,
   [chicken.slug]: chicken,
   [chickpeas.slug]: chickpeas,
+  [chineseYam.slug]: chineseYam,
   [cilantro.slug]: cilantro,
   [cinnamon.slug]: cinnamon,
   [clementine.slug]: clementine,

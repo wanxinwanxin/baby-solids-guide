@@ -42,6 +42,7 @@ export const FOOD_SEARCH_TERMS: Record<string, string[]> = {
   "chia-seeds": ["chia seeds","chia","chia pudding","奇亚籽","奇雅籽","奇亚布丁"],
   "chicken": ["chicken","鸡肉","鸡腿肉","鸡腿"],
   "chickpeas": ["chickpeas","garbanzo beans","鹰嘴豆","鸡心豆","三角豆"],
+  "chinese-yam": ["chinese yam","shan yao","nagaimo","mountain yam","huai shan","山药","淮山","淮山药","怀山药","长山药"],
   "cilantro": ["cilantro","coriander leaf","fresh coriander","香菜","芫荽","胡荽"],
   "cinnamon": ["cinnamon","ground cinnamon","肉桂","肉桂粉","玉桂"],
   "clementine": ["clementine","mandarin","tangerine","satsuma","小柑橘","橘子","蜜橘","砂糖橘"],

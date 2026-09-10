@@ -45,6 +45,8 @@ describe("app-wide search", () => {
       ["山芋", "sweet-potato"],
       ["奇异果", "kiwi"],
       ["猕猴桃", "kiwi"],
+      ["山药", "chinese-yam"],
+      ["淮山", "chinese-yam"],
     ] as const) {
       expect(searchEntries(en, q)[0]?.href, q).toBe(`/foods/${slug}`);
     }
