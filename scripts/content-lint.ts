@@ -32,6 +32,10 @@ async function main() {
     return;
   }
 
+  // Generated cross-language search terms must cover every food, or a newly
+  // added food is unsearchable by its Chinese name. Run `npm run gen:search-terms`.
+  const { FOOD_SEARCH_TERMS } = await import("../content/foods/search-terms");
+
   const slugs = new Set<string>();
   const allergensCovered = new Set<string>();
   let ironRichCount = 0;
@@ -49,6 +53,10 @@ async function main() {
 
     if (slugs.has(f.slug)) errors.push(`${label}: duplicate slug`);
     slugs.add(f.slug);
+
+    if (!FOOD_SEARCH_TERMS[f.slug]?.length) {
+      errors.push(`${label}: missing search terms — run \`npm run gen:search-terms\``);
+    }
 
     if (f.commonAllergen) allergensCovered.add(f.commonAllergen);
     if (f.ironRich) ironRichCount++;

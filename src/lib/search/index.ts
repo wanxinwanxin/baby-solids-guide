@@ -1,4 +1,5 @@
 import { allFoods } from "../../../content/foods";
+import { FOOD_SEARCH_TERMS } from "../../../content/foods/search-terms";
 import { allRecipes } from "../../../content/recipes";
 import { allGuides } from "../../../content/guides";
 import { allergenPrograms } from "../../../content/allergens";
@@ -173,8 +174,9 @@ export function buildSearchIndex(locale: Locale, zh: ZhOverlays | null): SearchE
   for (const f of allFoods) {
     const overlay = zh?.foods[f.slug];
     const name = (locale === "zh" && overlay?.name) || f.name;
-    const alt = [...f.aliases];
-    if (overlay) alt.push(overlay.name, ...(overlay.aliases ?? []));
+    // Every common name in both languages is always searchable, whatever the
+    // UI locale — a Chinese user on the English UI still finds 番茄 / 土豆.
+    const alt = [...(FOOD_SEARCH_TERMS[f.slug] ?? f.aliases)];
     if (name !== f.name) alt.push(f.name);
     entries.push({ href: `/foods/${f.slug}`, name, alt, group: "food", emoji: f.emoji });
   }

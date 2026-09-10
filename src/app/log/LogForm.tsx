@@ -4,6 +4,7 @@ import Link from"next/link";
 import { useRouter, useSearchParams } from"next/navigation";
 import { useMemo, useState } from"react";
 import type { AgeBand } from"@/content-schema/food";
+import { FOOD_SEARCH_TERMS } from"../../../content/foods/search-terms";
 import { bandForAgeMonths, todayIso } from"@/lib/food-utils";
 import { correctedAgeMonths } from"@/lib/age";
 import { onsetForElapsed } from"@/lib/checkins";
@@ -105,8 +106,15 @@ export function LogForm() {
   const matches = useMemo(() => {
     const q = foodQuery.trim().toLowerCase();
     if (!q) return [];
+    // Match any common name in either language (see content/foods/search-terms),
+    // so 番茄 / 土豆 / 奇异果 find the food whatever the UI language is.
     return foods
-      .filter((f) => f.name.toLowerCase().includes(q) || f.slug.includes(q))
+      .filter(
+        (f) =>
+          f.name.toLowerCase().includes(q) ||
+          f.slug.includes(q) ||
+          (FOOD_SEARCH_TERMS[f.slug] ?? f.aliases).some((t) => t.toLowerCase().includes(q)),
+      )
       .slice(0, 8);
   }, [foodQuery, foods]);
 

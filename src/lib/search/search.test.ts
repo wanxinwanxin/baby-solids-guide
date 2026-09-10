@@ -34,6 +34,22 @@ describe("app-wide search", () => {
     expect(hits[0].name).toBe(ZH_FOODS["banana"].name);
   });
 
+  it("finds a food by any of its Chinese names even in the English locale", () => {
+    // The RedNote feedback: 番茄/西红柿, 土豆/马铃薯, 红薯/山芋, 奇异果/猕猴桃.
+    for (const [q, slug] of [
+      ["番茄", "tomato"],
+      ["西红柿", "tomato"],
+      ["土豆", "potato"],
+      ["马铃薯", "potato"],
+      ["红薯", "sweet-potato"],
+      ["山芋", "sweet-potato"],
+      ["奇异果", "kiwi"],
+      ["猕猴桃", "kiwi"],
+    ] as const) {
+      expect(searchEntries(en, q)[0]?.href, q).toBe(`/foods/${slug}`);
+    }
+  });
+
   it("an exact feature name beats content whose name merely starts with it", () => {
     // "plan" must rank the Plan page above plantain.
     expect(searchEntries(en, "plan")[0].href).toBe("/plan");
