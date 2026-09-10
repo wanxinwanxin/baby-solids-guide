@@ -148,9 +148,14 @@ export function JournalEntry({
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span aria-hidden="true">{ENJOYMENT_EMOJI[log.enjoyment]}</span>
-            <Link href={`/foods/${log.foodSlug}`} className="font-medium underline-offset-2 hover:underline">
-              {foodName}
-            </Link>
+            {/* Custom foods have no food page, so they render as plain text. */}
+            {log.foodSlug.startsWith("custom:") ? (
+              <span className="font-medium">{foodName}</span>
+            ) : (
+              <Link href={`/foods/${log.foodSlug}`} className="font-medium underline-offset-2 hover:underline">
+                {foodName}
+              </Link>
+            )}
             {isFirstTry && (
               <Badge variant="outline" className="border-primary/50 text-primary">
                 {j.firstTry}

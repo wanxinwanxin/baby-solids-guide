@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from"next/navigation";
 import { useMemo, useState } from"react";
 import type { AgeBand } from"@/content-schema/food";
 import { FOOD_SEARCH_TERMS } from"../../../content/foods/search-terms";
-import { bandForAgeMonths, todayIso } from"@/lib/food-utils";
+import { bandForAgeMonths, customFoodSlug, todayIso } from"@/lib/food-utils";
+import { reportFoodRequest } from"@/lib/feedback";
 import { correctedAgeMonths } from"@/lib/age";
 import { onsetForElapsed } from"@/lib/checkins";
 import { useActiveBaby, useActiveCheckIns, useHydrated } from"@/lib/hooks";
@@ -77,6 +78,8 @@ export function LogForm() {
     : null;
 
   const [foodSlug, setFoodSlug] = useState(params.get("food") ?? "");
+  // A user-added food: no content entry, so it carries just its typed name.
+  const [customName, setCustomName] = useState<string | null>(null);
   const [foodQuery, setFoodQuery] = useState("");
   const [date, setDate] = useState(todayIso());
   const [band, setBand] = useState<AgeBand | null>(null);
@@ -118,6 +121,20 @@ export function LogForm() {
       .slice(0, 8);
   }, [foodQuery, foods]);
 
+  // Custom foods the family already logged (by name) — offered for reuse so a
+  // one-off name does not become a new entry every time.
+  const allLogs = useGuideStore((s) => s.logs);
+  const knownCustomNames = useMemo(() => {
+    const names = new Map<string, string>(); // lowercase → original display
+    for (const l of allLogs) if (l.customFoodName) names.set(l.customFoodName.toLowerCase(), l.customFoodName);
+    return names;
+  }, [allLogs]);
+  const customMatches = useMemo(() => {
+    const q = foodQuery.trim().toLowerCase();
+    if (!q) return [];
+    return [...knownCustomNames.values()].filter((n) => n.toLowerCase().includes(q)).slice(0, 5);
+  }, [foodQuery, knownCustomNames]);
+
   if (!hydrated) return null;
 
   if (!baby) {
@@ -146,14 +163,22 @@ export function LogForm() {
   }
 
   async function save() {
-    if (!food || !baby) return;
+    if (!baby) return;
+    if (!food && !customName) return;
     const id = newId();
     const { photoId, failed } = await commitPhoto(photo);
     setPhotoFailed(failed);
+    const slug = food ? food.slug : customFoodSlug(customName!);
+    // A never-seen custom food is a signal that the food database is missing
+    // something — tell the owner so it can be added (best-effort, guests too).
+    if (!food && customName && !knownCustomNames.has(customName.trim().toLowerCase())) {
+      reportFoodRequest(customName.trim(), locale);
+    }
     addLog({
       id,
       babyId: baby.id,
-      foodSlug: food.slug,
+      foodSlug: slug,
+      customFoodName: food ? undefined : customName!.trim(),
       date,
       time: details.time,
       mealSlot: details.mealSlot,
@@ -179,13 +204,13 @@ export function LogForm() {
     }
   }
 
-  if (savedClean && food && baby) {
+  if (savedClean && baby && (food || customName)) {
     return (
       <div className="mx-auto max-w-lg space-y-4">
         <Alert className="border-primary/40">
           <AlertTitle className="text-base">{t.loggedNice}</AlertTitle>
           <AlertDescription>
-            {fmt(t.inTheBook, { food: food.name, name: baby.nickname })}
+            {fmt(t.inTheBook, { food: food ? food.name : customName!, name: baby.nickname })}
           </AlertDescription>
         </Alert>
         {photoFailed && (
@@ -193,7 +218,8 @@ export function LogForm() {
             <AlertDescription>{td.photoFailed}</AlertDescription>
           </Alert>
         )}
-        {!activeCheckIn && <CheckInOffer food={food} baby={baby} logId={savedClean.logId} />}
+        {/* Check-in offers key off allergen metadata a custom food lacks. */}
+        {!activeCheckIn && food && <CheckInOffer food={food} baby={baby} logId={savedClean.logId} />}
         <div className="flex gap-3">
           <Button onClick={() => router.push("/today")} className="bg-primary text-primary-foreground hover:bg-primary/85">
             {t.backToToday}
@@ -203,6 +229,7 @@ export function LogForm() {
             onClick={() => {
               setSavedClean(null);
               setFoodSlug("");
+              setCustomName(null);
               setFoodQuery("");
               setSymptoms([]);
               setGagging(false);
@@ -286,10 +313,15 @@ export function LogForm() {
       {/* 1. Food */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold">{t.foodSection}</h2>
-        {food ? (
+        {food || customName ? (
           <div className="flex items-center gap-3">
             <span className="rounded-lg border border-primary bg-secondary px-4 py-2 font-medium">
-              {food.name}
+              {food ? food.name : customName}
+              {!food && (
+                <span className="ml-2 font-data text-[11px] font-normal text-muted-foreground">
+                  {t.customTag}
+                </span>
+              )}
             </span>
             {!activeCheckIn && (
               <button
@@ -297,6 +329,7 @@ export function LogForm() {
                 className="text-sm text-muted-foreground underline underline-offset-2"
                 onClick={() => {
                   setFoodSlug("");
+                  setCustomName(null);
                   setBand(null);
                 }}
               >
@@ -319,15 +352,33 @@ export function LogForm() {
                   {f.name}
                 </Chip>
               ))}
+              {customMatches.map((n) => (
+                <Chip key={`c-${n}`} active={false} onClick={() => setCustomName(n)}>
+                  {n}
+                </Chip>
+              ))}
             </div>
+            {/* Nothing in the database matches — let the parent add it anyway. */}
+            {foodQuery.trim() && matches.length === 0 && (
+              <button
+                type="button"
+                onClick={() => setCustomName(foodQuery.trim())}
+                className="flex w-full items-center gap-2 rounded-lg border border-dashed px-4 py-2.5 text-left text-sm hover:border-primary/60"
+              >
+                <span aria-hidden="true" className="text-primary">＋</span>
+                <span>{fmt(t.addCustom, { food: foodQuery.trim() })}</span>
+              </button>
+            )}
           </div>
         )}
       </section>
 
-      {food && (
+      {(food || customName) && (
         <>
           {/* 2. How was it served — each option shows the actual prep, not
-              just an age band, so the choice is legible at a glance. */}
+              just an age band, so the choice is legible at a glance. A custom
+              food has no prep specs, so this section is content-foods only. */}
+          {food && (
           <section className="space-y-2">
             <h2 className="text-sm font-semibold">{t.prepUsed}</h2>
             <div className="space-y-2" role="radiogroup" aria-label={t.prepUsed}>
@@ -363,6 +414,13 @@ export function LogForm() {
               })}
             </div>
           </section>
+          )}
+
+          {!food && customName && (
+            <p className="rounded-lg border border-dashed px-4 py-2.5 text-sm text-muted-foreground">
+              {t.customNoPrep}
+            </p>
+          )}
 
           {/* 3. Amount */}
           <section className="space-y-2">

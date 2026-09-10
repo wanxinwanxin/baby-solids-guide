@@ -106,3 +106,29 @@ export function localIsoDate(d: Date): string {
 export function todayIso(): string {
   return localIsoDate(new Date());
 }
+
+/** Prefix marking a user-added food's slug (see ExposureLog.foodSlug). */
+export const CUSTOM_FOOD_PREFIX = "custom:";
+
+export function isCustomFoodSlug(slug: string): boolean {
+  return slug.startsWith(CUSTOM_FOOD_PREFIX);
+}
+
+/**
+ * A stable slug for a user-added food, keyed off the normalized name so the
+ * same food typed twice groups together in history and insights.
+ */
+export function customFoodSlug(name: string): string {
+  return CUSTOM_FOOD_PREFIX + name.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+/**
+ * The name to show for a logged food: the custom name a parent typed, else
+ * the content food's localized name, else the raw slug as a last resort.
+ */
+export function foodDisplayName(
+  log: { foodSlug: string; customFoodName?: string },
+  foodBySlug: Map<string, { name: string }>,
+): string {
+  return log.customFoodName ?? foodBySlug.get(log.foodSlug)?.name ?? log.foodSlug;
+}

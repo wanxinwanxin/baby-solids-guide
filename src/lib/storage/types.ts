@@ -100,7 +100,15 @@ export type FeedQuantity = { value: number; unit: AmountUnit };
 export type ExposureLog = {
   id: string;
   babyId: string;
+  /**
+   * A content food slug, or a user food as `custom:<normalized-name>`. Custom
+   * foods carry their own display name in `customFoodName` so they resolve
+   * everywhere without a content entry — they are loggable but have no food
+   * page, prep specs, or planner/insights coverage.
+   */
   foodSlug: string;
+  /** Set only for a `custom:` foodSlug — the name the parent typed. */
+  customFoodName?: string;
   date: string; // ISO date
   /**
    * Local wall-clock time the food was served, "HH:MM" (24h). Stored as a

@@ -37,6 +37,8 @@ export const exposureLogSchema = z.object({
   id: z.string().min(1),
   babyId: z.string().min(1),
   foodSlug: z.string().min(1),
+  /** Display name for a `custom:` foodSlug (a user-added food). */
+  customFoodName: z.string().min(1).max(60).optional(),
   date: isoDate,
   time: clockTime.optional(),
   mealSlot: z.enum(["breakfast", "lunch", "dinner", "snack"]).optional(),

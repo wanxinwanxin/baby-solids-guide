@@ -45,6 +45,12 @@ export const logFormMsgs = {
   foodSection: { en: "Food", zh: "食物" },
   change: { en: "change", zh: "更换" },
   searchPlaceholder: { en: "Type to search (e.g. carrot)…", zh: "输入搜索（如：胡萝卜）…" },
+  addCustom: { en: 'Add "{food}" as a custom food', zh: "把“{food}”添加为自定义食物" },
+  customTag: { en: "custom", zh: "自定义" },
+  customNoPrep: {
+    en: "A custom food logs by name only — no cut, texture, or allergen guidance. Requested it so we can add it fully.",
+    zh: "自定义食物只按名称记录，没有切法、质地或过敏原指导。已把它反馈给我们，方便后续补齐。",
+  },
   searchAria: { en: "Search food to log", zh: "搜索要记录的食物" },
   prepUsed: { en: "Prep used", zh: "所用做法" },
   howMuch: { en: "How much went in?", zh: "吃进去多少？" },

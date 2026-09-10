@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { useActiveBaby, useActiveLogs, useHydrated } from "@/lib/hooks";
-import { todayIso } from "@/lib/food-utils";
+import { foodDisplayName, todayIso } from "@/lib/food-utils";
 import { dayLabel, firstTryLogIds, groupByDay } from "@/lib/journal";
 import { fmt } from "@/lib/i18n/config";
 import { useL10nFoods } from "@/lib/i18n/content-client";
@@ -50,6 +50,13 @@ export default function HistoryPage() {
     const counts = new Map<string, number>();
     for (const l of logs) counts.set(l.foodSlug, (counts.get(l.foodSlug) ?? 0) + 1);
     return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12);
+  }, [logs]);
+
+  // Custom foods carry their name on the log, not in the content database.
+  const customNameBySlug = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const l of logs) if (l.customFoodName) m.set(l.foodSlug, l.customFoodName);
+    return m;
   }, [logs]);
 
   if (!hydrated) return null;
@@ -198,7 +205,7 @@ export default function HistoryPage() {
                       <JournalEntry
                         key={log.id}
                         log={log}
-                        foodName={foodBySlug.get(log.foodSlug)?.name ?? log.foodSlug}
+                        foodName={foodDisplayName(log, foodBySlug)}
                         isFirstTry={firstTryIds.has(log.id)}
                       />
                     ))}
@@ -213,7 +220,7 @@ export default function HistoryPage() {
             <div className="flex flex-wrap gap-2">
               {foodCounts.map(([slug, n]) => (
                 <Badge key={slug} variant="outline">
-                  {foodBySlug.get(slug)?.name ?? slug} × {n}
+                  {foodBySlug.get(slug)?.name ?? customNameBySlug.get(slug) ?? slug} × {n}
                 </Badge>
               ))}
             </div>
