@@ -3,11 +3,16 @@
   "name": "OpenSolids — baby solids guide",
   "short_name": "OpenSolids",
   "description": "Free, science-based guide for starting your baby on solid foods.",
+  "lang": "en",
+  "dir": "ltr",
   "start_url": "/today",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone"],
+  "orientation": "portrait",
   "background_color": "#FBF8F3",
   "theme_color": "#1E7A52",
+  "categories": ["health", "lifestyle", "medical"],
   "icons": [
     {
       "src": "/icon.svg",
@@ -32,6 +37,23 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Log a food",
+      "short_name": "Log",
+      "url": "/log"
+    },
+    {
+      "name": "Today's plan",
+      "short_name": "Today",
+      "url": "/today"
+    },
+    {
+      "name": "Sleep windows",
+      "short_name": "Sleep",
+      "url": "/sleep"
     }
   ]
 }

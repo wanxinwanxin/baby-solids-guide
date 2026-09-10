@@ -4,6 +4,7 @@ import { useEffect, useState } from"react";
 import { useSession } from"@/lib/auth-client";
 import { useMsgs } from"@/lib/i18n/LocaleProvider";
 import { pushOptInMsgs } from"@/lib/i18n/messages/push-opt-in";
+import { isIosDevice, isStandaloneDisplay } from"@/components/InstallPrompt";
 
 function urlBase64ToUint8Array(base64: string): Uint8Array {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
@@ -18,13 +19,21 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
 export function PushOptIn() {
   const t = useMsgs(pushOptInMsgs);
   const { data: session } = useSession();
-  const [state, setState] = useState<"unknown" | "unsupported" | "off" | "on" | "denied">("unknown");
+  const [state, setState] = useState<
+    "unknown" | "unsupported" | "off" | "on" | "denied" | "ios-needs-install"
+  >("unknown");
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       await Promise.resolve(); // defer past the synchronous effect body
       if (cancelled) return;
+      // On iOS, web push only works once the app is installed to the home
+      // screen. Tell the parent that instead of silently showing nothing.
+      if (isIosDevice(navigator) && !isStandaloneDisplay(window)) {
+        setState("ios-needs-install");
+        return;
+      }
       if (
         !("serviceWorker"in navigator) ||
         !("PushManager"in window) ||
@@ -51,6 +60,9 @@ export function PushOptIn() {
   }, []);
 
   if (!session || state === "unknown" || state === "unsupported" || state === "denied") return null;
+  if (state === "ios-needs-install") {
+    return <p className="text-xs text-muted-foreground">{t.iosInstallFirst}</p>;
+  }
   if (state === "on") {
     return <p className="text-xs text-muted-foreground">{t.on}</p>;
   }

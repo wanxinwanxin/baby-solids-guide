@@ -211,8 +211,8 @@ export function AppNav() {
   const PRIMARY = caregiver ? caregiverLinks(t) : primaryLinks(t);
   const pathname = usePathname();
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-4xl items-center gap-1 px-3">
+    <header className="sticky top-0 z-40 border-b bg-background/95 pt-[env(safe-area-inset-top)] backdrop-blur">
+      <div className="mx-auto flex h-14 max-w-4xl items-center gap-1 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))]">
         <Link
           href="/"
           aria-label={BRAND}

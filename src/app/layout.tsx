@@ -43,6 +43,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const viewport: Viewport = {
   themeColor: "#1E7A52",
+  // Draw under the notch and home indicator when installed to the home screen,
+  // so the app reaches every screen edge like a native one. This is also what
+  // makes the `env(safe-area-inset-*)` values non-zero — the fixed chrome
+  // (header, tab bar) reads them to keep its content clear of those areas.
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

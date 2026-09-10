@@ -135,7 +135,7 @@ export function MobileTabBar() {
       data-tour="tabbar"
       className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
-      <div className="mx-auto flex max-w-md items-center px-2">
+      <div className="mx-auto flex max-w-md items-center pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))]">
         {caregiver ? (
           CAREGIVER_TABS.map(tab)
         ) : (
