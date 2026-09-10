@@ -47,6 +47,18 @@ const caregiverLinks = (t: NavMsgs) => [
   { href: "/safety", label: t.navSafety },
 ];
 
+/**
+ * Full day view promotes the whole-baby surfaces (sleep, bottles/diapers) into
+ * the primary nav so they are no longer buried under "More".
+ */
+const fullDayLinks = (t: NavMsgs) => [
+  { href: "/today", label: t.navToday },
+  { href: "/sleep", label: t.navSleepShort },
+  { href: "/care", label: t.navCareShort },
+  { href: "/history", label: t.navHistory },
+  { href: "/plan", label: t.navPlan },
+];
+
 const moreLinks = (t: NavMsgs) => [
   { href: "/learn", label: t.navLearn },
   { href: "/allergens", label: t.navAllergens },
@@ -208,7 +220,8 @@ export function AppNav() {
   // The persisted flag is read only after hydration so the first client
   // render matches the server render.
   const caregiver = useGuideStore((s) => s.caregiverMode) && hydrated;
-  const PRIMARY = caregiver ? caregiverLinks(t) : primaryLinks(t);
+  const fullDay = useGuideStore((s) => s.fullDayMode) && hydrated;
+  const PRIMARY = caregiver ? caregiverLinks(t) : fullDay ? fullDayLinks(t) : primaryLinks(t);
   const pathname = usePathname();
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 pt-[env(safe-area-inset-top)] backdrop-blur">

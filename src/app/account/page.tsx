@@ -6,6 +6,7 @@ import { authClient, signIn, signOut, signUp, useSession } from"@/lib/auth-clien
 import { useAuthEnabled, useSyncStatus } from"@/components/SyncProvider";
 import { useHydrated } from"@/lib/hooks";
 import { CaregiverModeCard } from"@/components/CaregiverModeCard";
+import { FullDayModeCard } from"@/components/FullDayModeCard";
 import { FamilyCard } from"@/components/FamilyCard";
 import { InstallPrompt } from"@/components/InstallPrompt";
 import { Alert, AlertDescription, AlertTitle } from"@/components/ui/alert";
@@ -51,6 +52,7 @@ export default function AccountPage() {
           </AlertDescription>
         </Alert>
         <CaregiverModeCard />
+        <FullDayModeCard />
       </div>
     );
   }
@@ -141,6 +143,7 @@ export default function AccountPage() {
         </Card>
         <FamilyCard myUserId={session.user.id} />
         <CaregiverModeCard />
+        <FullDayModeCard />
         <InstallPrompt persistent />
         <div className="border-t pt-4">
           {confirmDelete ? (
@@ -239,6 +242,7 @@ export default function AccountPage() {
       <p className="text-xs text-muted-foreground">{t.firstSignInNote}</p>
 
       <CaregiverModeCard />
+        <FullDayModeCard />
       <InstallPrompt persistent />
     </div>
   );

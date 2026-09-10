@@ -12,6 +12,9 @@ export const chromeMsgs = {
   navRead: { en: "Read to baby", zh: "读给宝宝" },
   navSleep: { en: "Sleep windows", zh: "睡眠时段" },
   navCare: { en: "Bottles & diapers", zh: "奶瓶与尿布" },
+  // Short forms for the nav/tab chrome, where the full names overflow.
+  navSleepShort: { en: "Sleep", zh: "睡眠" },
+  navCareShort: { en: "Care", zh: "护理" },
   navAllergens: { en: "Allergens", zh: "过敏原" },
   navHistory: { en: "History", zh: "历史" },
   navInsights: { en: "Insights", zh: "洞察" },

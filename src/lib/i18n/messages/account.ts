@@ -125,3 +125,17 @@ export const caregiverCardMsgs = {
   toggleOn: { en: "Switch to caregiver view", zh: "切换到看护人视图" },
   toggleOff: { en: "Show the full app", zh: "显示完整应用" },
 } satisfies Msgs;
+
+export const fullDayCardMsgs = {
+  title: { en: "Full day view", zh: "全天视图" },
+  body: {
+    en: "Track more than solids? Full day view turns Today into a whole-day dashboard — solids, formula, diapers, sleep, and reading, all together — and promotes them into the tabs. It changes only this device.",
+    zh: "不只想记辅食？全天视图会把“今日”变成一整天的面板——辅食、配方奶、尿布、睡眠、读书都在一起——并把它们提升到标签栏。此设置只影响这台设备。",
+  },
+  onNote: {
+    en: "Full day view is on for this device.",
+    zh: "这台设备已开启全天视图。",
+  },
+  toggleOn: { en: "Switch to full day view", zh: "切换到全天视图" },
+  toggleOff: { en: "Back to the solids app", zh: "返回辅食应用" },
+} satisfies Msgs;

@@ -64,6 +64,13 @@ export type GuideState = {
    * the day's foods with their prep, and the nav hides the planning surfaces.
    */
   caregiverMode: boolean;
+  /**
+   * The "Full day" view (2026-09-10) — the inverse of caregiver mode. When on,
+   * this device treats the whole baby's day equally (solids, formula, diapers,
+   * sleep, reading) instead of a solids-first app. Device-local like
+   * caregiverMode; the two are mutually exclusive.
+   */
+  fullDayMode: boolean;
 
   saveBaby: (b: BabyProfile) => void;
   setActiveBaby: (id: string) => void;
@@ -92,6 +99,7 @@ export type GuideState = {
   /** Bring every hidden note back. */
   restoreNotices: () => void;
   setCaregiverMode: (on: boolean) => void;
+  setFullDayMode: (on: boolean) => void;
   /** Replace local state with a server-merged snapshot (Phase 6 sync). */
   applySnapshot: (s: SyncSnapshot) => void;
   reset: () => void;
@@ -220,6 +228,7 @@ const EMPTY = {
   backupNudgeSnoozedUntil: undefined as string | undefined,
   dismissedNotices: [] as string[],
   caregiverMode: false,
+  fullDayMode: false,
 };
 
 /** v1 persisted shape → v2 (single `baby` becomes `babies[]`; overrides stamped). */
@@ -396,7 +405,14 @@ export const useGuideStore = create<GuideState>()(
 
       restoreNotices: () => set({ dismissedNotices: [] }),
 
-      setCaregiverMode: (caregiverMode) => set({ caregiverMode }),
+      // The two view modes are mutually exclusive — enabling one clears the
+      // other so a device is never both a stripped helper view and a widened
+      // full-day view at once.
+      setCaregiverMode: (caregiverMode) =>
+        set({ caregiverMode, fullDayMode: caregiverMode ? false : get().fullDayMode }),
+
+      setFullDayMode: (fullDayMode) =>
+        set({ fullDayMode, caregiverMode: fullDayMode ? false : get().caregiverMode }),
 
       reset: () => set({ ...EMPTY }),
 
@@ -554,6 +570,7 @@ export const useGuideStore = create<GuideState>()(
         backupNudgeSnoozedUntil,
         dismissedNotices,
         caregiverMode,
+        fullDayMode,
       }) => ({
         babies,
         activeBabyId,
@@ -571,6 +588,7 @@ export const useGuideStore = create<GuideState>()(
         backupNudgeSnoozedUntil,
         dismissedNotices,
         caregiverMode,
+        fullDayMode,
       }),
     },
   ),
