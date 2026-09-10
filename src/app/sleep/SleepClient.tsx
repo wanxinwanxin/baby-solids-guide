@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateTimeField } from "@/components/DateTimeField";
 import { TimeConfirm } from "@/components/TimeConfirm";
+import { SleepHistory } from "@/components/SleepHistory";
 
 const MIN = 60 * 1000;
 
@@ -446,6 +447,8 @@ export function SleepClient() {
           </details>
         </CardContent>
       </Card>
+
+      <SleepHistory />
 
       <div className="space-y-1 text-xs text-muted-foreground">
         <p>{t.syncNote}</p>

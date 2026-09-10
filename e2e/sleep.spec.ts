@@ -34,6 +34,51 @@ async function completeOnboarding(page: Page, nickname = "Sleepy") {
 // The window title depends on the wall clock: an evening run predicts bedtime.
 const WINDOW_TITLE = /^(Next nap window|Bedtime window)$/;
 
+/** Seed several past days of naps + night sleep into the synced store. */
+async function seedSleepHistory(page: Page) {
+  await page.evaluate(() => {
+    const raw = JSON.parse(localStorage.getItem("opensolids-v1")!);
+    const babyId = raw.state.babies[0].id;
+    const at = (daysAgo: number, h: number, m = 0) => {
+      const d = new Date();
+      d.setDate(d.getDate() - daysAgo);
+      d.setHours(h, m, 0, 0);
+      return d.toISOString();
+    };
+    const sessions: unknown[] = [];
+    let n = 0;
+    for (let day = 1; day <= 6; day++) {
+      // A consistent shape: morning nap, midday nap, late nap, night sleep.
+      sessions.push({ id: `sd${n++}`, babyId, start: at(day, 9, 0), end: at(day, 10, 0) });
+      sessions.push({ id: `sd${n++}`, babyId, start: at(day, 12, 30), end: at(day, 14, 0) });
+      sessions.push({ id: `sd${n++}`, babyId, start: at(day, 16, 30), end: at(day, 17, 15) });
+      sessions.push({ id: `sd${n++}`, babyId, start: at(day, 19, 30), end: at(day - 1, 6, 30) });
+    }
+    raw.state.sleepSessions = sessions;
+    localStorage.setItem("opensolids-v1", JSON.stringify(raw));
+  });
+  await page.reload();
+}
+
+test("sleep history shows per-day totals and a when-baby-slept timeline", async ({ page }) => {
+  await completeOnboarding(page);
+  await seedSleepHistory(page);
+  await page.goto("/sleep");
+
+  await expect(page.getByText("Sleep history")).toBeVisible();
+  await expect(page.getByText(/Last \d+ days · about .+ of sleep a day/)).toBeVisible();
+  await expect(page.getByText("Hours per day")).toBeVisible();
+  await expect(page.getByText("When baby slept")).toBeVisible();
+  await expect(page.getByText("Nap", { exact: true })).toBeVisible();
+  await expect(page.getByText("Night", { exact: true })).toBeVisible();
+  // One timeline row per day with sleep. Six seeded days of naps, and the
+  // night sessions carry a morning block into today too → seven dated rows.
+  const rows = page.getByRole("img", { name: /of sleep across \d+ sleeps/ });
+  await expect(rows).toHaveCount(7);
+
+  await page.screenshot({ path: "test-results/sleep-history.png", fullPage: true });
+});
+
 test("predicts a window from a wake anchor and logs a session", async ({ page }) => {
   await completeOnboarding(page);
 

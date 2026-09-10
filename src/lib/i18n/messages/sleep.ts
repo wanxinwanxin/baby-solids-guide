@@ -111,6 +111,25 @@ export const sleepMsgs = {
   yesDelete: { en: "Yes, delete", zh: "确认删除" },
   keepEntry: { en: "Keep", zh: "保留" },
 
+  // History
+  historyTitle: { en: "Sleep history", zh: "睡眠历史" },
+  historySummary: {
+    en: "Last {n} days · about {dur} of sleep a day · ~{naps} sleeps a day.",
+    zh: "最近 {n} 天 · 平均每天约睡 {dur} · 每天约 {naps} 次。",
+  },
+  historyPerDayTotals: { en: "Hours per day", zh: "每天睡眠时长" },
+  historyTimeline: { en: "When baby slept", zh: "入睡时段" },
+  historyChartAria: {
+    en: "Bar chart of total sleep hours per day",
+    zh: "每天睡眠总时长柱状图",
+  },
+  historyRowAria: {
+    en: "{date}: {dur} of sleep across {n} sleeps",
+    zh: "{date}：共睡 {dur}，分 {n} 次",
+  },
+  legendNap: { en: "Nap", zh: "小睡" },
+  legendNight: { en: "Night", zh: "夜间" },
+
   // Notes
   syncNote: {
     en: "With a signed-in family account, the sleep log and predictions stay in step on every member's device.",
