@@ -139,6 +139,22 @@ export const pageViews = pgTable(
   (t) => [primaryKey({ columns: [t.day, t.path] })],
 );
 
+/**
+ * Feedback + food requests (2026-09-09). Written by POST /api/feedback for
+ * anyone (guests too), so user_id is a plain nullable column, not a FK — a
+ * guest has no user row, and feedback should outlive an account deletion.
+ */
+export const feedback = pgTable("feedback", {
+  id: uuid("id").primaryKey(),
+  category: text("category").notNull(),
+  message: text("message").notNull(),
+  page: text("page"),
+  locale: text("locale"),
+  userId: text("user_id"),
+  email: text("email"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const reminders = pgTable("reminders", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id")

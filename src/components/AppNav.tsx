@@ -11,6 +11,7 @@ import { BRAND } from "@/lib/brand";
 import { BrandMark } from "@/components/BrandMark";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { SearchButton } from "@/components/SearchButton";
+import { FeedbackButton } from "@/components/FeedbackButton";
 import { startTour } from "@/components/Tour";
 import { useMsgs } from "@/lib/i18n/LocaleProvider";
 import { chromeMsgs } from "@/lib/i18n/messages/chrome";
@@ -242,6 +243,7 @@ export function AppNav() {
         <div className="ml-auto flex items-center gap-2">
           <BabySwitcher />
           <SearchButton />
+          <FeedbackButton />
           {/* The bottom tab bar has room for four tabs either side of the log
               button, so Foods lives here on mobile — a reference people look
               things up in, one tap from every page. */}

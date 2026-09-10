@@ -5,6 +5,7 @@ import { getLocale } from "@/lib/i18n/server";
 import { chromeMsgs } from "@/lib/i18n/messages/chrome";
 import { moreMsgs } from "@/lib/i18n/messages/more";
 import { TourButton } from "./TourButton";
+import { FeedbackMoreButton } from "./FeedbackMoreButton";
 
 /**
  * The phone's "More" menu, as a page: the mobile tab bar links here, so every
@@ -72,6 +73,7 @@ export default async function MorePage() {
         </h2>
         {extras.map(row)}
         <TourButton />
+        <FeedbackMoreButton />
       </section>
     </div>
   );
