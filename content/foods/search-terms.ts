@@ -127,6 +127,7 @@ export const FOOD_SEARCH_TERMS: Record<string, string[]> = {
   "quinoa": ["quinoa","藜麦"],
   "radish": ["radish","red radish","daikon","萝卜","樱桃萝卜","小红萝卜","白萝卜"],
   "raspberry": ["raspberry","树莓","覆盆子","红树莓"],
+  "rice-cereal": ["iron-fortified rice cereal","infant rice cereal","baby rice cereal","rice porridge cereal","强化铁婴儿米粉","婴儿米粉","米糊","高铁米粉","大米米粉"],
   "rice-noodles": ["rice noodles","rice sticks","pho noodles","vermicelli","米粉（米线）","米线","河粉","越南粉"],
   "rice": ["rice","米饭","大米","白米饭"],
   "ricotta": ["ricotta","ricotta cheese","里科塔奶酪","意大利乳清奶酪","瑞可塔"],

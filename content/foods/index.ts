@@ -119,6 +119,7 @@ import pumpkin from "./pumpkin";
 import quinoa from "./quinoa";
 import radish from "./radish";
 import raspberry from "./raspberry";
+import riceCereal from "./rice-cereal";
 import riceNoodles from "./rice-noodles";
 import rice from "./rice";
 import ricotta from "./ricotta";
@@ -279,6 +280,7 @@ export const allFoods: Food[] = [
   quinoa,
   radish,
   raspberry,
+  riceCereal,
   riceNoodles,
   rice,
   ricotta,
