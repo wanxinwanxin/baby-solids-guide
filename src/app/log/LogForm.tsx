@@ -15,6 +15,7 @@ import { clockNow } from"@/lib/journal";
 import {
   commitPhoto,
   LogDetailFields,
+  PhotoField,
   type LogDetails,
   type PhotoState,
 } from"@/components/journal/LogDetailFields";
@@ -486,6 +487,12 @@ export function LogForm() {
             )}
           </section>
 
+          {/* Photo — surfaced on its own (not under "Details"), because a meal
+              photo is a common, wanted action and was too easy to miss. */}
+          <section className="space-y-2">
+            <PhotoField photo={photo} onChange={setPhoto} />
+          </section>
+
           {/* Details — opt-in expansion, mirroring the symptoms pattern */}
           <section className="space-y-2">
             <button
@@ -496,14 +503,7 @@ export function LogForm() {
             >
               {showDetails ? "▾" : "▸"} {td.detailsToggle}
             </button>
-            {showDetails && (
-              <LogDetailFields
-                value={details}
-                onChange={setDetails}
-                photo={photo}
-                onPhotoChange={setPhoto}
-              />
-            )}
+            {showDetails && <LogDetailFields value={details} onChange={setDetails} />}
           </section>
 
           <div className="flex items-center gap-3">

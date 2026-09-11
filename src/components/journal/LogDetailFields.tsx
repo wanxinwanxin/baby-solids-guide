@@ -81,16 +81,56 @@ function PhotoPreview({ photo, alt }: { photo: PhotoState; alt: string }) {
   return <img src={url} alt={alt} className="size-20 rounded-lg border object-cover" />;
 }
 
+/**
+ * The photo control on its own, so it can sit prominently in the log form
+ * (not buried under "Details") and still be reused in the journal editor.
+ * A meal photo is a common ask, so it should be one obvious tap.
+ */
+export function PhotoField({
+  photo,
+  onChange,
+}: {
+  photo: PhotoState;
+  onChange: (next: PhotoState) => void;
+}) {
+  const t = useMsgs(logDetailMsgs);
+  return (
+    <div className="text-sm">
+      <span className="mb-1 block font-medium">{t.photoLabel}</span>
+      <div className="flex items-center gap-3">
+        <PhotoPreview photo={photo} alt={t.photoLabel} />
+        <div className="flex flex-wrap gap-2">
+          <label className="inline-flex min-h-11 cursor-pointer items-center rounded-lg border px-3 py-2 text-sm font-medium hover:border-primary/60">
+            {photo.kind === "none" ? t.addPhoto : t.replacePhoto}
+            <input
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) onChange({ kind: "new", file: f });
+                e.target.value = "";
+              }}
+            />
+          </label>
+          {photo.kind !== "none" && (
+            <Button type="button" variant="outline" size="sm" onClick={() => onChange({ kind: "none" })}>
+              {t.removePhoto}
+            </Button>
+          )}
+        </div>
+      </div>
+      <p className="mt-1.5 text-xs text-muted-foreground">{t.photoLocalOnly}</p>
+    </div>
+  );
+}
+
 export function LogDetailFields({
   value,
   onChange,
-  photo,
-  onPhotoChange,
 }: {
   value: LogDetails;
   onChange: (next: LogDetails) => void;
-  photo: PhotoState;
-  onPhotoChange: (next: PhotoState) => void;
 }) {
   const locale = useLocale();
   const t = useMsgs(logDetailMsgs);
@@ -188,34 +228,6 @@ export function LogDetailFields({
           className="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
         />
       </label>
-
-      <div className="text-sm">
-        <span className="mb-1 block font-medium">{t.photoLabel}</span>
-        <div className="flex items-center gap-3">
-          <PhotoPreview photo={photo} alt={t.photoLabel} />
-          <div className="flex flex-wrap gap-2">
-            <label className="inline-flex min-h-11 cursor-pointer items-center rounded-lg border px-3 py-2 text-sm font-medium hover:border-primary/60">
-              {photo.kind === "none" ? t.addPhoto : t.replacePhoto}
-              <input
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) onPhotoChange({ kind: "new", file: f });
-                  e.target.value = "";
-                }}
-              />
-            </label>
-            {photo.kind !== "none" && (
-              <Button type="button" variant="outline" size="sm" onClick={() => onPhotoChange({ kind: "none" })}>
-                {t.removePhoto}
-              </Button>
-            )}
-          </div>
-        </div>
-        <p className="mt-1.5 text-xs text-muted-foreground">{t.photoLocalOnly}</p>
-      </div>
     </div>
   );
 }

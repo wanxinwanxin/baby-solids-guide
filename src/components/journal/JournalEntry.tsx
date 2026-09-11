@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import {
   commitPhoto,
   LogDetailFields,
+  PhotoField,
   type LogDetails,
   type PhotoState,
 } from "./LogDetailFields";
@@ -227,12 +228,8 @@ export function JournalEntry({
               ))}
             </div>
           </div>
-          <LogDetailFields
-            value={details}
-            onChange={setDetails}
-            photo={photo}
-            onPhotoChange={setPhoto}
-          />
+          <PhotoField photo={photo} onChange={setPhoto} />
+          <LogDetailFields value={details} onChange={setDetails} />
           {photoFailed && <p className="text-xs text-destructive">{td.photoFailed}</p>}
           <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" onClick={() => void saveEdits()}>

@@ -194,7 +194,8 @@ test.describe("Feeding journal (granular history)", () => {
   test("attaches a photo, keeps it on the device, and survives a reload", async ({ page }) => {
     await completeOnboarding(page);
     await page.goto("/log?food=carrot");
-    await page.getByRole("button", { name: /Add details/ }).click();
+    // The photo control is now surfaced in the log flow — no need to open
+    // "Details" first.
 
     // A real 1x1 PNG: the capture path decodes it through createImageBitmap
     // and re-encodes via canvas, so a fake buffer wouldn't exercise it.
