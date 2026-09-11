@@ -41,6 +41,7 @@ export function FeedbackButton() {
         type="button"
         aria-label={t.open}
         title={t.open}
+        data-tour="feedback"
         onClick={() => {
           setPrefill({});
           setOpen(true);

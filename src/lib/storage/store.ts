@@ -77,6 +77,13 @@ export type GuideState = {
    * caregiverMode; the two are mutually exclusive.
    */
   fullDayMode: boolean;
+  /**
+   * Whether this device has seen the one-time "what's new" spotlight (feedback
+   * button + Full day view). Device-local; defaults true so a fresh install
+   * never sees it — the persist migration flips it false for existing users,
+   * so only people who had the app before this release get the prompt once.
+   */
+  whatsNewSeen: boolean;
 
   saveBaby: (b: BabyProfile) => void;
   setActiveBaby: (id: string) => void;
@@ -108,6 +115,7 @@ export type GuideState = {
   restoreNotices: () => void;
   setCaregiverMode: (on: boolean) => void;
   setFullDayMode: (on: boolean) => void;
+  setWhatsNewSeen: (v: boolean) => void;
   /** Replace local state with a server-merged snapshot (Phase 6 sync). */
   applySnapshot: (s: SyncSnapshot) => void;
   reset: () => void;
@@ -276,6 +284,7 @@ const EMPTY = {
   dismissedNotices: [] as string[],
   caregiverMode: false,
   fullDayMode: false,
+  whatsNewSeen: true,
 };
 
 /** v1 persisted shape → v2 (single `baby` becomes `babies[]`; overrides stamped). */
@@ -478,6 +487,8 @@ export const useGuideStore = create<GuideState>()(
       setFullDayMode: (fullDayMode) =>
         set({ fullDayMode, caregiverMode: fullDayMode ? false : get().caregiverMode }),
 
+      setWhatsNewSeen: (whatsNewSeen) => set({ whatsNewSeen }),
+
       reset: () => set({ ...EMPTY }),
 
       exportJson: () => {
@@ -590,7 +601,7 @@ export const useGuideStore = create<GuideState>()(
     }),
     {
       name: STORAGE_KEY,
-      version: 5,
+      version: 6,
       migrate: (persisted, version) => {
         let state = (
           version < 2 ? migrateV1ToV2(persisted) : persisted
@@ -637,6 +648,12 @@ export const useGuideStore = create<GuideState>()(
             // Removal is a cleanup, never a blocker.
           }
         }
+        if (version < 6) {
+          // v6 added the one-time "what's new" spotlight. Only existing users
+          // (whose store is migrating) should see it — a fresh install keeps
+          // the EMPTY default of `true` and never does.
+          state = { ...state, whatsNewSeen: false };
+        }
         return state;
       },
       storage: createJSONStorage(() =>
@@ -662,6 +679,7 @@ export const useGuideStore = create<GuideState>()(
         dismissedNotices,
         caregiverMode,
         fullDayMode,
+        whatsNewSeen,
       }) => ({
         babies,
         activeBabyId,
@@ -682,6 +700,7 @@ export const useGuideStore = create<GuideState>()(
         dismissedNotices,
         caregiverMode,
         fullDayMode,
+        whatsNewSeen,
       }),
     },
   ),

@@ -90,6 +90,7 @@ function AccountButton() {
         href="/account"
         aria-label={t.navAccount}
         title={session.user.email ?? t.navAccount}
+        data-tour="account"
         className="flex size-9 shrink-0 items-center justify-center rounded-full border border-primary/40 bg-secondary text-sm font-bold text-secondary-foreground"
       >
         {initial}
@@ -99,6 +100,7 @@ function AccountButton() {
   return (
     <Link
       href="/account"
+      data-tour="account"
       className="shrink-0 rounded-full border px-3 py-1.5 text-sm font-semibold text-foreground hover:border-primary/60 md:px-3.5 md:py-2"
     >
       {t.navSignIn}

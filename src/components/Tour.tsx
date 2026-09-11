@@ -53,10 +53,32 @@ function firstVisible(sel: string): HTMLElement | null {
   return null;
 }
 
-function TourOverlay({ onClose }: { onClose: () => void }) {
-  const t = useMsgs(tourMsgs);
+/** A spotlight step with its text already resolved to the active locale. */
+export type SpotlightStep = { sel: string; title: string; body: string };
+export type SpotlightLabels = {
+  stepLabel: string;
+  skip: string;
+  back: string;
+  next: string;
+  done: string;
+};
+
+/**
+ * The reusable spotlight overlay: dims the page and highlights one anchored
+ * control at a time. Both the walkthrough and the one-time "what's new"
+ * prompt render it with their own steps + labels.
+ */
+export function SpotlightOverlay({
+  steps: allSteps,
+  labels,
+  onClose,
+}: {
+  steps: SpotlightStep[];
+  labels: SpotlightLabels;
+  onClose: () => void;
+}) {
   // Resolve once at start: which steps have a visible anchor right now.
-  const [steps] = useState(() => STEPS.filter((s) => firstVisible(s.sel)));
+  const [steps] = useState(() => allSteps.filter((s) => firstVisible(s.sel)));
   const [i, setI] = useState(0);
   const [, setTick] = useState(0);
   const nextRef = useRef<HTMLButtonElement>(null);
@@ -89,9 +111,9 @@ function TourOverlay({ onClose }: { onClose: () => void }) {
   // If the chrome changed under us (breakpoint flip, nav re-render), bail out
   // instead of spotlighting a stale rectangle.
   useEffect(() => {
-    if (!el) onClose();
-  }, [el, onClose]);
-  if (!el) return null;
+    if (steps.length > 0 && !el) onClose();
+  }, [steps.length, el, onClose]);
+  if (steps.length === 0 || !el) return null;
 
   const r = el.getBoundingClientRect();
   const pad = 6;
@@ -118,22 +140,22 @@ function TourOverlay({ onClose }: { onClose: () => void }) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={t[step.title]}
+        aria-label={step.title}
         className="fixed space-y-2 rounded-2xl border bg-popover p-5 shadow-xl"
         style={cardStyle}
       >
         <p className="font-data text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-          {fmt(t.stepLabel, { n: i + 1, total: steps.length })}
+          {fmt(labels.stepLabel, { n: i + 1, total: steps.length })}
         </p>
-        <h2 className="text-base font-bold">{t[step.title]}</h2>
-        <p className="text-sm leading-relaxed text-muted-foreground">{t[step.body]}</p>
+        <h2 className="text-base font-bold">{step.title}</h2>
+        <p className="text-sm leading-relaxed text-muted-foreground">{step.body}</p>
         <div className="flex items-center gap-2 pt-2">
           <button
             type="button"
             onClick={onClose}
             className="rounded-full px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
           >
-            {t.skip}
+            {labels.skip}
           </button>
           <div className="ml-auto flex gap-2">
             {i > 0 && (
@@ -142,7 +164,7 @@ function TourOverlay({ onClose }: { onClose: () => void }) {
                 onClick={() => setI((n) => n - 1)}
                 className="rounded-full border px-3.5 py-1.5 text-sm font-semibold text-foreground hover:border-primary/60"
               >
-                {t.back}
+                {labels.back}
               </button>
             )}
             <button
@@ -151,7 +173,7 @@ function TourOverlay({ onClose }: { onClose: () => void }) {
               onClick={() => (i + 1 < steps.length ? setI((n) => n + 1) : onClose())}
               className="rounded-full bg-primary px-3.5 py-1.5 text-sm font-semibold text-primary-foreground hover:bg-primary-deep dark:hover:bg-primary/80"
             >
-              {i + 1 < steps.length ? t.next : t.done}
+              {i + 1 < steps.length ? labels.next : labels.done}
             </button>
           </div>
         </div>
@@ -163,6 +185,7 @@ function TourOverlay({ onClose }: { onClose: () => void }) {
 
 /** Mounted once in the root layout; renders nothing until startTour() fires. */
 export function TourController() {
+  const t = useMsgs(tourMsgs);
   const [active, setActive] = useState(false);
   const close = useCallback(() => setActive(false), []);
   useEffect(() => {
@@ -170,7 +193,16 @@ export function TourController() {
     window.addEventListener(START_EVENT, on);
     return () => window.removeEventListener(START_EVENT, on);
   }, []);
-  return active ? <TourOverlay onClose={close} /> : null;
+  if (!active) return null;
+  const steps = STEPS.map((s) => ({ sel: s.sel, title: t[s.title], body: t[s.body] }));
+  const labels: SpotlightLabels = {
+    stepLabel: t.stepLabel,
+    skip: t.skip,
+    back: t.back,
+    next: t.next,
+    done: t.done,
+  };
+  return <SpotlightOverlay steps={steps} labels={labels} onClose={close} />;
 }
 
 const neverChanges = () => () => {};
