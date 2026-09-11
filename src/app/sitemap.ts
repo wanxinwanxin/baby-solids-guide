@@ -3,6 +3,7 @@ import { allFoods } from "../../content/foods";
 import { allergenPrograms } from "../../content/allergens";
 import { allGuides } from "../../content/guides";
 import { allRecipes } from "../../content/recipes";
+import { allFamilyRecipes } from "../../content/family-recipes";
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
@@ -17,6 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/about`, priority: 0.5 },
     ...allFoods.map((f) => ({ url: `${BASE}/foods/${f.slug}`, priority: 0.7 })),
     ...allRecipes.map((r) => ({ url: `${BASE}/recipes/${r.slug}`, priority: 0.7 })),
+    ...allFamilyRecipes.map((r) => ({ url: `${BASE}/recipes/family/${r.slug}`, priority: 0.7 })),
     ...allGuides.map((g) => ({ url: `${BASE}/learn/${g.slug}`, priority: 0.7 })),
     ...allergenPrograms.map((p) => ({ url: `${BASE}/allergens/${p.id}`, priority: 0.7 })),
   ];

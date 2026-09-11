@@ -1,9 +1,10 @@
 import type { AllergenProgram, Food, Guide } from "@/content-schema/food";
-import type { Recipe } from "@/content-schema/recipe";
+import type { FamilyRecipe, Recipe } from "@/content-schema/recipe";
 import type { Locale } from "@/lib/i18n/config";
-import { mergeAllergen, mergeFood, mergeGuide, mergeRecipe } from "./l10n-merge";
+import { mergeAllergen, mergeFamilyRecipe, mergeFood, mergeGuide, mergeRecipe } from "./l10n-merge";
 import { ZH_FOODS } from "../../content/i18n/zh/foods";
 import { ZH_RECIPES } from "../../content/i18n/zh/recipes";
+import { ZH_FAMILY_RECIPES } from "../../content/i18n/zh/family-recipes";
 import { ZH_GUIDES } from "../../content/i18n/zh/guides";
 import { ZH_ALLERGENS } from "../../content/i18n/zh/allergens";
 
@@ -21,6 +22,14 @@ export function localizeFood(food: Food, locale: Locale): Food {
 
 export function localizeRecipe(recipe: Recipe, locale: Locale): Recipe {
   return locale === "zh" ? mergeRecipe(recipe, ZH_RECIPES[recipe.slug]) : recipe;
+}
+
+export function localizeFamilyRecipe(recipe: FamilyRecipe, locale: Locale): FamilyRecipe {
+  return locale === "zh" ? mergeFamilyRecipe(recipe, ZH_FAMILY_RECIPES[recipe.slug]) : recipe;
+}
+
+export function localizeFamilyRecipes(recipes: FamilyRecipe[], locale: Locale): FamilyRecipe[] {
+  return locale === "zh" ? recipes.map((r) => localizeFamilyRecipe(r, locale)) : recipes;
 }
 
 export function localizeGuide(guide: Guide, locale: Locale): Guide {

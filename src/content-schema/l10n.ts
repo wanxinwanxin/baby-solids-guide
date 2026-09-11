@@ -41,6 +41,17 @@ export type RecipeL10n = {
   storage: string;
 };
 
+export type FamilyRecipeL10n = {
+  slug: string;
+  name: string;
+  time: string;
+  serves: string;
+  ingredients: string[];
+  steps: string[];
+  whyItWorks: string;
+  tips?: string[];
+};
+
 export type GuideL10n = {
   slug: string;
   title: string;

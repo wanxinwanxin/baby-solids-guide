@@ -9,6 +9,7 @@ import path from "node:path";
 const KINDS = [
   { dir: "foods", type: "FoodL10n", constName: "ZH_FOODS", doc: "zh food overlays, keyed by slug" },
   { dir: "recipes", type: "RecipeL10n", constName: "ZH_RECIPES", doc: "zh recipe overlays, keyed by slug" },
+  { dir: "family-recipes", type: "FamilyRecipeL10n", constName: "ZH_FAMILY_RECIPES", doc: "zh family-recipe overlays, keyed by slug" },
   { dir: "guides", type: "GuideL10n", constName: "ZH_GUIDES", doc: "zh guide overlays, keyed by slug" },
   { dir: "allergens", type: "AllergenL10n", constName: "ZH_ALLERGENS", doc: "zh allergen-program overlays, keyed by allergen id" },
 ] as const;

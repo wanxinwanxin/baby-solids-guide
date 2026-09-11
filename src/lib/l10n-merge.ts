@@ -1,6 +1,6 @@
 import type { AllergenProgram, Food, Guide } from "@/content-schema/food";
-import type { Recipe } from "@/content-schema/recipe";
-import type { AllergenL10n, FoodL10n, GuideL10n, RecipeL10n } from "@/content-schema/l10n";
+import type { FamilyRecipe, Recipe } from "@/content-schema/recipe";
+import type { AllergenL10n, FamilyRecipeL10n, FoodL10n, GuideL10n, RecipeL10n } from "@/content-schema/l10n";
 
 /**
  * Pure overlay-merge functions, shared by the server localizers
@@ -58,6 +58,20 @@ export function mergeRecipe(recipe: Recipe, o: RecipeL10n | undefined): Recipe {
     steps: recipe.steps.map((s, i) => pickAt(o.steps, i) ?? s),
     whyItWorks: o.whyItWorks,
     storage: o.storage,
+  };
+}
+
+export function mergeFamilyRecipe(recipe: FamilyRecipe, o: FamilyRecipeL10n | undefined): FamilyRecipe {
+  if (!o) return recipe;
+  return {
+    ...recipe,
+    name: o.name,
+    time: o.time,
+    serves: o.serves,
+    ingredients: recipe.ingredients.map((s, i) => pickAt(o.ingredients, i) ?? s),
+    steps: recipe.steps.map((s, i) => pickAt(o.steps, i) ?? s),
+    whyItWorks: o.whyItWorks,
+    tips: recipe.tips?.map((s, i) => pickAt(o.tips ?? [], i) ?? s),
   };
 }
 

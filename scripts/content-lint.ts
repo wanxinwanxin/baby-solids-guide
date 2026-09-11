@@ -212,6 +212,27 @@ async function main() {
     errors.push(`corpus: only ${ironPairingCount} iron-pairing recipes (need ≥${IRON_PAIRING_MIN})`);
   }
 
+  // ——— Family-table recipes (school-age kids, 2026-09-11) ———
+  const FAMILY_RECIPES_MIN = Number(process.env.FAMILY_RECIPES_MIN ?? 8);
+  const { FamilyRecipeSchema } = await import("../src/content-schema/recipe");
+  const { allFamilyRecipes } = await import("../content/family-recipes");
+  const familyRecipeSlugs = new Set<string>();
+  for (const recipe of allFamilyRecipes) {
+    const rlabel = `family-recipe:${recipe.slug ?? "?"}`;
+    const parsed = FamilyRecipeSchema.safeParse(recipe);
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        errors.push(`${rlabel}: ${issue.path.join(".")} — ${issue.message}`);
+      }
+      continue;
+    }
+    if (familyRecipeSlugs.has(recipe.slug)) errors.push(`${rlabel}: duplicate slug`);
+    familyRecipeSlugs.add(recipe.slug);
+  }
+  if (allFamilyRecipes.length < FAMILY_RECIPES_MIN) {
+    errors.push(`corpus: only ${allFamilyRecipes.length} family recipes (need ≥${FAMILY_RECIPES_MIN})`);
+  }
+
   // ——— zh translation overlays (i18n) ———
   // Structural checks only: every base entry has an overlay, no orphans, and
   // every overlay array mirrors its base array length so the index-aligned
@@ -271,6 +292,24 @@ async function main() {
     for (const slug of Object.keys(ZH_RECIPES)) {
       if (!recipeSlugs.has(slug)) errors.push(`zh:recipe:${slug}: overlay has no base recipe`);
     }
+    const { ZH_FAMILY_RECIPES } = await import("../content/i18n/zh/family-recipes");
+    for (const r of allFamilyRecipes) {
+      const zl = `zh:family-recipe:${r.slug}`;
+      const o = ZH_FAMILY_RECIPES[r.slug];
+      if (!o) {
+        errors.push(`${zl}: missing zh overlay`);
+        continue;
+      }
+      if (o.slug !== r.slug) errors.push(`${zl}: overlay slug "${o.slug}" mismatch`);
+      same(zl, "ingredients", r.ingredients.length, o.ingredients.length);
+      same(zl, "steps", r.steps.length, o.steps.length);
+      if (r.tips) same(zl, "tips", r.tips.length, o.tips?.length ?? 0);
+    }
+    for (const slug of Object.keys(ZH_FAMILY_RECIPES)) {
+      if (!familyRecipeSlugs.has(slug)) {
+        errors.push(`zh:family-recipe:${slug}: overlay has no base recipe`);
+      }
+    }
     for (const g of allGuides) {
       const zl = `zh:guide:${g.slug}`;
       const o = ZH_GUIDES[g.slug];
@@ -306,7 +345,7 @@ async function main() {
   }
 
   console.log(
-    `content-lint: ${allFoods.length} foods, ${allergensCovered.size}/9 allergens, ${ironRichCount} iron-rich, ${allGuides.length} guides, ${allRecipes.length} recipes (${ironPairingCount} iron-pairing), zh overlays: ${zhCounts.foods} foods / ${zhCounts.recipes} recipes / ${zhCounts.guides} guides / ${zhCounts.allergens} allergens.`,
+    `content-lint: ${allFoods.length} foods, ${allergensCovered.size}/9 allergens, ${ironRichCount} iron-rich, ${allGuides.length} guides, ${allRecipes.length} recipes (${ironPairingCount} iron-pairing), ${allFamilyRecipes.length} family recipes, zh overlays: ${zhCounts.foods} foods / ${zhCounts.recipes} recipes / ${zhCounts.guides} guides / ${zhCounts.allergens} allergens.`,
   );
   finish(errors);
 }

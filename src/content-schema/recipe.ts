@@ -29,3 +29,27 @@ export const RecipeSchema = z.object({
 });
 
 export type Recipe = z.infer<typeof RecipeSchema>;
+
+/**
+ * Family-table recipes (2026-09-11, user request): real weeknight dishes for
+ * school-age kids and the rest of the family. A separate tier from baby
+ * recipes on purpose — ingredients are free text (amounts included), steps
+ * are real cooking, and nothing here is texture-checked or band-gated for
+ * babies. The /recipes page labels the section accordingly.
+ */
+export const FamilyRecipeSchema = z.object({
+  slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),
+  name: z.string().min(3).max(60),
+  emoji: z.string().min(1).max(8),
+  /** Hands-on-to-table time, in parent language ("20 min"). */
+  time: z.string().min(2).max(20),
+  serves: z.string().min(2).max(40),
+  /** Free text with amounts — these are not catalog food slugs. */
+  ingredients: z.array(z.string().min(3).max(120)).min(3).max(12),
+  steps: z.array(z.string().min(10).max(220)).min(2).max(8),
+  /** Why kids actually eat it, in parent language. */
+  whyItWorks: z.string().min(20).max(300),
+  tips: z.array(z.string().min(10).max(220)).max(3).optional(),
+});
+
+export type FamilyRecipe = z.infer<typeof FamilyRecipeSchema>;

@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { allRecipes } from "../../../content/recipes";
+import { allFamilyRecipes } from "../../../content/family-recipes";
 import { foodBySlug } from "../../../content/foods";
 import { Badge } from "@/components/ui/badge";
 import { getLocale } from "@/lib/i18n/server";
 import { fmt, msg, pick } from "@/lib/i18n/config";
 import { bandLabel } from "@/lib/i18n/labels";
 import { recipesMsgs, RECIPE_METHOD_MSGS } from "@/lib/i18n/messages/recipes";
-import { localizeRecipes } from "@/lib/l10n";
+import { localizeFamilyRecipes, localizeRecipes } from "@/lib/l10n";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -19,6 +20,9 @@ export default async function RecipesPage() {
   const locale = await getLocale();
   const t = pick(recipesMsgs, locale);
   const recipes = [...localizeRecipes(allRecipes, locale)].sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
+  const familyRecipes = [...localizeFamilyRecipes(allFamilyRecipes, locale)].sort((a, b) =>
     a.name.localeCompare(b.name),
   );
   return (
@@ -57,6 +61,42 @@ export default async function RecipesPage() {
           </li>
         ))}
       </ul>
+
+      <section className="space-y-4 border-t pt-8">
+        <div className="space-y-2">
+          <h2 className="font-heading text-2xl font-extrabold tracking-tight">
+            {t.familyHeading}
+            <span className="text-primary">{t.headingDot}</span>
+          </h2>
+          <p className="max-w-2xl text-[15px] leading-relaxed text-foreground/70">
+            {t.familyIntro}
+          </p>
+        </div>
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {familyRecipes.map((r) => (
+            <li key={r.slug}>
+              <Link
+                href={`/recipes/family/${r.slug}`}
+                className="flex h-full flex-col gap-3 rounded-2xl border bg-card p-4 transition-colors hover:border-primary"
+              >
+                <div aria-hidden="true" className="flex h-14 items-center text-3xl">
+                  {r.emoji}
+                </div>
+                <span className="font-heading text-lg leading-tight font-bold">{r.name}</span>
+                <p className="line-clamp-2 flex-1 text-[13px] leading-snug text-muted-foreground">
+                  {r.whyItWorks}
+                </p>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Badge variant="outline">{t.familyBadge}</Badge>
+                  <span className="font-data text-[10.5px] text-muted-foreground">
+                    {r.time} · {r.serves}
+                  </span>
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

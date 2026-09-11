@@ -28,6 +28,22 @@ export const recipesMsgs = {
   storage: { en: "Storage", zh: "储存" },
   allRecipes: { en: "All recipes →", zh: "全部食谱 →" },
   recipeFallback: { en: "Recipe", zh: "食谱" },
+  // ——— Family table (school-age kids) ———
+  familyHeading: { en: "The family table", zh: "全家餐桌" },
+  familyIntro: {
+    en: "Real weeknight dishes for school-age kids and everyone else at the table. These are regular cooking — not portioned, texture-checked, or band-gated for babies.",
+    zh: "给学龄孩子和全家人的家常菜。这部分是正常做饭——没有按宝宝月龄做质地和分量的处理。",
+  },
+  familyBadge: { en: "Big kids & family", zh: "大孩子和全家" },
+  familyBreadcrumb: { en: "Family table", zh: "全家餐桌" },
+  familyIngredients: { en: "Ingredients", zh: "食材" },
+  familyTips: { en: "Tips", zh: "小贴士" },
+  familyTime: { en: "Time", zh: "耗时" },
+  familyServes: { en: "Serves", zh: "份量" },
+  familyBabyNote: {
+    en: "Cooking for a baby too? Set aside an unseasoned portion before the salt and sauces go in, then check the food's own page for the safe form at their age.",
+    zh: "同时也要喂宝宝？在放盐和调味料之前先盛出一份原味的，再到对应食物页面查看适合月龄的安全形态。",
+  },
 } satisfies Msgs;
 
 /**
