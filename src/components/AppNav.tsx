@@ -63,6 +63,7 @@ const moreLinks = (t: NavMsgs) => [
   { href: "/learn", label: t.navLearn },
   { href: "/allergens", label: t.navAllergens },
   { href: "/insights", label: t.navInsights },
+  { href: "/gallery", label: t.navGallery },
   { href: "/safety", label: t.navSafety },
 ];
 

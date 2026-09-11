@@ -23,6 +23,10 @@ export const moreMsgs = {
   descLearn: { en: "Short guides on starting solids", zh: "辅食入门短指南" },
   descAllergens: { en: "Introduce the top 9 allergens on a schedule", zh: "按计划引入九大过敏原" },
   descInsights: { en: "Progress, variety, and patterns from your logs", zh: "从记录中看进度、多样性和规律" },
+  descGallery: {
+    en: "Light up every food baby has cleared, and earn badges",
+    zh: "点亮宝宝吃过的每一种食物，收集成就徽章",
+  },
   descSafety: { en: "Gagging vs. choking, and what to do", zh: "干呕与窒息的分辨和处理" },
   descRead: { en: "Rhymes and 古诗 to read aloud, with pinyin", zh: "童谣与古诗，带拼音朗读" },
   descSleep: {

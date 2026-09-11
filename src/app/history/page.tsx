@@ -8,6 +8,7 @@ import { dayLabel, firstTryLogIds, groupByDay } from "@/lib/journal";
 import { fmt } from "@/lib/i18n/config";
 import { useL10nFoods } from "@/lib/i18n/content-client";
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
+import { galleryMsgs } from "@/lib/i18n/messages/gallery";
 import { historyMsgs } from "@/lib/i18n/messages/history";
 import { journalMsgs } from "@/lib/i18n/messages/journal";
 import { useGuideStore } from "@/lib/storage/store";
@@ -27,6 +28,7 @@ export default function HistoryPage() {
   const locale = useLocale();
   const t = useMsgs(historyMsgs);
   const j = useMsgs(journalMsgs);
+  const g = useMsgs(galleryMsgs);
   const { foodBySlug } = useL10nFoods();
   const fileRef = useRef<HTMLInputElement>(null);
   const [importMessage, setImportMessage] = useState<string | null>(null);
@@ -104,6 +106,11 @@ export default function HistoryPage() {
               })}
             </p>
           )}
+          <p className="mt-0.5 text-sm">
+            <Link href="/gallery" className="text-primary underline underline-offset-2">
+              🏅 {g.title} →
+            </Link>
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button

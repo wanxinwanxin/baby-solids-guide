@@ -18,6 +18,7 @@ export const chromeMsgs = {
   navAllergens: { en: "Allergens", zh: "过敏原" },
   navHistory: { en: "History", zh: "历史" },
   navInsights: { en: "Insights", zh: "洞察" },
+  navGallery: { en: "Food gallery", zh: "食物图鉴" },
   navSafety: { en: "Safety", zh: "安全" },
   navEmergency: { en: "Emergency", zh: "紧急" },
   navLog: { en: "+ Log", zh: "+ 记录" },

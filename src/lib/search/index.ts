@@ -99,6 +99,12 @@ const FEATURES: Feature[] = [
     keywords: ["stats", "charts", "progress", "variety", "统计", "图表", "进度"],
   },
   {
+    href: "/gallery",
+    en: "Food gallery",
+    zh: "食物图鉴",
+    keywords: ["unlock", "collection", "badges", "achievements", "图鉴", "解锁", "成就", "徽章", "排敏"],
+  },
+  {
     href: "/safety",
     en: "Safety & emergency",
     zh: "安全与紧急",

@@ -36,6 +36,7 @@ export default async function MorePage() {
     { href: "/learn", label: nav.navLearn, desc: t.descLearn },
     { href: "/allergens", label: nav.navAllergens, desc: t.descAllergens },
     { href: "/insights", label: nav.navInsights, desc: t.descInsights },
+    { href: "/gallery", label: nav.navGallery, desc: t.descGallery },
     { href: "/safety", label: nav.navSafety, desc: t.descSafety },
   ];
   const extras = [
