@@ -184,7 +184,7 @@ export function SleepClient() {
   const [wakeError, setWakeError] = useState(false);
   const [addStart, setAddStart] = useState<Date | null>(null);
   const [addEnd, setAddEnd] = useState<Date | null>(null);
-  const [addError, setAddError] = useState(false);
+  const [addError, setAddError] = useState<null | "order" | "future">(null);
   // Remount key: clears the add fields after a successful add.
   const [addFormKey, setAddFormKey] = useState(0);
 
@@ -247,19 +247,25 @@ export function SleepClient() {
   };
 
   const submitManualAdd = () => {
-    if (!addStart || !addEnd || addEnd.getTime() <= addStart.getTime()) {
-      setAddError(true);
+    // The wake time is optional: an empty end means the baby is still asleep,
+    // so a missed "fell asleep" tap can be back-dated without a fake end time.
+    if (!addStart || addStart.getTime() > nowMs + MIN) {
+      setAddError("future");
+      return;
+    }
+    if (addEnd && addEnd.getTime() <= addStart.getTime()) {
+      setAddError("order");
       return;
     }
     addSleepSession({
       id: newId(),
       babyId: baby.id,
       start: addStart.toISOString(),
-      end: addEnd.toISOString(),
+      ...(addEnd ? { end: addEnd.toISOString() } : {}),
     });
     setAddStart(null);
     setAddEnd(null);
-    setAddError(false);
+    setAddError(null);
     setAddFormKey((k) => k + 1);
   };
 
@@ -437,13 +443,18 @@ export function SleepClient() {
             <div key={addFormKey} className="mt-3 space-y-3">
               <div className="flex flex-wrap gap-4">
                 <DateTimeField id="add-start" label={t.addStart} onChange={setAddStart} />
-                <DateTimeField id="add-end" label={t.addEnd} onChange={setAddEnd} />
+                <DateTimeField id="add-end" label={t.addEndOptional} onChange={setAddEnd} />
               </div>
+              <p className="text-xs text-muted-foreground">{t.manualEndOptional}</p>
               <Button variant="outline" onClick={submitManualAdd}>
                 {t.addBtn}
               </Button>
             </div>
-            {addError && <p className="mt-2 text-sm text-destructive">{t.addInvalid}</p>}
+            {addError && (
+              <p className="mt-2 text-sm text-destructive">
+                {addError === "order" ? t.addInvalid : t.futureTime}
+              </p>
+            )}
           </details>
         </CardContent>
       </Card>

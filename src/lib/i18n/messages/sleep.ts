@@ -89,6 +89,11 @@ export const sleepMsgs = {
   addTitle: { en: "Add a sleep by hand", zh: "手动补记一段睡眠" },
   addStart: { en: "Fell asleep", zh: "入睡时间" },
   addEnd: { en: "Woke up", zh: "醒来时间" },
+  addEndOptional: { en: "Woke up (optional)", zh: "醒来时间（选填）" },
+  manualEndOptional: {
+    en: "Leave the wake time empty if the baby is still asleep — you can fill it in later.",
+    zh: "如果宝宝还在睡，醒来时间留空即可，之后再补。",
+  },
   addBtn: { en: "Add sleep", zh: "添加" },
   addInvalid: {
     en: "The wake time must come after the sleep time.",
