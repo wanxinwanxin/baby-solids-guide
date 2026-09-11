@@ -53,16 +53,21 @@ test("an existing user sees it once, highlighting the feedback button", async ({
   await markAsExistingUser(page);
   await page.goto("/today");
 
-  // Step 1 spotlights the feedback button.
+  // Step 1 spotlights the feedback button (always present — the feedback
+  // button is not auth-gated).
   const dialog = page.getByRole("dialog", { name: /tell us what to build/ });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText(/request a food or a feature/)).toBeVisible();
   await page.screenshot({ path: "test-results/whats-new-spotlight.png" });
 
-  // Step 2 points to Full day view, then finishes.
-  await dialog.getByRole("button", { name: "Next" }).click();
-  await expect(page.getByRole("dialog", { name: /Full day view/ })).toBeVisible();
-  await page.getByRole("button", { name: "Got it" }).click();
+  // The Full day step anchors to the account button, which only renders when
+  // auth is configured. So the spotlight is 1 or 2 steps; finish either.
+  const next = page.getByRole("dialog").getByRole("button", { name: "Next" });
+  if (await next.count()) {
+    await next.click();
+    await expect(page.getByRole("dialog", { name: /Full day view/ })).toBeVisible();
+  }
+  await page.getByRole("dialog").getByRole("button", { name: "Got it" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
   // It never returns.
