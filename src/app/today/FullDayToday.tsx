@@ -19,7 +19,7 @@ import { formatDuration, formatTime, openSession, predictNextSleep } from "@/lib
 import { useSleepStore } from "@/lib/sleep/store";
 import { newId, useGuideStore } from "@/lib/storage/store";
 import type { BabyProfile, FormulaUnit } from "@/lib/storage/types";
-import { todayIso } from "@/lib/food-utils";
+import { localIsoDate, todayIso } from "@/lib/food-utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { SwipeToComplete } from "@/components/SwipeToComplete";
 
@@ -131,9 +131,10 @@ export function FullDayToday({
     [open, sleepSessions, ageMonths, now, wakeAnchors, baby.id],
   );
 
-  // Care tallies for today.
+  // Care tallies for today. `at` is a UTC ISO datetime, so compare LOCAL
+  // calendar dates — a UTC slice drops evening logs in western timezones.
   const careToday = useMemo(
-    () => careLogs.filter((c) => c.at.slice(0, 10) === today),
+    () => careLogs.filter((c) => localIsoDate(new Date(c.at)) === today),
     [careLogs, today],
   );
   const bottles = useMemo(() => careToday.filter((c) => c.kind === "formula"), [careToday]);

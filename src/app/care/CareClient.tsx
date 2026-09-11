@@ -12,9 +12,11 @@ import { fmt } from "@/lib/i18n/config";
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
 import { careMsgs } from "@/lib/i18n/messages/care";
 import { datetimeMsgs } from "@/lib/i18n/messages/datetime";
+import { localIsoDate } from "@/lib/food-utils";
+import { dailySleep } from "@/lib/sleep/history";
 import { formatDuration, formatTime } from "@/lib/sleep/model";
 import { newId, useGuideStore } from "@/lib/storage/store";
-import type { CareLog, DiaperKind, FormulaUnit, SleepSession } from "@/lib/storage/types";
+import type { CareLog, DiaperKind, FormulaUnit } from "@/lib/storage/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,10 +59,7 @@ function Chip({
   );
 }
 
-const localDateKey = (iso: string) => {
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-};
+const localDateKey = (iso: string) => localIsoDate(new Date(iso));
 
 /** "360 ml" / "360 ml + 4 oz" — totals never mix units silently. */
 function formatBottleTotal(logs: CareLog[]): string {
@@ -265,16 +264,23 @@ export function CareClient() {
     .sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
 
   // Previous days, newest first — bottles, diapers, and sleep in one line
-  // per day, which is the "one place" a grandparent actually wants.
+  // per day, which is the "one place" a grandparent actually wants. Sleep
+  // minutes come from dailySleep, which clips a midnight-crossing session to
+  // each day it touches — the same math as /sleep history, so the two pages
+  // report the same daily totals.
   const recentDays = useMemo(() => {
-    const byDay = new Map<string, { at: number; logs: CareLog[]; sleep: SleepSession[] }>();
-    const dayOf = (iso: string) => {
-      const key = localDateKey(iso);
-      if (!byDay.has(key)) byDay.set(key, { at: new Date(iso).getTime(), logs: [], sleep: [] });
+    const byDay = new Map<string, { at: number; logs: CareLog[]; sleepMin: number }>();
+    const dayOf = (key: string) => {
+      if (!byDay.has(key)) {
+        const [y, m, d] = key.split("-").map(Number);
+        byDay.set(key, { at: new Date(y, m - 1, d, 12).getTime(), logs: [], sleepMin: 0 });
+      }
       return byDay.get(key)!;
     };
-    for (const l of careLogs) dayOf(l.at).logs.push(l);
-    for (const s of sleepSessions) if (s.end) dayOf(s.start).sleep.push(s);
+    for (const l of careLogs) dayOf(localDateKey(l.at)).logs.push(l);
+    for (const d of dailySleep(sleepSessions, new Date(), 30)) {
+      dayOf(d.dateIso).sleepMin = d.totalMinutes;
+    }
     return [...byDay.entries()]
       .filter(([key]) => key !== todayKey)
       .sort((a, b) => b[1].at - a[1].at)
@@ -309,7 +315,7 @@ export function CareClient() {
       day: "numeric",
     }).format(new Date(at));
 
-  const daySummary = (logs: CareLog[], sleep: SleepSession[]): string => {
+  const daySummary = (logs: CareLog[], sleepMin: number): string => {
     const parts: string[] = [];
     const bottles = logs.filter((l) => l.kind === "formula");
     const diapers = logs.filter((l) => l.kind === "diaper");
@@ -317,10 +323,6 @@ export function CareClient() {
       parts.push(fmt(t.bottleSummary, { n: bottles.length, total: formatBottleTotal(bottles) }));
     }
     if (diapers.length > 0) parts.push(fmt(t.diaperSummary, { n: diapers.length }));
-    const sleepMin = sleep.reduce(
-      (sum, s) => sum + (new Date(s.end!).getTime() - new Date(s.start).getTime()) / MIN,
-      0,
-    );
     if (sleepMin > 0) parts.push(fmt(t.sleepSummary, { dur: formatDuration(sleepMin, locale) }));
     return parts.join(" · ");
   };
@@ -493,7 +495,7 @@ export function CareClient() {
               {recentDays.map(([key, day]) => (
                 <li key={key} className="flex flex-wrap justify-between gap-x-3 gap-y-0.5">
                   <span className="font-data">{dayLabel(day.at)}</span>
-                  <span className="text-muted-foreground">{daySummary(day.logs, day.sleep)}</span>
+                  <span className="text-muted-foreground">{daySummary(day.logs, day.sleepMin)}</span>
                 </li>
               ))}
             </ul>

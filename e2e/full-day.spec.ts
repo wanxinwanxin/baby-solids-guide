@@ -68,6 +68,37 @@ test("toggle flips Today into the whole-day dashboard and promotes the nav", asy
   await page.screenshot({ path: "test-results/full-day-mobile.png" });
 });
 
+test.describe("care tallies use local dates", () => {
+  // West of UTC, so an evening log's UTC date is tomorrow — the regression
+  // this guards against is a UTC string-slice date comparison.
+  test.use({ timezoneId: "America/Los_Angeles" });
+
+  test("an evening bottle still counts on the Today dashboard", async ({ page }) => {
+    await completeOnboarding(page);
+    await enableFullDay(page);
+
+    // Seed a 120 ml bottle at 8 pm local today (03:00 UTC tomorrow).
+    await page.evaluate(() => {
+      const raw = JSON.parse(localStorage.getItem("opensolids-v1")!);
+      const s = raw.state;
+      const d = new Date();
+      d.setHours(20, 0, 0, 0);
+      s.careLogs.push({
+        id: "care-tz-1",
+        babyId: s.activeBabyId,
+        kind: "formula",
+        at: d.toISOString(),
+        amount: { value: 120, unit: "ml" },
+      });
+      localStorage.setItem("opensolids-v1", JSON.stringify(raw));
+    });
+    await page.reload();
+
+    await page.goto("/today");
+    await expect(page.getByText("1 bottles · 120 ml")).toBeVisible();
+  });
+});
+
 test("completing a food in the to-do list logs it eaten", async ({ page }) => {
   await completeOnboarding(page);
   await enableFullDay(page);
