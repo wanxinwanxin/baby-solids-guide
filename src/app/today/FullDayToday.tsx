@@ -97,6 +97,19 @@ export function FullDayToday({
     return s;
   }, [logs, today]);
 
+  // The actual foods fed today, in the order logged — so the Solids card
+  // shows what was eaten, not just a count.
+  const eatenNames = useMemo(() => {
+    const seen = new Set<string>();
+    const names: string[] = [];
+    for (const l of logs) {
+      if (l.date !== today || seen.has(l.foodSlug)) continue;
+      seen.add(l.foodSlug);
+      names.push(l.customFoodName ?? foodBySlug.get(l.foodSlug)?.name ?? l.foodSlug);
+    }
+    return names;
+  }, [logs, today, foodBySlug]);
+
   const toTry = useMemo(
     () => picks.filter((p) => !eatenToday.has(p.slug)).slice(0, 4),
     [picks, eatenToday],
@@ -210,7 +223,8 @@ export function FullDayToday({
         <div className="grid grid-cols-2 gap-2">
           <StatCard
             title={t.solidsTitle}
-            value={eatenCount > 0 ? fmt(t.solidsEaten, { n: eatenCount }) : t.noneYet}
+            value={eatenCount > 0 ? eatenNames.join(" · ") : t.noneYet}
+            sub={eatenCount > 0 ? fmt(t.solidsEaten, { n: eatenCount }) : undefined}
             href="/log"
             linkLabel={t.logFood}
           />
