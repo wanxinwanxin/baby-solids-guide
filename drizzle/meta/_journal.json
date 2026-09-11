@@ -43,6 +43,13 @@
       "when": 1788999823053,
       "tag": "0005_feedback",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789086238588,
+      "tag": "0006_activity-logs",
+      "breakpoints": true
     }
   ]
 }

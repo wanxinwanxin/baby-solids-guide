@@ -79,6 +79,19 @@ test("completing a food in the to-do list logs it eaten", async ({ page }) => {
   await expect(page.getByText(/\d+ eaten/)).toBeVisible();
 });
 
+test("marking Read to baby persists (now synced, not device-only)", async ({ page }) => {
+  await completeOnboarding(page);
+  await enableFullDay(page);
+  await page.goto("/today");
+
+  await page.getByRole("button", { name: "Read it" }).click();
+  // The Reading card flips to done, and it survives a reload (it lives in the
+  // persisted, family-synced store now — not the old device-local habit store).
+  await expect(page.getByText("Read today ✓")).toBeVisible();
+  await page.reload();
+  await expect(page.getByText("Read today ✓")).toBeVisible();
+});
+
 test("reverting to the solids app restores the standard Today", async ({ page }) => {
   await completeOnboarding(page);
   await enableFullDay(page);

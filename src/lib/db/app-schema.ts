@@ -47,6 +47,21 @@ export const careLogs = pgTable("care_logs", {
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
+/**
+ * Activity logs (daily habits like "read to baby", 2026-09-10). The id is a
+ * deterministic text key (`<babyId>:<activity>:<date>`), so it's text, not
+ * uuid, unlike the other logs.
+ */
+export const activityLogs = pgTable("activity_logs", {
+  id: text("id").primaryKey(),
+  babyId: uuid("baby_id")
+    .notNull()
+    .references(() => babies.id, { onDelete: "cascade" }),
+  payload: jsonb("payload").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+});
+
 export const allergenOverrides = pgTable(
   "allergen_overrides",
   {

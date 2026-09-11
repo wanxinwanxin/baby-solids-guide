@@ -115,6 +115,14 @@ export const careLogSchema = z.object({
   updatedAt: isoDateTime.optional(),
 });
 
+export const activityLogSchema = z.object({
+  id: z.string().min(1),
+  babyId: z.string().min(1),
+  activity: z.enum(["read"]),
+  date: isoDate,
+  updatedAt: isoDateTime.optional(),
+});
+
 export const exportEnvelopeV1Schema = z.object({
   schemaVersion: z.literal(1),
   exportedAt: z.string(),
@@ -140,4 +148,7 @@ export const exportEnvelopeV2Schema = z.object({
   careLogs: z.array(z.unknown()).default([]),
   deletedSleepIds: z.array(z.string()).default([]),
   deletedCareLogIds: z.array(z.string()).default([]),
+  // Added 2026-09-10 (reading-habit sync).
+  activityLogs: z.array(z.unknown()).default([]),
+  deletedActivityIds: z.array(z.string()).default([]),
 });

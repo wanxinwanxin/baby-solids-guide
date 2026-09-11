@@ -2,6 +2,7 @@
 
 import { useMemo, useSyncExternalStore } from "react";
 import type {
+  ActivityLog,
   AllergenOverride,
   BabyProfile,
   CareLog,
@@ -69,6 +70,15 @@ export function useActiveCareLogs(): CareLog[] {
   return useMemo(
     () => (baby ? careLogs.filter((l) => l.babyId === baby.id) : []),
     [careLogs, baby],
+  );
+}
+
+export function useActiveActivityLogs(): ActivityLog[] {
+  const baby = useActiveBaby();
+  const activityLogs = useGuideStore((s) => s.activityLogs);
+  return useMemo(
+    () => (baby ? activityLogs.filter((a) => a.babyId === baby.id) : []),
+    [activityLogs, baby],
   );
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { BabyProfile, CareLog, ExposureLog, Plan, SleepSession } from "@/lib/storage/types";
+import type { ActivityLog, BabyProfile, CareLog, ExposureLog, Plan, SleepSession } from "@/lib/storage/types";
 import type { SyncSnapshot } from "@/lib/storage/store";
 import { EMPTY_SNAPSHOT, mergeSnapshots, snapshotVersion } from "./merge";
 
@@ -280,5 +280,39 @@ describe("mergeSnapshots — sleep sessions + care logs", () => {
       sleepSessions: [sleep("s1", "b1", "2026-09-07T21:40:00Z", "2026-09-07T21:30:00.000Z")],
     });
     expect(snapshotVersion(a)).not.toBe(snapshotVersion(later));
+  });
+});
+
+// ——— Activity logs (reading habit, 2026-09-10) ———
+
+const activity = (id: string, babyId: string, updatedAt?: string, date = "2026-09-10"): ActivityLog => ({
+  id,
+  babyId,
+  activity: "read",
+  date,
+  updatedAt,
+});
+
+describe("mergeSnapshots — activity logs", () => {
+  const b = baby("b1", "Kid", "2026-08-01T00:00:00Z");
+
+  it("merges per id with LWW and honors tombstones both ways", () => {
+    const server = snap({ babies: [b], activityLogs: [activity("b1:read:2026-09-10", "b1", "2026-09-10T20:00:00Z")] });
+    const client = snap({ babies: [b], deletedActivityIds: ["b1:read:2026-09-10"] });
+    const merged = mergeSnapshots(server, client);
+    expect(merged.activityLogs).toHaveLength(0);
+    expect(merged.deletedActivityIds).toEqual(["b1:read:2026-09-10"]);
+  });
+
+  it("a read ticked on one device shows up merged from the other", () => {
+    const server = snap({ babies: [b] });
+    const client = snap({ babies: [b], activityLogs: [activity("b1:read:2026-09-10", "b1", "2026-09-10T20:00:00Z")] });
+    expect(mergeSnapshots(server, client).activityLogs.map((a) => a.id)).toEqual(["b1:read:2026-09-10"]);
+  });
+
+  it("an older client (no activity arrays) never wipes server rows", () => {
+    const server = snap({ babies: [b], activityLogs: [activity("b1:read:2026-09-10", "b1", "2026-09-10T20:00:00Z")] });
+    const oldClient = { babies: [b], logs: [], overrides: [], checkIns: [], plans: [], deletedLogIds: [], deletedBabyIds: [] } as unknown as SyncSnapshot;
+    expect(mergeSnapshots(server, oldClient).activityLogs.map((a) => a.id)).toEqual(["b1:read:2026-09-10"]);
   });
 });

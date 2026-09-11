@@ -170,6 +170,22 @@ export type CareLog = {
   updatedAt?: string; // ISO datetime — LWW sync ordering
 };
 
+/**
+ * A daily activity done with the baby (2026-09-10) — currently just "read to
+ * baby". Synced per family like the other logs, so a "read" ticked on one
+ * parent's phone shows on the grandparents' too. The id is deterministic
+ * (`<babyId>:<activity>:<date>`) so both devices agree and toggling is
+ * idempotent. `date` is a local calendar date, YYYY-MM-DD.
+ */
+export type ActivityId = "read";
+export type ActivityLog = {
+  id: string;
+  babyId: string;
+  activity: ActivityId;
+  date: string;
+  updatedAt?: string;
+};
+
 export type AllergenStatus =
   | "not-started"
   | "introducing"
@@ -242,6 +258,9 @@ export type ExportEnvelope = {
   careLogs?: CareLog[];
   deletedSleepIds?: string[];
   deletedCareLogIds?: string[];
+  /** Present since 2026-09-10 (reading-habit sync). */
+  activityLogs?: ActivityLog[];
+  deletedActivityIds?: string[];
 };
 
 export type ImportResult =

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { authEnabled, getAuth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import {
+  activityLogSchema,
   allergenOverrideSchema,
   babyProfileSchema,
   careLogSchema,
@@ -30,6 +31,9 @@ const snapshotSchema = z.object({
   careLogs: z.array(careLogSchema).max(20000).default([]),
   deletedSleepIds: z.array(z.string()).max(20000).default([]),
   deletedCareLogIds: z.array(z.string()).max(20000).default([]),
+  // Reading-habit sync (2026-09-10); defaults keep older-client pushes valid.
+  activityLogs: z.array(activityLogSchema).max(20000).default([]),
+  deletedActivityIds: z.array(z.string()).max(20000).default([]),
 });
 
 async function requireUser() {

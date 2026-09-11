@@ -99,6 +99,25 @@ describe("sync server persistence (pglite)", () => {
     expect(pulled.plans[0].entries[0].foodSlug).toBe("beef");
   });
 
+  it("activity logs (reading habit) roundtrip and tombstone across a family", async () => {
+    const ID = `${UUID_A}:read:2026-09-10`;
+    const client = snapWith({
+      babies: [baby(UUID_A)],
+      activityLogs: [
+        { id: ID, babyId: UUID_A, activity: "read", date: "2026-09-10", updatedAt: "2026-09-10T20:00:00.000Z" },
+      ],
+    });
+    await saveSnapshot(db, "user-a", mergeSnapshots(await loadSnapshot(db, "user-a"), client));
+    expect((await loadSnapshot(db, "user-a")).activityLogs.map((a) => a.id)).toContain(ID);
+
+    // Untick → tombstone; it stays gone on later pulls.
+    const untick = snapWith({ babies: [baby(UUID_A)], deletedActivityIds: [ID] });
+    await saveSnapshot(db, "user-a", mergeSnapshots(await loadSnapshot(db, "user-a"), untick));
+    const after = await loadSnapshot(db, "user-a");
+    expect(after.activityLogs.map((a) => a.id)).not.toContain(ID);
+    expect(after.deletedActivityIds).toContain(ID);
+  });
+
   it("sleep sessions + care logs roundtrip and tombstone correctly", async () => {
     const UUID_SLEEP = "33333333-3333-4333-8333-333333333331";
     const UUID_CARE = "33333333-3333-4333-8333-333333333332";

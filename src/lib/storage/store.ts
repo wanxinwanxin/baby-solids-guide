@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { AllergenId } from "@/content-schema/food";
 import type {
+  ActivityId,
+  ActivityLog,
   AllergenOverride,
   BabyProfile,
   CareLog,
@@ -14,6 +16,7 @@ import type {
   TextureStage,
 } from "./types";
 import {
+  activityLogSchema,
   allergenOverrideSchema,
   careLogSchema,
   checkInSchema,
@@ -43,10 +46,13 @@ export type GuideState = {
   /** Sleep + care (2026-09-08): synced per family, same LWW rules as logs. */
   sleepSessions: SleepSession[];
   careLogs: CareLog[];
+  /** Daily activities (2026-09-10, e.g. "read to baby"), synced per family. */
+  activityLogs: ActivityLog[];
   deletedLogIds: string[];
   deletedBabyIds: string[];
   deletedSleepIds: string[];
   deletedCareLogIds: string[];
+  deletedActivityIds: string[];
   lastExportAt?: string;
   backupNudgeSnoozedUntil?: string;
   /**
@@ -93,6 +99,8 @@ export type GuideState = {
   addCareLog: (l: CareLog) => void;
   updateCareLog: (id: string, patch: Partial<Omit<CareLog, "id" | "babyId">>) => void;
   deleteCareLog: (id: string) => void;
+  /** Tick or untick a daily activity (idempotent, deterministic id). */
+  setActivityDone: (babyId: string, activity: ActivityId, date: string, done: boolean) => void;
   snoozeBackupNudge: (untilIso: string) => void;
   /** Hide one note. The condition behind it stays in force. */
   dismissNotice: (key: string) => void;
@@ -116,10 +124,12 @@ export type SyncSnapshot = {
   plans: Plan[];
   sleepSessions: SleepSession[];
   careLogs: CareLog[];
+  activityLogs: ActivityLog[];
   deletedLogIds: string[];
   deletedBabyIds: string[];
   deletedSleepIds: string[];
   deletedCareLogIds: string[];
+  deletedActivityIds: string[];
 };
 
 export function snapshotOf(s: GuideState): SyncSnapshot {
@@ -131,10 +141,12 @@ export function snapshotOf(s: GuideState): SyncSnapshot {
     plans,
     sleepSessions,
     careLogs,
+    activityLogs,
     deletedLogIds,
     deletedBabyIds,
     deletedSleepIds,
     deletedCareLogIds,
+    deletedActivityIds,
   } = s;
   return {
     babies,
@@ -144,11 +156,18 @@ export function snapshotOf(s: GuideState): SyncSnapshot {
     plans,
     sleepSessions,
     careLogs,
+    activityLogs,
     deletedLogIds,
     deletedBabyIds,
     deletedSleepIds,
     deletedCareLogIds,
+    deletedActivityIds,
   };
+}
+
+/** Deterministic id so both devices agree on one row per baby/activity/day. */
+export function activityLogId(babyId: string, activity: ActivityId, date: string): string {
+  return `${babyId}:${activity}:${date}`;
 }
 
 // ——— Selectors (pure; usable with useGuideStore(selector)) ———
@@ -211,6 +230,32 @@ export function importLegacySleep(raw: string | null): SleepSession[] {
   }
 }
 
+/** Pre-v5 device-local habits store (zustand persist envelope). */
+export const LEGACY_HABITS_KEY = "os-habits";
+
+/**
+ * Adopt the old device-local reading habit (`done: {dateIso: ["read"]}`) into
+ * synced activity logs for the given baby. Tolerant of anything; no baby →
+ * nothing to attach the marks to.
+ */
+export function importLegacyHabits(raw: string | null, babyId: string | null): ActivityLog[] {
+  if (!raw || !babyId) return [];
+  try {
+    const done: unknown = JSON.parse(raw)?.state?.done;
+    if (!done || typeof done !== "object") return [];
+    const out: ActivityLog[] = [];
+    for (const [date, habits] of Object.entries(done as Record<string, unknown>)) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Array.isArray(habits)) continue;
+      if (habits.includes("read")) {
+        out.push({ id: activityLogId(babyId, "read", date), babyId, activity: "read", date });
+      }
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 const EMPTY = {
   babies: [] as BabyProfile[],
   activeBabyId: null as string | null,
@@ -220,10 +265,12 @@ const EMPTY = {
   plans: [] as Plan[],
   sleepSessions: [] as SleepSession[],
   careLogs: [] as CareLog[],
+  activityLogs: [] as ActivityLog[],
   deletedLogIds: [] as string[],
   deletedBabyIds: [] as string[],
   deletedSleepIds: [] as string[],
   deletedCareLogIds: [] as string[],
+  deletedActivityIds: [] as string[],
   lastExportAt: undefined as string | undefined,
   backupNudgeSnoozedUntil: undefined as string | undefined,
   dismissedNotices: [] as string[],
@@ -278,6 +325,7 @@ export const useGuideStore = create<GuideState>()(
           plans: get().plans.filter((p) => p.babyId !== id),
           sleepSessions: get().sleepSessions.filter((s) => s.babyId !== id),
           careLogs: get().careLogs.filter((c) => c.babyId !== id),
+          activityLogs: get().activityLogs.filter((a) => a.babyId !== id),
           deletedBabyIds: [...new Set([...get().deletedBabyIds, id])],
         });
       },
@@ -398,6 +446,22 @@ export const useGuideStore = create<GuideState>()(
           deletedCareLogIds: [...new Set([...get().deletedCareLogIds, id])],
         }),
 
+      setActivityDone: (babyId, activity, date, done) => {
+        const id = activityLogId(babyId, activity, date);
+        if (done) {
+          if (get().activityLogs.some((a) => a.id === id)) return;
+          set({
+            activityLogs: [...get().activityLogs, { id, babyId, activity, date, updatedAt: now() }],
+            deletedActivityIds: get().deletedActivityIds.filter((d) => d !== id),
+          });
+        } else {
+          set({
+            activityLogs: get().activityLogs.filter((a) => a.id !== id),
+            deletedActivityIds: [...new Set([...get().deletedActivityIds, id])],
+          });
+        }
+      },
+
       snoozeBackupNudge: (untilIso) => set({ backupNudgeSnoozedUntil: untilIso }),
 
       dismissNotice: (key) =>
@@ -426,9 +490,11 @@ export const useGuideStore = create<GuideState>()(
           plans,
           sleepSessions,
           careLogs,
+          activityLogs,
           deletedLogIds,
           deletedSleepIds,
           deletedCareLogIds,
+          deletedActivityIds,
         } = get();
         const envelope: ExportEnvelope = {
           schemaVersion: 2,
@@ -444,6 +510,8 @@ export const useGuideStore = create<GuideState>()(
           careLogs,
           deletedSleepIds,
           deletedCareLogIds,
+          activityLogs,
+          deletedActivityIds,
         };
         set({ lastExportAt: now() });
         return JSON.stringify(envelope, null, 2);
@@ -485,6 +553,7 @@ export const useGuideStore = create<GuideState>()(
           const plans = parseRows<Plan>(d.plans, planSchema, "plan");
           const sleepSessions = parseRows<SleepSession>(d.sleepSessions, sleepSessionSchema, "sleep");
           const careLogs = parseRows<CareLog>(d.careLogs, careLogSchema, "care");
+          const activityLogs = parseRows<ActivityLog>(d.activityLogs, activityLogSchema, "activity");
           set({
             babies: d.babies,
             activeBabyId: d.activeBabyId ?? d.babies[0]?.id ?? null,
@@ -494,9 +563,11 @@ export const useGuideStore = create<GuideState>()(
             plans,
             sleepSessions,
             careLogs,
+            activityLogs,
             deletedLogIds: d.deletedLogIds,
             deletedSleepIds: d.deletedSleepIds,
             deletedCareLogIds: d.deletedCareLogIds,
+            deletedActivityIds: d.deletedActivityIds,
           });
           return { ok: true, logsImported: logs.length, skipped };
         }
@@ -519,7 +590,7 @@ export const useGuideStore = create<GuideState>()(
     }),
     {
       name: STORAGE_KEY,
-      version: 4,
+      version: 5,
       migrate: (persisted, version) => {
         let state = (
           version < 2 ? migrateV1ToV2(persisted) : persisted
@@ -548,6 +619,24 @@ export const useGuideStore = create<GuideState>()(
             // Removal is a cleanup, never a blocker.
           }
         }
+        if (version < 5) {
+          // v5 moved the reading habit into the synced store. Adopt this
+          // device's old per-day "read" marks for the active baby so nothing
+          // is lost, then drop the legacy key.
+          state = {
+            ...state,
+            activityLogs: importLegacyHabits(
+              typeof window !== "undefined" ? window.localStorage.getItem(LEGACY_HABITS_KEY) : null,
+              state.activeBabyId ?? state.babies?.[0]?.id ?? null,
+            ),
+            deletedActivityIds: [],
+          };
+          try {
+            if (typeof window !== "undefined") window.localStorage.removeItem(LEGACY_HABITS_KEY);
+          } catch {
+            // Removal is a cleanup, never a blocker.
+          }
+        }
         return state;
       },
       storage: createJSONStorage(() =>
@@ -562,10 +651,12 @@ export const useGuideStore = create<GuideState>()(
         plans,
         sleepSessions,
         careLogs,
+        activityLogs,
         deletedLogIds,
         deletedBabyIds,
         deletedSleepIds,
         deletedCareLogIds,
+        deletedActivityIds,
         lastExportAt,
         backupNudgeSnoozedUntil,
         dismissedNotices,
@@ -580,10 +671,12 @@ export const useGuideStore = create<GuideState>()(
         plans,
         sleepSessions,
         careLogs,
+        activityLogs,
         deletedLogIds,
         deletedBabyIds,
         deletedSleepIds,
         deletedCareLogIds,
+        deletedActivityIds,
         lastExportAt,
         backupNudgeSnoozedUntil,
         dismissedNotices,

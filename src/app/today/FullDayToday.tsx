@@ -6,11 +6,11 @@ import type { Food } from "@/content-schema/food";
 import { correctedAgeMonths } from "@/lib/age";
 import type { ScoredFood } from "@/lib/engine";
 import {
+  useActiveActivityLogs,
   useActiveCareLogs,
   useActiveLogs,
   useActiveSleepSessions,
 } from "@/lib/hooks";
-import { habitDone, useHabitStore } from "@/lib/habits/store";
 import { fmt } from "@/lib/i18n/config";
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
 import { fullDayMsgs } from "@/lib/i18n/messages/full-day";
@@ -79,8 +79,8 @@ export function FullDayToday({
   const sleepSessions = useActiveSleepSessions();
   const addLog = useGuideStore((s) => s.addLog);
   const wakeAnchors = useSleepStore((s) => s.wakeAnchors);
-  const done = useHabitStore((s) => s.done);
-  const toggleHabit = useHabitStore((s) => s.toggle);
+  const activityLogs = useActiveActivityLogs();
+  const setActivityDone = useGuideStore((s) => s.setActivityDone);
 
   const now = useMemo(() => new Date(), []);
   const today = todayIso();
@@ -114,7 +114,7 @@ export function FullDayToday({
     () => picks.filter((p) => !eatenToday.has(p.slug)).slice(0, 4),
     [picks, eatenToday],
   );
-  const readDone = habitDone(done, today, "read");
+  const readDone = activityLogs.some((a) => a.activity === "read" && a.date === today);
 
   // Sleep today + next window (mirrors the /sleep page logic).
   const open = useMemo(() => openSession(sleepSessions), [sleepSessions]);
@@ -205,7 +205,7 @@ export function FullDayToday({
             ))}
             {!readDone && (
               <SwipeToComplete
-                onComplete={() => toggleHabit(today, "read")}
+                onComplete={() => setActivityDone(baby.id, "read", today, true)}
                 completeLabel={t.markRead}
               >
                 <div className="px-4 py-3">

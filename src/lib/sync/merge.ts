@@ -1,5 +1,6 @@
 import type { SyncSnapshot } from "@/lib/storage/store";
 import type {
+  ActivityLog,
   AllergenOverride,
   BabyProfile,
   CareLog,
@@ -88,6 +89,10 @@ export function mergeSnapshots(server: SyncSnapshot, client: SyncSnapshot): Sync
   const deletedCareLogIds = [
     ...new Set([...(server.deletedCareLogIds ?? []), ...(client.deletedCareLogIds ?? [])]),
   ];
+  // Reading-habit sync landed 2026-09-10 — same older-client tolerance.
+  const deletedActivityIds = [
+    ...new Set([...(server.deletedActivityIds ?? []), ...(client.deletedActivityIds ?? [])]),
+  ];
 
   const babies = lwwById<BabyProfile>(server.babies, client.babies, (b) => b.id, deletedBabies);
   const babyIds = new Set(babies.map((b) => b.id));
@@ -129,6 +134,13 @@ export function mergeSnapshots(server: SyncSnapshot, client: SyncSnapshot): Sync
     new Set(deletedCareLogIds),
   ).filter((c) => babyIds.has(c.babyId));
 
+  const activityLogs = lwwById<ActivityLog>(
+    server.activityLogs ?? [],
+    client.activityLogs ?? [],
+    (a) => a.id,
+    new Set(deletedActivityIds),
+  ).filter((a) => babyIds.has(a.babyId));
+
   return {
     babies,
     logs,
@@ -137,10 +149,12 @@ export function mergeSnapshots(server: SyncSnapshot, client: SyncSnapshot): Sync
     plans,
     sleepSessions,
     careLogs,
+    activityLogs,
     deletedLogIds,
     deletedBabyIds,
     deletedSleepIds,
     deletedCareLogIds,
+    deletedActivityIds,
   };
 }
 
@@ -159,10 +173,12 @@ export function snapshotFingerprint(s: SyncSnapshot): string {
     sorted(s.plans.map((p) => `${p.babyId}@${p.updatedAt ?? ""}:${p.entries.length}`)),
     sorted((s.sleepSessions ?? []).map((r) => `${r.id}@${r.updatedAt ?? ""}:${r.end ?? "open"}`)),
     sorted((s.careLogs ?? []).map((r) => `${r.id}@${r.updatedAt ?? ""}`)),
+    sorted((s.activityLogs ?? []).map((r) => `${r.id}@${r.updatedAt ?? ""}`)),
     sorted(s.deletedLogIds),
     sorted(s.deletedBabyIds),
     sorted(s.deletedSleepIds ?? []),
     sorted(s.deletedCareLogIds ?? []),
+    sorted(s.deletedActivityIds ?? []),
   ].join("||");
 }
 
@@ -189,8 +205,10 @@ export const EMPTY_SNAPSHOT: SyncSnapshot = {
   plans: [],
   sleepSessions: [],
   careLogs: [],
+  activityLogs: [],
   deletedLogIds: [],
   deletedBabyIds: [],
   deletedSleepIds: [],
   deletedCareLogIds: [],
+  deletedActivityIds: [],
 };

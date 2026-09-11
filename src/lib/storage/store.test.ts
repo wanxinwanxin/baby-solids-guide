@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { BabyProfile, ExposureLog } from "./types";
-import { importLegacySleep, migrateV1ToV2, newId, selectPlanForActive, useGuideStore } from "./store";
+import { importLegacyHabits, importLegacySleep, migrateV1ToV2, newId, selectPlanForActive, useGuideStore } from "./store";
 
 const makeBaby = (id = "b1", nickname = "Testling"): BabyProfile => ({
   id,
@@ -332,5 +332,43 @@ describe("sleep + care in the synced store", () => {
     const st = useGuideStore.getState();
     expect(st.sleepSessions.map((r) => r.id)).toEqual(["sl2"]);
     expect(st.careLogs[0]?.amount?.unit).toBe("oz");
+  });
+});
+
+describe("activity logs (reading habit sync)", () => {
+  it("setActivityDone ticks (idempotent, deterministic id) and unticks with a tombstone", () => {
+    const s = useGuideStore.getState();
+    s.setActivityDone("b1", "read", "2026-09-10", true);
+    let st = useGuideStore.getState();
+    expect(st.activityLogs).toHaveLength(1);
+    expect(st.activityLogs[0].id).toBe("b1:read:2026-09-10");
+
+    // Ticking again is a no-op (no duplicate row).
+    useGuideStore.getState().setActivityDone("b1", "read", "2026-09-10", true);
+    expect(useGuideStore.getState().activityLogs).toHaveLength(1);
+
+    // Unticking removes it and tombstones the id.
+    useGuideStore.getState().setActivityDone("b1", "read", "2026-09-10", false);
+    st = useGuideStore.getState();
+    expect(st.activityLogs).toHaveLength(0);
+    expect(st.deletedActivityIds).toContain("b1:read:2026-09-10");
+  });
+});
+
+describe("importLegacyHabits (v5 migration source)", () => {
+  it("adopts old per-day read marks for the active baby", () => {
+    const raw = JSON.stringify({
+      state: { done: { "2026-09-08": ["read"], "2026-09-09": [], "2026-09-10": ["read"] } },
+    });
+    const rows = importLegacyHabits(raw, "baby-x");
+    expect(rows.map((r) => r.date).sort()).toEqual(["2026-09-08", "2026-09-10"]);
+    expect(rows[0].id).toBe("baby-x:read:2026-09-08");
+    expect(rows.every((r) => r.babyId === "baby-x" && r.activity === "read")).toBe(true);
+  });
+
+  it("returns nothing without a baby or on garbage", () => {
+    expect(importLegacyHabits(JSON.stringify({ state: { done: { "2026-09-10": ["read"] } } }), null)).toEqual([]);
+    expect(importLegacyHabits("{{{broken", "b1")).toEqual([]);
+    expect(importLegacyHabits(null, "b1")).toEqual([]);
   });
 });

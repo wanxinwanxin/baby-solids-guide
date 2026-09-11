@@ -3,6 +3,7 @@ import type { Db } from "@/lib/db";
 import { schema } from "@/lib/db";
 import type { SyncSnapshot } from "@/lib/storage/store";
 import type {
+  ActivityLog,
   AllergenOverride,
   BabyProfile,
   CareLog,
@@ -12,8 +13,17 @@ import type {
   SleepSession,
 } from "@/lib/storage/types";
 
-const { babies, babyMembers, exposureLogs, allergenOverrides, checkIns, plans, sleepSessions, careLogs } =
-  schema;
+const {
+  babies,
+  babyMembers,
+  exposureLogs,
+  allergenOverrides,
+  checkIns,
+  plans,
+  sleepSessions,
+  careLogs,
+  activityLogs,
+} = schema;
 
 const ts = (v?: string) => (v ? new Date(v) : new Date(0));
 
@@ -38,7 +48,7 @@ export async function loadSnapshot(db: Db, userId: string): Promise<SyncSnapshot
     babyIds.length === 0 ? [] : await db.select().from(babies).where(inArray(babies.id, babyIds));
   const children =
     babyIds.length === 0
-      ? { logRows: [], overrideRows: [], checkInRows: [], planRows: [], sleepRows: [], careRows: [] }
+      ? { logRows: [], overrideRows: [], checkInRows: [], planRows: [], sleepRows: [], careRows: [], activityRows: [] }
       : {
           logRows: await db.select().from(exposureLogs).where(inArray(exposureLogs.babyId, babyIds)),
           overrideRows: await db
@@ -49,6 +59,7 @@ export async function loadSnapshot(db: Db, userId: string): Promise<SyncSnapshot
           planRows: await db.select().from(plans).where(inArray(plans.babyId, babyIds)),
           sleepRows: await db.select().from(sleepSessions).where(inArray(sleepSessions.babyId, babyIds)),
           careRows: await db.select().from(careLogs).where(inArray(careLogs.babyId, babyIds)),
+          activityRows: await db.select().from(activityLogs).where(inArray(activityLogs.babyId, babyIds)),
         };
 
   return {
@@ -59,10 +70,12 @@ export async function loadSnapshot(db: Db, userId: string): Promise<SyncSnapshot
     plans: children.planRows.map((r) => r.payload as Plan),
     sleepSessions: children.sleepRows.filter((r) => !r.deletedAt).map((r) => r.payload as SleepSession),
     careLogs: children.careRows.filter((r) => !r.deletedAt).map((r) => r.payload as CareLog),
+    activityLogs: children.activityRows.filter((r) => !r.deletedAt).map((r) => r.payload as ActivityLog),
     deletedLogIds: children.logRows.filter((r) => !!r.deletedAt).map((r) => r.id),
     deletedBabyIds: [],
     deletedSleepIds: children.sleepRows.filter((r) => !!r.deletedAt).map((r) => r.id),
     deletedCareLogIds: children.careRows.filter((r) => !!r.deletedAt).map((r) => r.id),
+    deletedActivityIds: children.activityRows.filter((r) => !!r.deletedAt).map((r) => r.id),
   };
 }
 
@@ -177,6 +190,28 @@ export async function saveSnapshot(db: Db, userId: string, snap: SyncSnapshot): 
         .set({ deletedAt: new Date() })
         .where(
           and(inArray(careLogs.id, snap.deletedCareLogIds), inArray(careLogs.babyId, snapBabyIds)),
+        );
+    }
+    for (const a of snap.activityLogs ?? []) {
+      if (!snapBabyIds.includes(a.babyId)) continue;
+      await tx
+        .insert(activityLogs)
+        .values({ id: a.id, babyId: a.babyId, payload: a, updatedAt: ts(a.updatedAt) })
+        .onConflictDoUpdate({
+          target: activityLogs.id,
+          set: { payload: a, updatedAt: ts(a.updatedAt), deletedAt: null },
+          setWhere: inArray(activityLogs.babyId, snapBabyIds),
+        });
+    }
+    if ((snap.deletedActivityIds ?? []).length > 0) {
+      await tx
+        .update(activityLogs)
+        .set({ deletedAt: new Date() })
+        .where(
+          and(
+            inArray(activityLogs.id, snap.deletedActivityIds),
+            inArray(activityLogs.babyId, snapBabyIds),
+          ),
         );
     }
 
