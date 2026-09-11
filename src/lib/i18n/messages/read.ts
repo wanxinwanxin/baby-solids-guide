@@ -22,4 +22,8 @@ export const readMsgs = {
   kindRhyme: { en: "nursery rhyme", zh: "童谣" },
   kindPoem: { en: "poem", zh: "诗" },
   kindSonnet: { en: "sonnet", zh: "十四行诗" },
+  textSize: { en: "Text size", zh: "字号" },
+  sizeStandard: { en: "Standard text size", zh: "标准字号" },
+  sizeLarge: { en: "Large text size", zh: "大字号" },
+  sizeExtraLarge: { en: "Extra-large text size", zh: "特大字号" },
 } satisfies Msgs;

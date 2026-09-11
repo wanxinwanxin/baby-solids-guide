@@ -171,3 +171,34 @@
     font-variant-numeric: tabular-nums;
   }
 }
+/* Read to baby — larger, adjustable text for older eyes (grandparents). The
+   size control (ReadingScaleControl) sets data-read-scale on #reading-root. */
+.read-hanzi {
+  font-size: 20px;
+  line-height: 1.85;
+}
+.read-pinyin {
+  font-size: 13px;
+}
+.read-en {
+  font-size: 18px;
+  line-height: 1.85;
+}
+[data-read-scale="l"] .read-hanzi {
+  font-size: 27px;
+}
+[data-read-scale="l"] .read-pinyin {
+  font-size: 16px;
+}
+[data-read-scale="l"] .read-en {
+  font-size: 23px;
+}
+[data-read-scale="xl"] .read-hanzi {
+  font-size: 36px;
+}
+[data-read-scale="xl"] .read-pinyin {
+  font-size: 20px;
+}
+[data-read-scale="xl"] .read-en {
+  font-size: 30px;
+}

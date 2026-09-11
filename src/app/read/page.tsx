@@ -3,6 +3,7 @@ import { chinesePoems, englishPieces } from "../../../content/read-aloud";
 import { pick } from "@/lib/i18n/config";
 import { getLocale } from "@/lib/i18n/server";
 import { readMsgs } from "@/lib/i18n/messages/read";
+import { ReadingScaleControl } from "./ReadingScaleControl";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -30,7 +31,7 @@ export default async function ReadPage() {
         {englishPieces.map((p) => (
           <details key={p.slug} className="group rounded-2xl border bg-card px-5 py-3.5">
             <summary className="flex cursor-pointer list-none flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className="text-[15px] font-bold">{p.title}</span>
+              <span className="text-lg font-bold">{p.title}</span>
               <span className="font-data text-[11px] text-muted-foreground">
                 {p.author} · {t[KIND_KEY[p.kind]]}
               </span>
@@ -38,7 +39,7 @@ export default async function ReadPage() {
             <div className="mt-3 space-y-4 pb-1.5">
               {/* Rhymes repeat lines verbatim, so positions are the only stable keys. */}
               {p.stanzas.map((stanza, si) => (
-                <p key={si} className="text-[15px] leading-relaxed">
+                <p key={si} className="read-en">
                   {stanza.map((line, li) => (
                     <span key={li} className="block">
                       {line}
@@ -78,7 +79,7 @@ export default async function ReadPage() {
             {group.poems.map((p) => (
           <details key={p.slug} className="group rounded-2xl border bg-card px-5 py-3.5">
             <summary className="flex cursor-pointer list-none flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className="text-[15px] font-bold">{p.title}</span>
+              <span className="text-lg font-bold">{p.title}</span>
               <span className="font-data text-[11px] text-muted-foreground">
                 {p.pinyinTitle} · {p.dynasty} · {p.author}
               </span>
@@ -86,8 +87,8 @@ export default async function ReadPage() {
             <div className="mt-3 space-y-3 pb-1.5">
               {p.lines.map((line, li) => (
                 <div key={li}>
-                  <div className="font-data text-[12px] text-muted-foreground">{line.pinyin}</div>
-                  <div className="text-[17px] leading-relaxed tracking-wide">{line.hanzi}</div>
+                  <div className="read-pinyin font-data text-muted-foreground">{line.pinyin}</div>
+                  <div className="read-hanzi tracking-wide">{line.hanzi}</div>
                 </div>
               ))}
             </div>
@@ -100,10 +101,11 @@ export default async function ReadPage() {
   );
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
-      <div className="space-y-2">
+    <div id="reading-root" className="mx-auto max-w-2xl space-y-8">
+      <div className="space-y-3">
         <h1 className="text-2xl font-bold">{t.heading}</h1>
         <p className="max-w-2xl text-muted-foreground">{t.intro}</p>
+        <ReadingScaleControl />
       </div>
       {locale === "zh" ? (
         <>
