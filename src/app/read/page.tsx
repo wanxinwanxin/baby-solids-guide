@@ -3,6 +3,7 @@ import { chinesePoems, englishPieces } from "../../../content/read-aloud";
 import { pick } from "@/lib/i18n/config";
 import { getLocale } from "@/lib/i18n/server";
 import { readMsgs } from "@/lib/i18n/messages/read";
+import { MarkReadButton } from "./MarkReadButton";
 import { ReadingScaleControl } from "./ReadingScaleControl";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -47,6 +48,7 @@ export default async function ReadPage() {
                   ))}
                 </p>
               ))}
+              <MarkReadButton slug={p.slug} title={p.title} />
             </div>
           </details>
         ))}
@@ -91,6 +93,7 @@ export default async function ReadPage() {
                   <div className="read-hanzi tracking-wide">{line.hanzi}</div>
                 </div>
               ))}
+              <MarkReadButton slug={p.slug} title={p.title} />
             </div>
           </details>
             ))}

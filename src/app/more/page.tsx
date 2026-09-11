@@ -41,6 +41,7 @@ export default async function MorePage() {
   ];
   const extras = [
     { href: "/read", label: nav.navRead, desc: t.descRead },
+    { href: "/activities", label: nav.navActivities, desc: t.descActivities },
     { href: "/sleep", label: nav.navSleep, desc: t.descSleep },
     { href: "/care", label: nav.navCare, desc: t.descCare },
   ];

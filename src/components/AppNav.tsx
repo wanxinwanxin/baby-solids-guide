@@ -70,6 +70,7 @@ const moreLinks = (t: NavMsgs) => [
 /** Auxiliary shelf: nice-to-haves that are not part of the feeding loop. */
 const extrasLinks = (t: NavMsgs) => [
   { href: "/read", label: t.navRead },
+  { href: "/activities", label: t.navActivities },
   { href: "/sleep", label: t.navSleep },
   { href: "/care", label: t.navCare },
 ];

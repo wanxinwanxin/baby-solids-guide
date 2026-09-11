@@ -13,12 +13,13 @@ import {
 } from "@/lib/hooks";
 import { fmt } from "@/lib/i18n/config";
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
+import { ACTIVITY_EMOJI } from "@/lib/i18n/messages/activities";
 import { fullDayMsgs } from "@/lib/i18n/messages/full-day";
 import { dailySleep } from "@/lib/sleep/history";
 import { formatDuration, formatTime, openSession, predictNextSleep } from "@/lib/sleep/model";
 import { useSleepStore } from "@/lib/sleep/store";
 import { newId, useGuideStore } from "@/lib/storage/store";
-import type { BabyProfile, FormulaUnit } from "@/lib/storage/types";
+import type { ActivityId, BabyProfile, FormulaUnit } from "@/lib/storage/types";
 import { localIsoDate, todayIso } from "@/lib/food-utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { SwipeToComplete } from "@/components/SwipeToComplete";
@@ -115,6 +116,13 @@ export function FullDayToday({
     [picks, eatenToday],
   );
   const readDone = activityLogs.some((a) => a.activity === "read" && a.date === today);
+  // Itemized reads (specific pieces from /read) and other logged activities.
+  const readTitlesToday = activityLogs
+    .filter((a) => a.activity === "read" && a.date === today && a.itemTitle)
+    .map((a) => a.itemTitle as string);
+  const otherActivitiesToday = activityLogs.filter(
+    (a) => a.date === today && a.activity !== "read",
+  );
 
   // Sleep today + next window (mirrors the /sleep page logic).
   const open = useMemo(() => openSession(sleepSessions), [sleepSessions]);
@@ -262,8 +270,35 @@ export function FullDayToday({
           <StatCard
             title={t.readingTitle}
             value={readDone ? t.readDone : t.noneYet}
+            sub={
+              readTitlesToday.length > 0
+                ? readTitlesToday.slice(0, 2).join(" · ") +
+                  (readTitlesToday.length > 2 ? ` +${readTitlesToday.length - 2}` : "")
+                : undefined
+            }
             href="/read"
             linkLabel={t.open}
+          />
+          <StatCard
+            title={t.activitiesTitle}
+            value={
+              otherActivitiesToday.length > 0
+                ? fmt(t.activitiesCount, { n: otherActivitiesToday.length })
+                : t.noneYet
+            }
+            sub={
+              otherActivitiesToday.length > 0
+                ? [
+                    ...new Set(
+                      otherActivitiesToday.map(
+                        (a) => ACTIVITY_EMOJI[a.activity as ActivityId] ?? "⭐",
+                      ),
+                    ),
+                  ].join(" ")
+                : undefined
+            }
+            href="/activities"
+            linkLabel={t.logActivity}
           />
         </div>
       </section>

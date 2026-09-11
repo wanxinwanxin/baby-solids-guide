@@ -26,6 +26,9 @@ export const fullDayMsgs = {
   sleepSoFar: { en: "{dur} so far", zh: "已睡 {dur}" },
   nextWindow: { en: "Next: {a} – {b}", zh: "下次：{a} – {b}" },
   readDone: { en: "Read today ✓", zh: "今天读过 ✓" },
+  activitiesTitle: { en: "Activities", zh: "亲子活动" },
+  activitiesCount: { en: "{n} logged", zh: "记了 {n} 次" },
+  logActivity: { en: "Log activity", zh: "记录活动" },
 
   // Quick actions / links
   logFood: { en: "Log food", zh: "记辅食" },

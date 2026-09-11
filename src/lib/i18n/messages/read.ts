@@ -22,6 +22,8 @@ export const readMsgs = {
   kindRhyme: { en: "nursery rhyme", zh: "童谣" },
   kindPoem: { en: "poem", zh: "诗" },
   kindSonnet: { en: "sonnet", zh: "十四行诗" },
+  markRead: { en: "Read this to baby ✓", zh: "记一次读给宝宝 ✓" },
+  readToday: { en: "Read today ✓ (tap to undo)", zh: "今天读过 ✓（点击撤销）" },
   textSize: { en: "Text size", zh: "字号" },
   sizeStandard: { en: "Standard text size", zh: "标准字号" },
   sizeLarge: { en: "Large text size", zh: "大字号" },

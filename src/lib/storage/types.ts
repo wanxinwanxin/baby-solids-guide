@@ -171,18 +171,44 @@ export type CareLog = {
 };
 
 /**
- * A daily activity done with the baby (2026-09-10) — currently just "read to
- * baby". Synced per family like the other logs, so a "read" ticked on one
- * parent's phone shows on the grandparents' too. The id is deterministic
- * (`<babyId>:<activity>:<date>`) so both devices agree and toggling is
- * idempotent. `date` is a local calendar date, YYYY-MM-DD.
+ * Activities done with the baby (2026-09-10; itemized 2026-09-11). Synced
+ * per family like the other logs. Two shapes share one collection:
+ *
+ * - Daily habit ticks (the Full-day "read to baby" swipe) keep the
+ *   deterministic id `<babyId>:<activity>:<date>`, so both devices agree
+ *   and toggling is idempotent.
+ * - Itemized logs (a specific poem read, one round of singing) use random
+ *   ids so a day can hold many, and may carry `itemId`/`itemTitle`/`notes`.
+ *
+ * `date` is a local calendar date, YYYY-MM-DD. The zod schema accepts any
+ * activity string so a newer client's activities never strand on an older
+ * one; ACTIVITY_IDS is the registry this build knows how to label.
  */
-export type ActivityId = "read";
+export const ACTIVITY_IDS = [
+  "read",
+  "sing",
+  "music",
+  "exercise",
+  "tummy-time",
+  "outdoors",
+  "play",
+] as const;
+export type ActivityId = (typeof ACTIVITY_IDS)[number];
 export type ActivityLog = {
   id: string;
   babyId: string;
-  activity: ActivityId;
+  /**
+   * Usually one of ACTIVITY_IDS, but typed open so rows written by a newer
+   * client survive here (the UI falls back to a generic label for them).
+   * The `string & {}` keeps editor autocomplete for the known ids.
+   */
+  activity: ActivityId | (string & {});
   date: string;
+  /** Stable key of the specific item (a read-aloud piece's slug). */
+  itemId?: string;
+  /** Display title of the item, denormalized so it renders everywhere. */
+  itemTitle?: string;
+  notes?: string;
   updatedAt?: string;
 };
 

@@ -108,6 +108,9 @@ export type GuideState = {
   deleteCareLog: (id: string) => void;
   /** Tick or untick a daily activity (idempotent, deterministic id). */
   setActivityDone: (babyId: string, activity: ActivityId, date: string, done: boolean) => void;
+  /** Add one itemized activity log (a specific poem, one round of singing). */
+  addActivityLog: (a: ActivityLog) => void;
+  deleteActivityLog: (id: string) => void;
   snoozeBackupNudge: (untilIso: string) => void;
   /** Hide one note. The condition behind it stays in force. */
   dismissNotice: (key: string) => void;
@@ -470,6 +473,18 @@ export const useGuideStore = create<GuideState>()(
           });
         }
       },
+
+      addActivityLog: (a) =>
+        set({
+          activityLogs: [...get().activityLogs, { ...a, updatedAt: now() }],
+          deletedActivityIds: get().deletedActivityIds.filter((d) => d !== a.id),
+        }),
+
+      deleteActivityLog: (id) =>
+        set({
+          activityLogs: get().activityLogs.filter((a) => a.id !== id),
+          deletedActivityIds: [...new Set([...get().deletedActivityIds, id])],
+        }),
 
       snoozeBackupNudge: (untilIso) => set({ backupNudgeSnoozedUntil: untilIso }),
 

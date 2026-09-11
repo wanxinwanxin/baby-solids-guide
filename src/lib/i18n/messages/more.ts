@@ -29,6 +29,10 @@ export const moreMsgs = {
   },
   descSafety: { en: "Gagging vs. choking, and what to do", zh: "干呕与窒息的分辨和处理" },
   descRead: { en: "Rhymes and 古诗 to read aloud, with pinyin", zh: "童谣与古诗，带拼音朗读" },
+  descActivities: {
+    en: "Log reading, singing, exercise, and more — one tap",
+    zh: "一键记录读书、唱歌、运动等亲子活动",
+  },
   descSleep: {
     en: "Nap and bedtime windows from your baby's rhythm",
     zh: "根据宝宝节律推算小睡与就寝时段",

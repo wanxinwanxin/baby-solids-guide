@@ -118,8 +118,13 @@ export const careLogSchema = z.object({
 export const activityLogSchema = z.object({
   id: z.string().min(1),
   babyId: z.string().min(1),
-  activity: z.enum(["read"]),
+  // Any string, not an enum: a newer client's activity kinds must survive a
+  // round-trip through an older client or server without being dropped.
+  activity: z.string().min(1).max(40),
   date: isoDate,
+  itemId: z.string().max(200).optional(),
+  itemTitle: z.string().max(200).optional(),
+  notes: z.string().max(2000).optional(),
   updatedAt: isoDateTime.optional(),
 });
 

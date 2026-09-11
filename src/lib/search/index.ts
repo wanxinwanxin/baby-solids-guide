@@ -99,6 +99,12 @@ const FEATURES: Feature[] = [
     keywords: ["stats", "charts", "progress", "variety", "统计", "图表", "进度"],
   },
   {
+    href: "/activities",
+    en: "Activities",
+    zh: "亲子活动",
+    keywords: ["sing", "singing", "exercise", "tummy time", "outdoors", "play", "早教", "唱歌", "运动", "户外", "活动"],
+  },
+  {
     href: "/gallery",
     en: "Food gallery",
     zh: "食物图鉴",
