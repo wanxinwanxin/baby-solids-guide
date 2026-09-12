@@ -125,6 +125,11 @@ export function median(values: number[]): number | null {
 /** Personal windows begin to steer the prediction from this sample count. */
 export const PERSONALIZED_AT = 5;
 
+/** Assumed nap length when testing whether a late nap crowds the night. */
+export const TYPICAL_NAP_MIN = 45;
+/** Minimum awake stretch a nap must leave before bedtime to be worth it. */
+export const MIN_LAST_WAKE_MIN = 90;
+
 export type LastNapAdjust = "shorter" | "longer" | null;
 
 export type PredictionBasis = {
@@ -237,13 +242,25 @@ export function predictNextSleep(input: PredictInput): SleepPrediction | null {
 
   const newborn = ageMonths < 2;
   const [lo, hi] = newborn ? [0.75, 1.25] : [0.88, 1.08];
-  const windowStart = lastWake + effective * lo * MIN;
-  const windowEnd = lastWake + effective * hi * MIN;
+  let windowStart = lastWake + effective * lo * MIN;
+  let windowEnd = lastWake + effective * hi * MIN;
 
   const bedtime = estimateBedtime(sessions, ageMonths, now);
-  // Process-C label: a window that opens inside the bedtime zone IS bedtime.
-  const kind: "nap" | "bedtime" =
-    ageMonths >= 3 && windowStart >= bedtime.at - 60 * MIN ? "bedtime" : "nap";
+  // Process C caps the day. A nap only makes sense if it can both happen
+  // (~TYPICAL_NAP) and still leave a real awake stretch (~MIN_LAST_WAKE)
+  // before the night — otherwise the next sleep IS bedtime. And a bedtime
+  // window anchors on the bedtime estimate, not on lastWake alone, so it
+  // never renders as a "nap" pinned right before — or after — the family's
+  // normal night.
+  let kind: "nap" | "bedtime" = "nap";
+  if (ageMonths >= 3 && windowStart >= bedtime.at - (TYPICAL_NAP_MIN + MIN_LAST_WAKE_MIN) * MIN) {
+    kind = "bedtime";
+    // Pressure sets the point inside a circadian band around the estimate:
+    // at most 75 min earlier (early bedtime after a rough nap day), at most
+    // 45 min later (after a late last nap).
+    windowStart = Math.min(Math.max(windowStart, bedtime.at - 75 * MIN), bedtime.at + 45 * MIN);
+    windowEnd = Math.min(Math.max(windowEnd, windowStart + 30 * MIN), windowStart + 90 * MIN);
+  }
 
   return {
     kind,

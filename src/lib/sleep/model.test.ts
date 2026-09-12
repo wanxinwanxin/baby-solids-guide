@@ -177,6 +177,44 @@ describe("predictNextSleep", () => {
     // 8-month window (~3 h) from 16:30 opens ≈19:10, inside bedtime − 60 min.
     expect(p.kind).toBe("bedtime");
   });
+
+  it("never suggests a nap that would crowd the night — it flips to bedtime", () => {
+    // Wake at 15:55 puts the pressure window ≈18:25–18:58, which the old
+    // rule kept as a "nap" ending half an hour before the 19:30 bedtime.
+    const p = predictNextSleep({
+      sessions: [],
+      ageMonths: 8,
+      now: at(16, 30),
+      wakeAnchor: iso(at(15, 55)),
+    })!;
+    expect(p.kind).toBe("bedtime");
+    // The window reads as an (early) night, near the bedtime estimate.
+    expect(p.windowEnd).toBeGreaterThanOrEqual(p.basis.bedtimeEstimate - 45 * MIN);
+  });
+
+  it("a bedtime window is anchored near the estimate, not after it", () => {
+    // Wake at 19:00 puts raw pressure ≈21:30 — well past the 19:30 estimate.
+    const p = predictNextSleep({
+      sessions: [],
+      ageMonths: 8,
+      now: at(19, 30),
+      wakeAnchor: iso(at(19, 0)),
+    })!;
+    expect(p.kind).toBe("bedtime");
+    expect(p.windowStart).toBeLessThanOrEqual(p.basis.bedtimeEstimate + 45 * MIN);
+    expect(p.windowEnd - p.windowStart).toBeLessThanOrEqual(90 * MIN);
+  });
+
+  it("an afternoon nap with room before bedtime stays a nap", () => {
+    // Wake at 12:30 → window ≈15:00, ending ≳3 h before the 19:30 bedtime.
+    const p = predictNextSleep({
+      sessions: [],
+      ageMonths: 8,
+      now: at(13),
+      wakeAnchor: iso(at(12, 30)),
+    })!;
+    expect(p.kind).toBe("nap");
+  });
 });
 
 describe("estimateBedtime", () => {
