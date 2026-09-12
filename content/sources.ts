@@ -87,6 +87,11 @@ export const SOURCES = {
     url: "https://www.cdc.gov/infant-toddler-nutrition/foods-and-drinks/choking-hazards.html",
     retrievedOn: "2026-08-22",
   },
+  fdaAckee: {
+    label: "FDA Import Alert 21-11 — Ackee product safety (hypoglycin A limits)",
+    url: "https://www.accessdata.fda.gov/cms_ia/importalert_63.html",
+    retrievedOn: "2026-09-11",
+  },
 } satisfies Record<string, SourceRef>;
 
 export type SourceKey = keyof typeof SOURCES;

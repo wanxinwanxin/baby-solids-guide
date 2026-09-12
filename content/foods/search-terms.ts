@@ -7,6 +7,7 @@
  * language is. Names only (no prose), so this stays tiny.
  */
 export const FOOD_SEARCH_TERMS: Record<string, string[]> = {
+  "ackee": ["ackee","ackee fruit","canned ackee","achee","西非荔枝果","阿基果","阿开木","牙买加国果"],
   "almond-butter": ["almond butter","almond","杏仁酱","巴旦木酱","杏仁"],
   "amaranth": ["amaranth","苋米","苋菜籽","籽粒苋"],
   "apple": ["apple","苹果","苹果泥"],
