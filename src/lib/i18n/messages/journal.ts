@@ -6,8 +6,8 @@ import type { Msg, Msgs } from "../config";
  * shared by the log form and the journal's edit dialog.
  */
 export const journalMsgs = {
-  entriesFor: { en: "{n} entries for {name}", zh: "{name} 的 {n} 条记录" },
-  oneEntryFor: { en: "1 entry for {name}", zh: "{name} 的 1 条记录" },
+  entriesFor: { en: "{n} entries for {name}", zh: "{name}的 {n} 条记录" },
+  oneEntryFor: { en: "1 entry for {name}", zh: "{name}的 1 条记录" },
   firstTry: { en: "first try", zh: "第一次尝试" },
   dayFirstTries: { en: "{n} new", zh: "{n} 种新食物" },
   noTime: { en: "no time set", zh: "未记录时间" },
@@ -31,7 +31,7 @@ export const journalMsgs = {
   filterReactions: { en: "Reactions", zh: "有反应" },
   filterEmpty: {
     en: "No entries match this filter yet.",
-    zh: "还没有符合此筛选条件的记录。",
+    zh: "这个筛选下还没有记录。",
   },
   /**
    * The amount phrase on its own. historyMsgs.ateLine carries a leading "·"
@@ -57,7 +57,7 @@ export const logDetailMsgs = {
   quantityLabel: { en: "Measured amount", zh: "具体分量" },
   quantityPlaceholder: { en: "e.g. 20", zh: "例如 20" },
   quantityAria: { en: "Measured amount value", zh: "具体分量数值" },
-  unitAria: { en: "Measured amount unit", zh: "分量单位" },
+  unitAria: { en: "Measured amount unit", zh: "具体分量单位" },
   notesLabel: { en: "Notes", zh: "备注" },
   notesPlaceholder: {
     en: "Anything you want to remember about this feed…",
@@ -74,7 +74,7 @@ export const logDetailMsgs = {
   },
   photoFailed: {
     en: "Couldn't save that photo on this device. The entry saved without it.",
-    zh: "无法在这台设备上保存该照片。记录已保存，但不含照片。",
+    zh: "无法在这台设备上保存这张照片。记录已保存，但不含照片。",
   },
 } satisfies Msgs;
 

@@ -37,7 +37,7 @@ export const accountMsgs = {
   lastChecked: { en: "Last checked for updates at {time}.", zh: "上次检查更新：{time}。" },
   lastCheckedNever: {
     en: "Checking for updates from your other devices…",
-    zh: "正在检查其他设备上的更新……",
+    zh: "正在检查其他设备上的更新…",
   },
   lastCheckedStale: {
     en: "Last checked at {time} — other devices' changes may not be here yet.",
@@ -47,7 +47,7 @@ export const accountMsgs = {
   signOut: { en: "Sign out", zh: "退出登录" },
   deleteConfirmBody: {
     en: "Delete the account and ALL server-side data? Data on this device stays until you clear it from History.",
-    zh: "确定要删除账户以及服务器上的全部数据吗？这台设备上的数据会保留，直到你在“历史”页里清除。",
+    zh: "确定要删除账户和服务器上的全部数据吗？这台设备上的数据会保留，直到你在“历史”页里清除。",
   },
   deleteYes: { en: "Yes, delete my account", zh: "是的，删除我的账户" },
   cancel: { en: "Cancel", zh: "取消" },
@@ -116,7 +116,7 @@ export const caregiverCardMsgs = {
   title: { en: "Who uses this device?", zh: "这台设备谁在用？" },
   body: {
     en: "Helping with feeding, but not with planning? Caregiver view hides the planning tools and shows just what to serve today and how to prepare it. It changes only this device.",
-    zh: "只负责喂，不负责规划？看护人视图会隐藏规划工具，只显示今天吃什么、怎么做。此设置只影响这台设备。",
+    zh: "只负责喂，不负责规划？看护人视图会隐藏规划工具，只显示今天吃什么、怎么做。这个设置只影响这台设备。",
   },
   onNote: {
     en: "Caregiver view is on for this device.",
@@ -130,7 +130,7 @@ export const fullDayCardMsgs = {
   title: { en: "Full day view", zh: "全天视图" },
   body: {
     en: "Track more than solids? Full day view turns Today into a whole-day dashboard — solids, formula, diapers, sleep, and reading, all together — and promotes them into the tabs. It changes only this device.",
-    zh: "不只想记辅食？全天视图会把“今日”变成一整天的面板——辅食、配方奶、尿布、睡眠、读书都在一起——并把它们提升到标签栏。此设置只影响这台设备。",
+    zh: "不只想记辅食？全天视图会把“今日”变成一整天的面板：辅食、配方奶、尿布、睡眠、读书都在一起，还会把这几项提升到标签栏。这个设置只影响这台设备。",
   },
   onNote: {
     en: "Full day view is on for this device.",

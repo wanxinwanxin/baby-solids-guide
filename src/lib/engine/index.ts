@@ -299,20 +299,20 @@ export function riskTier(baby: BabyProfile): "high" | "moderate" | "low" {
 const zhAllergen = (id: AllergenId) => allergenLabel(id, "zh");
 
 const TEXTURE_STAGE_ZH: Record<TextureStage, { label: string; typicalAge: string }> = {
-  S1: { label: "细腻泥糊＋可抓握的软条", typicalAge: "约6–7个月" },
-  S2: { label: "带小颗粒的泥＋一口大小的软块", typicalAge: "约8–9个月" },
-  S3: { label: "切碎的软质家常食物", typicalAge: "约10–12个月" },
+  S1: { label: "细滑泥糊 + 易抓握的软条", typicalAge: "约6–7个月" },
+  S2: { label: "带颗粒泥糊 + 一口大小的软块", typicalAge: "约8–9个月" },
+  S3: { label: "切碎的软质家常饭菜", typicalAge: "约10–12个月" },
   S4: { label: "安全切分的家庭餐", typicalAge: "12个月以上" },
 };
 
 const COPY = {
   gateUnderFour: {
     en: "Most babies are ready around 6 months (corrected age), and even pediatrician-guided programs wait until at least 4 months. It's early yet — watch for the readiness signs.",
-    zh: "大多数宝宝在6个月左右（按矫正月龄）才准备好吃辅食，即使是儿科医生指导的方案也至少要等到4个月。现在还早——先留意宝宝的准备信号吧。",
+    zh: "大多数宝宝在 6 个月左右（按矫正月龄）才准备好吃辅食，即使是儿科医生指导的方案也至少要等到 4 个月。现在还早——先留意宝宝的准备信号吧。",
   },
   gateFourToSix: {
     en: "Between 4 and 6 months, start solids only if your pediatrician specifically advised it — if they have, tell us below and you can start today.",
-    zh: "4到6个月之间，只有在儿科医生明确建议的情况下才开始添加辅食——如果医生已经建议了，请在下方告诉我们，今天就可以开始。",
+    zh: "4–6 个月之间，只有在儿科医生明确建议的情况下才开始添加辅食——如果医生已经建议了，请在下方告诉我们，今天就可以开始。",
   },
   gateConfirmSigns: {
     en: "Confirm the readiness signs first: sits with minimal support, steady head control, brings objects to the mouth, shows interest in food, and the tongue-thrust reflex has faded.",
@@ -325,13 +325,13 @@ const COPY = {
       ". Stick to smooth, thin textures (the first prep option on each food page) and let their advice override anything suggested here.",
     zh:
       (beforeSix
-        ? "你们是在儿科医生的指导下、不满6个月就开始添加辅食的。"
+        ? "你们是在儿科医生的指导下，不满 6 个月就开始添加辅食的。"
         : "你们是在儿科医生的指导下开始添加辅食的。") +
       "请坚持使用细腻稀薄的质地（每个食物页面的第一个制作方式），一切以医生的建议为准，优先于这里的任何推荐。",
   }),
   exclTooYoung: (minMonths: number): Msg => ({
     en: `Not before ${minMonths} months (corrected age).`,
-    zh: `未满${minMonths}个月（矫正月龄）不建议尝试。`,
+    zh: `未满 ${minMonths} 个月（矫正月龄）不建议尝试。`,
   }),
   exclAllergenPaused: (id: AllergenId): Msg => ({
     en: `Paused: the ${id} group is on hold after a logged reaction or per medical advice.`,
@@ -339,7 +339,7 @@ const COPY = {
   }),
   exclDoctorAvoid: {
     en: "On your doctor-avoid list.",
-    zh: "在医生建议避免的清单上。",
+    zh: "在医生建议回避的清单上。",
   },
   exclFoodHold: {
     en: "On hold: symptoms were logged with this food — check with your pediatrician.",
@@ -351,27 +351,27 @@ const COPY = {
   }),
   warnAvoidPerDoctor: (id: AllergenId): Msg => ({
     en: `The ${id} group is excluded (known allergy / medical advice).`,
-    zh: `${zhAllergen(id)}类食物已排除（已知过敏／遵医嘱）。`,
+    zh: `${zhAllergen(id)}类食物已排除（已知过敏/遵医嘱）。`,
   }),
   warnReactionPaused: (id: AllergenId): Msg => ({
     en: `The ${id} group is paused after a logged reaction. See the reaction playbook, and clear it only after talking to your pediatrician.`,
-    zh: `${zhAllergen(id)}类食物在记录到反应后已暂停。请查看反应应对指南，并且只有在与儿科医生沟通后再解除暂停。`,
+    zh: `${zhAllergen(id)}类食物在记录到反应后已暂停。请查看反应应对手册，并且只有与儿科医生沟通之后才能解除暂停。`,
   }),
   peanutGateReason: {
     en: "Severe eczema or an existing food allergy puts your baby in the higher-risk group for peanut allergy. Talk to your pediatrician or allergist before introducing peanut — they may recommend testing or a supervised first exposure, ideally around 4–6 months. Once they clear you, confirm it in the allergen tracker.",
-    zh: "重度湿疹或已有食物过敏，意味着宝宝属于花生过敏的较高风险人群。引入花生前，请先咨询儿科医生或过敏专科医生——他们可能会建议先做检测，或在监护下进行首次尝试，最好在4–6个月左右。医生确认可以后，请在过敏原追踪中确认。",
+    zh: "重度湿疹或已有食物过敏，意味着宝宝属于花生过敏的较高风险人群。引入花生前，请先咨询儿科医生或过敏专科医生——他们可能会建议先做检测，或在医生监护下首次尝试，最好在 4–6 个月左右。医生许可后，请在过敏原追踪中确认。",
   },
   peanutGateGuidance: {
     en: "Talk to your pediatrician first, then confirm clearance in the tracker.",
-    zh: "请先咨询儿科医生，再在追踪页确认已获许可。",
+    zh: "请先咨询儿科医生，再到追踪页确认已获许可。",
   },
   allergenGuidance: {
     en: "Serve early in the day so you can watch for a reaction for the next 2 hours, alongside familiar foods — never with another brand-new food.",
-    zh: "请在一天较早的时候提供，方便在接下来的2小时里观察有无反应；搭配熟悉的食物一起吃——绝不要和另一种全新食物同时尝试。",
+    zh: "请在一天较早的时候提供，方便在接下来的 2 小时里观察有无反应。搭配熟悉的食物一起吃——绝不要和另一种全新食物同时尝试。",
   },
   gateNeedSmoothDays: (days: number, id: AllergenId): Msg => ({
     en: `Get ${days} smooth days of solids in first, then start ${id}.`,
-    zh: `先顺利吃满${days}天辅食，再开始尝试${zhAllergen(id)}。`,
+    zh: `先顺利吃满 ${days} 天辅食，再开始尝试${zhAllergen(id)}。`,
   }),
   gateResolveReaction: {
     en: "Resolve the paused reaction before starting a new allergen.",
@@ -379,23 +379,23 @@ const COPY = {
   },
   gateCooldown: (days: number, id: AllergenId): Msg => ({
     en: `Wait ${days} more day(s) after the last new allergen before starting ${id}.`,
-    zh: `距离上一种新过敏原还需再等${days}天，之后再开始尝试${zhAllergen(id)}。`,
+    zh: `距离上一种新过敏原还需再等 ${days} 天，之后再开始尝试${zhAllergen(id)}。`,
   }),
   maintUrgent: (id: AllergenId, days: number): Msg => ({
     en: `It's been ${days} days since ${id}. Consistent ongoing exposure (about twice a week) is what maintains tolerance — get it back in the rotation soon.`,
-    zh: `距离上次吃${zhAllergen(id)}已经${days}天了。持续规律地接触（大约每周两次）才能维持耐受——尽快让它回到日常轮换中吧。`,
+    zh: `距离上次吃${zhAllergen(id)}已经 ${days} 天了。持续规律地接触（大约每周两次）才能维持耐受——尽快让它回到日常轮换中吧。`,
   }),
   warnMaintLapse: (id: AllergenId, days: number): Msg => ({
     en: `${id} hasn't been served in ${days} days — long gaps can undo the benefit of early introduction.`,
-    zh: `${zhAllergen(id)}已经${days}天没有提供了——间隔太久可能会抵消早期引入的益处。`,
+    zh: `${zhAllergen(id)}已经 ${days} 天没有提供了——间隔太久可能会抵消早期引入的益处。`,
   }),
   maintNudge: (id: AllergenId, days: number): Msg => ({
     en: `Keep ${id} in the rotation — aim for about twice a week (last served ${days} days ago).`,
-    zh: `让${zhAllergen(id)}保持在日常轮换中——目标是大约每周两次（上次提供是${days}天前）。`,
+    zh: `让${zhAllergen(id)}保持在日常轮换中——目标是大约每周两次（上次提供是 ${days} 天前）。`,
   }),
   retryReason: (attempts: number, pairing: string | undefined): Msg => ({
     en: `Refused ${attempts} time(s) so far — normal! Try a different prep or pair it with ${pairing ?? "a favorite"}. It can take 8–15 tries.`,
-    zh: `到目前为止已拒绝${attempts}次——很正常！试试换一种做法，或和${pairing ?? "宝宝爱吃的食物"}搭配。接受一种新食物可能需要8–15次尝试。`,
+    zh: `到目前为止已拒绝 ${attempts} 次——很正常！试试换一种做法，或和${pairing ?? "宝宝爱吃的食物"}搭配。接受一种新食物可能需要 8–15 次尝试。`,
   }),
   reasonGoodFit: (band: AgeBand): Msg => ({
     en: `A good fit for ${band} right now.`,
@@ -407,23 +407,23 @@ const COPY = {
   }),
   reasonAllergen: (id: AllergenId): Msg => ({
     en: `Time to introduce ${id}: serve early in the day and watch for 2 hours.`,
-    zh: `该引入${zhAllergen(id)}了：请在一天较早时提供，并观察2小时。`,
+    zh: `该引入${zhAllergen(id)}了：请在一天较早时提供，并观察 2 小时。`,
   }),
   reasonIron: {
     en: "Iron stores dip around 6 months — iron-rich foods are the priority.",
-    zh: "宝宝的铁储备在6个月左右开始下降——富含铁的食物是当前的重点。",
+    zh: "宝宝的铁储备在 6 个月左右开始下降——富含铁的食物是当前的重点。",
   },
   reasonPlanned: {
     en: "On your plan for this week.",
-    zh: "在你本周的计划里。",
+    zh: "在本周的计划里。",
   },
   reasonPinned: (attempts: number, name: string): Msg => ({
     en: `Offered ${attempts} time(s) — keep ${name.toLowerCase()} going for 2–3 days while you watch, before adding the next new food.`,
-    zh: `已提供${attempts}次——继续让宝宝吃${name}并观察2–3天，再添加下一种新食物。`,
+    zh: `已提供 ${attempts} 次——继续让宝宝吃${name}并观察 2–3 天，再添加下一种新食物。`,
   }),
   textureNudge: (count: number, next: (typeof TEXTURE_STAGES)[number]): Msg => ({
     en: `Ready for the next texture? The last ${count} logs show confident eating. Consider moving to ${next.id}: ${next.label.toLowerCase()} (${next.typicalAge}). You confirm the switch — the app never auto-advances.`,
-    zh: `准备好进入下一个质地阶段了吗？最近${count}条记录显示宝宝吃得很有信心。可以考虑进入${next.id}：${TEXTURE_STAGE_ZH[next.id].label}（${TEXTURE_STAGE_ZH[next.id].typicalAge}）。是否切换由你来确认——应用绝不会自动升级。`,
+    zh: `准备好进入下一个质地阶段了吗？最近 ${count} 条记录显示宝宝吃得很有信心。可以考虑进入${next.id}：${TEXTURE_STAGE_ZH[next.id].label}（${TEXTURE_STAGE_ZH[next.id].typicalAge}）。是否切换由你来确认——应用绝不会自动升级。`,
   }),
 };
 

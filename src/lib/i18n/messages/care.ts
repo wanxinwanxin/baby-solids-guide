@@ -40,7 +40,7 @@ export const careMsgs = {
   diaperSummary: { en: "{n} diapers", zh: "尿布 {n} 次" },
   sleepSummary: { en: "sleep {dur}", zh: "睡眠 {dur}" },
   recentTitle: { en: "Recent days", zh: "最近几天" },
-  recentEmpty: { en: "Older days appear here as you log.", zh: "有记录后，这里会显示往日汇总。" },
+  recentEmpty: { en: "Older days appear here as you log.", zh: "记了几天之后，这里会按天汇总。" },
 
   // Entry rows + edit panel
   formulaEntry: { en: "Bottle · {amount}", zh: "喂奶 · {amount}" },

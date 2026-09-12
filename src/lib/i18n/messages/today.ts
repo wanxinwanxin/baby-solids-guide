@@ -6,7 +6,7 @@ export const todayMsgs = {
   pctFoodsTried: { en: "{pct}% of foods tried", zh: "已尝试 {pct}% 的食物" },
 
   // ——— State C: no profile yet ———
-  meetTitle: { en: "Let's meet your baby", zh: "来认识一下你的宝宝" },
+  meetTitle: { en: "Let's meet your baby", zh: "来认识一下宝宝" },
   meetTitleDot: { en: ".", zh: "。" },
   meetLede: {
     en: "Two minutes of setup and we'll build a day-by-day plan — whether you're starting from scratch or already mid-journey.",
@@ -24,7 +24,7 @@ export const todayMsgs = {
   almostThereDot: { en: ".", zh: "。" },
   gatedLede: {
     en: "Not quite solids time yet — and that's exactly what today is for. Here's what to watch for; we'll flip to food picks the moment the signs line up.",
-    zh: "还没到吃辅食的时候——而今天要做的正是等待和观察。下面是要留意的信号；只要信号都齐了，我们马上切换到食物推荐。",
+    zh: "还没到吃辅食的时候——而今天要做的正是等待和观察。下面是要留意的信号。只要信号都齐了，我们马上切换到食物推荐。",
   },
   readinessTitle: { en: "Readiness watch list", zh: "准备度观察清单" },
   fiveSigns: { en: "5 signs", zh: "5 个信号" },
@@ -35,7 +35,7 @@ export const todayMsgs = {
   pedsTitle: { en: "Starting on your pediatrician's advice?", zh: "在儿科医生的建议下开始？" },
   pedsBody: {
     en: "Plenty of families start solids between 4 and 6 months on their pediatrician's specific guidance — sometimes before every readiness sign has appeared. If that's you, start the program today: we'll keep suggestions to smooth, mashable first foods, and your pediatrician's advice always comes first.",
-    zh: "不少家庭会遵照儿科医生的明确指导，在 4 到 6 个月之间开始添加辅食——有时并不是每个准备信号都已出现。如果你正是这种情况，今天就可以开始：我们会把建议限定在细滑、易压成泥的初期食物，而儿科医生的建议永远优先。",
+    zh: "不少家庭会遵照儿科医生的明确指导，在 4–6 个月之间开始添加辅食——有时并不是每个准备信号都已出现。如果你正是这种情况，今天就可以开始：我们会把建议限定在细腻、易压成泥的初期食物，而儿科医生的建议永远优先。",
   },
   pedsButton: {
     en: "Our pediatrician advised us to start — begin today",
@@ -61,9 +61,9 @@ export const todayMsgs = {
     zh: "预览最多只能看到 {n} 天后——再往后，推荐取决于宝宝实际吃了什么。",
   },
   backToToday: { en: "← back to today", zh: "← 回到今天" },
-  todayFor: { en: "Today for {name}", zh: "{name} 的今天" },
-  tomorrowFor: { en: "Tomorrow for {name}", zh: "{name} 的明天" },
-  dayFor: { en: "{day} for {name}", zh: "{name} 的 {day}" },
+  todayFor: { en: "Today for {name}", zh: "{name}的今天" },
+  tomorrowFor: { en: "Tomorrow for {name}", zh: "{name}的明天" },
+  dayFor: { en: "{day} for {name}", zh: "{name}的 {day}" },
   syncing: { en: "syncing…", zh: "同步中…" },
   syncRetrying: { en: "sync retrying", zh: "同步重试中" },
   synced: { en: "synced ✓", zh: "已同步 ✓" },
@@ -83,13 +83,13 @@ export const todayMsgs = {
   previewAfter: { en: " show up here instantly.", zh: "上的改动会立刻显示在这里。" },
 
   // ——— Account / backup nudges ———
-  saveDataTitle: { en: "Save {name}'s data", zh: "保存 {name} 的数据" },
+  saveDataTitle: { en: "Save {name}'s data", zh: "保存{name}的数据" },
   accountBody: {
     en: "{n} logs live only on this device. Sign in once and everything follows you to any phone or laptop — free, no individual tracking.",
     zh: "{n} 条记录只保存在这台设备上。登录一次，数据就会跟着你出现在任何手机或电脑上——免费，也不会跟踪个人。",
   },
   accountLink: { en: "Sign in with Google or email →", zh: "用 Google 或邮箱登录 →" },
-  backupTitle: { en: "Back up {name}'s history", zh: "备份 {name} 的记录" },
+  backupTitle: { en: "Back up {name}'s history", zh: "备份{name}的记录" },
   backupBody: {
     en: "{n} logs live only on this device. A one-tap export keeps them safe if the browser clears its storage.",
     zh: "{n} 条记录只保存在这台设备上。一键导出即可留个备份，就算浏览器清除了存储也不怕。",
@@ -99,13 +99,13 @@ export const todayMsgs = {
 
   // ——— Check-ins ———
   checkIns: { en: "Check-ins", zh: "观察提醒" },
-  checkReaction: { en: "Check for a reaction to {food}", zh: "看看 {food} 有没有引起反应" },
+  checkReaction: { en: "Check for a reaction to {food}", zh: "看看{food}有没有引起反应" },
   dueAt: { en: "due {time}", zh: "{time} 到期" },
-  logWhatYouSee: { en: "Log what you see", zh: "记录你的观察" },
+  logWhatYouSee: { en: "Log what you see", zh: "记录观察结果" },
   allClear: { en: "All clear ✓", zh: "一切正常 ✓" },
   upcomingCheck: {
     en: "Upcoming: {food} check at {time}",
-    zh: "接下来：{time} 观察 {food} 的反应",
+    zh: "接下来：{time} 观察{food}的反应",
   },
   dismiss: { en: "dismiss", zh: "忽略" },
 
@@ -128,12 +128,12 @@ export const todayMsgs = {
   /** {name} = baby nickname. */
   comingUpLede: {
     en: "The next foods on {name}'s plan, with enough notice to shop or batch-cook.",
-    zh: "{name}计划里接下来的食物——提前知道，好去采购或提前做好。",
+    zh: "{name}计划里接下来的食物——提前知道，好去采购或一次多做。",
   },
   comingUpNowLabel: { en: "On the tray now", zh: "正在引入" },
   comingUpNothingNew: {
     en: "Nothing new on the tray today. The next food and its date are below.",
-    zh: "今天托盘上没有新食物。下一种食物和它的日期在下面。",
+    zh: "今天餐盘上没有新食物。下一种食物和日期列在下面。",
   },
   comingUpEmpty: {
     en: "Every food on the plan has had its turn. Add more to keep the run going.",
@@ -147,7 +147,7 @@ export const todayMsgs = {
   /** {name} = baby nickname. */
   noPlanBody: {
     en: "A plan paces new foods so a reaction always points at one of them — and it's what fills this list with what to buy next.",
-    zh: "计划会安排新食物的节奏，让出现反应时总能追溯到具体某一种——也正是它让这份清单告诉你接下来要买什么。",
+    zh: "计划会安排新食物的节奏，让出现反应时总能追溯到具体某一种。有了计划，这份清单才会列出接下来要买的食物。",
   },
   buildPlanLink: { en: "Build a plan →", zh: "生成计划 →" },
 
@@ -175,7 +175,7 @@ export const todayMsgs = {
   nutrientMixTitle: { en: "Today's nutrient mix", zh: "今日营养构成" },
   nutrientMixSub: {
     en: "How many of today's {n} picks carry each nutrient.",
-    zh: "今日 {n} 种推荐里，各有几种能提供这项营养。",
+    zh: "今日 {n} 种推荐中，每项营养分别有几种食物提供。",
   },
   nutrientMixSubOne: {
     en: "What today's pick brings to the table.",
@@ -204,7 +204,7 @@ export const todayMsgs = {
     zh: "9 种过敏原中已开始 {n} 种",
   },
   nextUpAllergen: { en: "Next up: {allergen}", zh: "下一个：{allergen}" },
-  onHold: { en: "on hold", zh: "暂缓" },
+  onHold: { en: "on hold", zh: "暂停" },
   manageTracker: { en: "Manage in the allergen tracker →", zh: "去过敏原追踪器管理 →" },
   allNineUnderway: {
     en: "All nine common allergens are underway or done — keep them in rotation.",
@@ -231,7 +231,7 @@ export const todayMsgs = {
   todayBadgeSuffix: { en: " · today", zh: " · 今日" },
   comboFootnote: {
     en: "Only foods {name} has already handled safely (plus today's picks) make this list.",
-    zh: "只有 {name} 已经安全吃过的食物（加上今日推荐）才会列在这里。",
+    zh: "只有{name}已经安全吃过的食物（加上今日推荐）才会列在这里。",
   },
 
   // ——— Safe so far ———
@@ -240,7 +240,7 @@ export const todayMsgs = {
   manyFoods: { en: "{n} foods", zh: "{n} 种食物" },
   safeLede: {
     en: "Eaten at least once with no reaction logged — {name}'s growing pantry. Keep favorites in rotation while the new ones arrive.",
-    zh: "至少吃过一次且没有记录到反应——这是 {name} 不断扩充的食物库。在新食物陆续加入的同时，让喜欢的食物保持轮换。",
+    zh: "至少吃过一次且没有记录到反应——{name}的安全食物越来越多。新食物陆续加入，喜欢的食物也要保持轮换。",
   },
   nMore: { en: "+{n} more →", zh: "还有 {n} 种 →" },
 
@@ -250,7 +250,7 @@ export const todayMsgs = {
   tryMany: { en: "tries", zh: "次尝试" },
   refusalsNormal: {
     en: "Refusals are normal — it can take 8–15 relaxed offers before a food clicks.",
-    zh: "被拒绝很正常——一种食物往往要轻松地试上 8–15 次才会被接受。",
+    zh: "宝宝不肯吃很正常——一种食物往往要轻松地试上 8–15 次才肯吃。",
   },
 
   // ——— Footer CTA ———
@@ -262,7 +262,7 @@ export const todayMsgs = {
 export const caregiverMsgs = {
   emergencyLink: {
     en: "Worried right now? Emergency guide",
-    zh: "现在就担心？看急救指南",
+    zh: "现在就担心？看安全指南",
   },
   serveLede: {
     en: "What to serve {name} today, and exactly how to prepare it.",

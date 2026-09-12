@@ -38,7 +38,7 @@ export const safetyMsgs = {
   neverTitle: { en: "Never serve unmodified", zh: "绝不能不处理就直接给" },
   neverIntro: {
     en: "These are the classic airway-shaped hazards. Most are fine with the right prep — each food's page shows exactly how.",
-    zh: "以下是典型的、形状容易卡住气道的高危食物。大多数只要处理得当就可以吃——每种食物的页面都写明了具体做法。",
+    zh: "以下是形状容易堵住气道的典型高危食物。大多数只要处理得当就可以吃——每种食物的页面都写明了具体做法。",
   },
   thHazard: { en: "Hazard", zh: "高危食物" },
   thAlt: { en: "Safe alternative", zh: "安全做法" },
@@ -75,12 +75,12 @@ export const safetyMsgs = {
   /** {fare} / {aap} are the English citation labels from SOURCES (not translated). */
   planSourcesNote: {
     en: "Structure informed by FARE's emergency care plan and AAP choking-prevention guidance ({fare}; {aap}).",
-    zh: "本方案的结构参考了 FARE 的紧急护理计划和 AAP 的防窒息指南（{fare}；{aap}）。",
+    zh: "这份方案的结构参考了 FARE 的紧急护理计划和 AAP 的防窒息指南（{fare}；{aap}）。",
   },
   footerSources: { en: "Sources:", zh: "参考来源：" },
   footerDisclaimer: {
     en: ". Educational guidance, not medical advice.",
-    zh: "。以上为教育性指导，不构成医疗建议。",
+    zh: "。以上是科普指南，不是医疗建议。",
   },
 } satisfies Msgs;
 
@@ -110,7 +110,7 @@ export const CALL_911_SIGNS: Msg[] = [
 
 /** Bullets in the gagging card (before the "What to do" line). */
 export const GAG_SIGNS: Msg[] = [
-  { en: "• Noisy: coughing, sputtering, retching", zh: "• 有声音：咳嗽、噗噗吐气、作呕" },
+  { en: "• Noisy: coughing, sputtering, retching", zh: "• 有声音：咳嗽、噗噗吐气、干呕" },
   { en: "• Face may turn red", zh: "• 脸可能会涨红" },
   {
     en: "• Baby works the food forward on their own",
@@ -154,7 +154,7 @@ export const NEVER_SERVE_ROWS: { hazard: Msg; alt: Msg }[] = [
     hazard: { en: "Hot dogs and sausage rounds", zh: "热狗和香肠圆片" },
     alt: {
       en: "Skip, or slice lengthwise into thin strips (watch sodium)",
-      zh: "最好不给；要给就纵向切成细条（注意钠含量）",
+      zh: "不要整根给；要给就纵向切成细条（注意钠含量）",
     },
   },
   {

@@ -16,9 +16,9 @@ export const ALLERGEN_MSGS: Record<AllergenId, Msg> = {
   wheat: { en: "Wheat", zh: "小麦" },
   soy: { en: "Soy", zh: "大豆" },
   sesame: { en: "Sesame", zh: "芝麻" },
-  "tree-nut": { en: "Tree nuts", zh: "坚果" },
+  "tree-nut": { en: "Tree nuts", zh: "树坚果" },
   fish: { en: "Fish", zh: "鱼类" },
-  shellfish: { en: "Shellfish", zh: "甲壳类海鲜" },
+  shellfish: { en: "Shellfish", zh: "带壳海鲜" },
 };
 
 export const CATEGORY_MSGS: Record<FoodCategory, Msg> = {
@@ -37,9 +37,9 @@ export const NUTRIENT_MSGS: Record<NutrientTag, Msg> = {
   zinc: { en: "Zinc", zh: "锌" },
   protein: { en: "Protein", zh: "蛋白质" },
   omega3: { en: "Omega-3", zh: "Omega-3" },
-  vitaminA: { en: "Vitamin A", zh: "维生素A" },
-  vitaminC: { en: "Vitamin C", zh: "维生素C" },
-  vitaminD: { en: "Vitamin D", zh: "维生素D" },
+  vitaminA: { en: "Vitamin A", zh: "维生素 A" },
+  vitaminC: { en: "Vitamin C", zh: "维生素 C" },
+  vitaminD: { en: "Vitamin D", zh: "维生素 D" },
   calcium: { en: "Calcium", zh: "钙" },
   folate: { en: "Folate", zh: "叶酸" },
   fiber: { en: "Fiber", zh: "膳食纤维" },
@@ -85,7 +85,7 @@ export const SYMPTOM_MSGS: Record<SymptomId, Msg> = {
   "vomiting-repetitive": { en: "Repeated, forceful vomiting", zh: "反复剧烈呕吐" },
   "vomiting-delayed-1-4h": {
     en: "Profuse vomiting 1–4 hours after eating",
-    zh: "进食后1–4小时大量呕吐",
+    zh: "进食后 1–4 小时大量呕吐",
   },
   "lethargy-floppy": {
     en: "Unusually pale, floppy, or hard to rouse",
@@ -117,7 +117,7 @@ export const TEXTURE_STAGE_MSGS: Record<TextureStage, { label: Msg; typicalAge: 
     typicalAge: { en: "≈10–12 months", zh: "约10–12个月" },
   },
   S4: {
-    label: { en: "Safely-cut family meals", zh: "安全切分的家庭餐食" },
+    label: { en: "Safely-cut family meals", zh: "安全切分的家庭餐" },
     typicalAge: { en: "12 months +", zh: "12个月以上" },
   },
 };

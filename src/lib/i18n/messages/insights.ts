@@ -5,7 +5,7 @@ import type { Msg, Msgs } from "../config";
 export const insightsMsgs = {
   title: { en: "Insights", zh: "洞察" },
   setupTitle: { en: "Set up a profile to see insights", zh: "先建立档案才能查看洞察" },
-  setupBody: { en: "Insights are built from your own logs.", zh: "洞察由你自己的记录生成。" },
+  setupBody: { en: "Insights are built from your own logs.", zh: "这些洞察全部来自你自己的记录。" },
   startOnboarding: { en: "Start onboarding →", zh: "开始设置 →" },
   nothingTitle: { en: "Nothing to chart yet", zh: "还没有可展示的数据" },
   nothingBody: {
@@ -49,7 +49,7 @@ export const insightsMsgs = {
   refusalsTitle: { en: "Worth another relaxed try", zh: "值得再轻松试一次" },
   noRefusals: {
     en: "No stuck refusals right now — everything offered lately landed okay.",
-    zh: "目前没有一直被拒绝的食物——最近提供的都还不错。",
+    zh: "目前没有哪种食物一直吃不下去——最近提供的都还不错。",
   },
   offersNote: { en: "It can take 8–15 relaxed offers.", zh: "可能需要 8–15 次轻松的尝试。" },
   tries: { en: "· {n} tries", zh: "· 试过 {n} 次" },

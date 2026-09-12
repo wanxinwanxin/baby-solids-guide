@@ -11,7 +11,7 @@ export const activitiesMsgs = {
   heading: { en: "Activities", zh: "亲子活动" },
   intro: {
     en: "One tap logs an activity for today. Reading a specific piece? Log it from the Read to baby shelf and the title comes along.",
-    zh: "点一下就记录一次今天的活动。读了某一首具体的诗？从「读给宝宝」书架上记录，标题会一起记下来。",
+    zh: "点一下就记录一次今天的活动。读了某一首具体的诗？从“读给宝宝”书架上记录，标题会一起记下来。",
   },
   setupTitle: { en: "Set up a profile to log activities", zh: "先建立档案才能记录活动" },
   setupBody: { en: "Activities are logged per baby.", zh: "活动按宝宝分别记录。" },
@@ -22,7 +22,7 @@ export const activitiesMsgs = {
   deleteAria: { en: "Delete {what}", zh: "删除{what}" },
   recentTitle: { en: "Previous days", zh: "之前几天" },
   recentEmpty: { en: "Past days will show up here.", zh: "过去几天的记录会显示在这里。" },
-  readShelfLink: { en: "Read to baby shelf →", zh: "去「读给宝宝」书架 →" },
+  readShelfLink: { en: "Read to baby shelf →", zh: "去“读给宝宝”书架 →" },
   syncNote: {
     en: "Activities sync to everyone in the family, like meals and sleep.",
     zh: "活动和喂食、睡眠一样，会同步给全家人。",

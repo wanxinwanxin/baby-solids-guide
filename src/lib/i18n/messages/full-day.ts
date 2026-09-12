@@ -2,12 +2,12 @@ import type { Msgs } from "../config";
 
 /** The Full day view dashboard (src/app/today/FullDayToday.tsx). */
 export const fullDayMsgs = {
-  greeting: { en: "Today for {name}", zh: "{name} 的今天" },
+  greeting: { en: "Today for {name}", zh: "{name}的今天" },
 
   toDoTitle: { en: "To do today", zh: "今天要做的" },
   toDoHint: { en: "Swipe right, or tap ✓, when it's done.", zh: "做完后向右滑动，或点 ✓。" },
   allCaughtUp: { en: "All caught up for today. 🎉", zh: "今天都做完啦。🎉" },
-  tryFood: { en: "Try {food}", zh: "尝试 {food}" },
+  tryFood: { en: "Try {food}", zh: "尝试{food}" },
   markEaten: { en: "Ate it", zh: "已吃" },
   readHabit: { en: "Read to baby", zh: "读给宝宝听" },
   markRead: { en: "Read it", zh: "已读" },
@@ -24,7 +24,7 @@ export const fullDayMsgs = {
   bottlesToday: { en: "{n} bottles · {total}", zh: "{n} 瓶 · {total}" },
   diapersCount: { en: "{n} changes", zh: "换了 {n} 次" },
   sleepSoFar: { en: "{dur} so far", zh: "已睡 {dur}" },
-  nextWindow: { en: "Next: {a} – {b}", zh: "下次：{a} – {b}" },
+  nextWindow: { en: "Next: {a} – {b}", zh: "下次：{a}–{b}" },
   readDone: { en: "Read today ✓", zh: "今天读过 ✓" },
   activitiesTitle: { en: "Activities", zh: "亲子活动" },
   activitiesCount: { en: "{n} logged", zh: "记了 {n} 次" },

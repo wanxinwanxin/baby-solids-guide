@@ -18,12 +18,12 @@ export const tourMsgs = {
   navTitle: { en: "Your daily loop", zh: "每天的主线" },
   navBody: {
     en: "Today shows what to serve, History keeps the feeding journal, and Plan lays out the days ahead.",
-    zh: "「今日」告诉你今天吃什么，「历史」是喂养日记，「计划」排好接下来的日子。",
+    zh: "“今日”告诉你今天吃什么，“历史”是喂养日记，“计划”排好接下来的日子。",
   },
   logTitle: { en: "Log every taste", zh: "记录每一口" },
   logBody: {
     en: "One tap after each meal. The log drives tomorrow's picks, allergen tracking, and insights.",
-    zh: "每餐后点一下。记录会驱动明日推荐、过敏原追踪和洞察。",
+    zh: "每餐后点一下。明日推荐、过敏原追踪和洞察，都靠这些记录。",
   },
   foodsTitle: { en: "The food library", zh: "食物库" },
   foodsBody: {
@@ -33,7 +33,7 @@ export const tourMsgs = {
   moreTitle: { en: "More lives here", zh: "更多都在这里" },
   moreBody: {
     en: "Guides, allergens, and insights — plus extras like the read-aloud shelf of rhymes and 古诗.",
-    zh: "学习指南、过敏原、洞察，还有「读给宝宝」的童谣与古诗。",
+    zh: "学习指南、过敏原、洞察，还有“读给宝宝”的童谣与古诗。",
   },
   emergencyTitle: { en: "Emergency, one tap away", zh: "紧急情况，一键直达" },
   emergencyBody: {

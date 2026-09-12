@@ -22,7 +22,7 @@ export const galleryMsgs = {
     en: "Unlock your first food to earn your first badge.",
     zh: "点亮第一种食物，就能拿到第一个徽章。",
   },
-  nextTier: { en: "{n} more to “{name}”", zh: "再点亮 {n} 种就是「{name}」" },
+  nextTier: { en: "{n} more to “{name}”", zh: "再点亮 {n} 种就是“{name}”" },
   allTiersEarned: { en: "Every badge earned — the whole table is yours.", zh: "所有徽章都已收集——整张餐桌都是你们的。" },
   progressAria: { en: "Progress toward the next badge", zh: "距离下一个徽章的进度" },
   tierEarnedAria: { en: "{name} — earned", zh: "{name}——已达成" },

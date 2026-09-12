@@ -5,7 +5,7 @@ export const readMsgs = {
   metaTitle: { en: "Read to your baby", zh: "读给宝宝听" },
   metaDescription: {
     en: "A small public-domain shelf of things to recite at the table: English nursery rhymes and poems, and classical Chinese poems with pinyin.",
-    zh: "一份公共领域的床边与餐边朗读小集：英文童谣与诗歌，以及带拼音的中文古诗。",
+    zh: "一份公共领域的朗读小集，餐桌边就能念：英文童谣与诗歌，以及带拼音的中文古诗。",
   },
   heading: { en: "Read to your baby", zh: "读给宝宝听" },
   intro: {
@@ -23,7 +23,7 @@ export const readMsgs = {
   kindPoem: { en: "poem", zh: "诗" },
   kindSonnet: { en: "sonnet", zh: "十四行诗" },
   markRead: { en: "Read this to baby ✓", zh: "记一次读给宝宝 ✓" },
-  readToday: { en: "Read today ✓ (tap to undo)", zh: "今天读过 ✓（点击撤销）" },
+  readToday: { en: "Read today ✓ (tap to undo)", zh: "今天读过 ✓（点一下撤销）" },
   textSize: { en: "Text size", zh: "字号" },
   sizeStandard: { en: "Standard text size", zh: "标准字号" },
   sizeLarge: { en: "Large text size", zh: "大字号" },

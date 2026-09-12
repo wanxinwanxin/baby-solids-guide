@@ -7,7 +7,7 @@ export const onboardingMsgs = {
   stepAria: { en: "Step {step} of {total}", zh: "第 {step} 步，共 {total} 步" },
 
   // Step 0 — basics
-  aboutTitle: { en: "About your baby", zh: "关于你的宝宝" },
+  aboutTitle: { en: "About your baby", zh: "宝宝信息" },
   nameLabel: { en: "Name or nickname", zh: "名字或昵称" },
   namePlaceholder: { en: "e.g. Mango", zh: "例如：芒果" },
   birthDateLabel: { en: "Birth date", zh: "出生日期" },
@@ -39,19 +39,19 @@ export const onboardingMsgs = {
   // a too-young baby still gets a profile, and Today explains the wait.
   /** Live echo under the birth date — the fastest way to spot a mistyped year. */
   babyIsAge: { en: "{name} is {age}.", zh: "{name}{age}。" },
-  ageWeeks: { en: "{n} weeks old today", zh: "今天{n}周大" },
-  ageMonths: { en: "{n} months old today", zh: "今天{n}个月大" },
-  ageWeeksCorrected: { en: "{n} weeks corrected today", zh: "今天矫正{n}周" },
-  ageMonthsCorrected: { en: "{n} months corrected today", zh: "今天矫正{n}个月" },
+  ageWeeks: { en: "{n} weeks old today", zh: "今天 {n} 周大" },
+  ageMonths: { en: "{n} months old today", zh: "今天 {n} 个月大" },
+  ageWeeksCorrected: { en: "{n} weeks corrected today", zh: "今天矫正 {n} 周" },
+  ageMonthsCorrected: { en: "{n} months corrected today", zh: "今天矫正 {n} 个月" },
   tooYoungTitle: { en: "Too early for solids — and that's fine", zh: "现在开始辅食还太早——这很正常" },
   tooYoungBody: {
     en: "Milk or formula is all {name} needs right now. Set the profile up anyway: we'll show you what to watch for, and food picks turn on around {date}.",
     zh: "现在{name}只需要母乳或配方奶。你还是可以先建好档案：我们会告诉你该观察什么，食物推荐会在 {date} 前后开启。",
   },
-  earlyWindowTitle: { en: "In the pediatrician-guided window", zh: "处于医生指导可提前开始的阶段" },
+  earlyWindowTitle: { en: "In the pediatrician-guided window", zh: "处于儿科医生指导可提前开始的阶段" },
   earlyWindowBody: {
     en: "Most babies start at 6 months — for {name}, around {date}. Between 4 and 6 months we only unlock the plan if your pediatrician has told you to start.",
-    zh: "大多数宝宝在 6 个月开始——对{name}来说大约是 {date}。在 4 到 6 个月之间，只有当儿科医生明确让你开始时，我们才会解锁计划。",
+    zh: "大多数宝宝在 6 个月开始——{name}大约在 {date}。在 4–6 个月之间，只有当儿科医生明确让你开始时，我们才会解锁计划。",
   },
   whenToStartLink: { en: "Read: when to start solids", zh: "延伸阅读：什么时候开始辅食" },
 
@@ -127,7 +127,7 @@ export const onboardingMsgs = {
   },
   avoidingDesc: {
     en: "Optional — a reaction you suspect, or something you've been advised to hold off on for now.",
-    zh: "可选——你怀疑有反应，或者被建议暂时先别吃的食物。",
+    zh: "可选——你怀疑有反应，或者有人建议暂时先别吃的食物。",
   },
   avoidingWhichQ: { en: "What are you holding off on?", zh: "你们暂时不打算给宝宝吃什么？" },
   avoidingWhichHelp: {
@@ -189,7 +189,7 @@ export const onboardingMsgs = {
   },
   earlyStartBody: {
     en: "You're starting on your pediatrician's specific advice — the plan unlocks today, and we'll keep picks to smooth, mashable first foods.",
-    zh: "你们是按儿科医生的明确建议开始的——计划今天解锁，我们会把推荐控制在顺滑、可压成泥的初期食物。",
+    zh: "你们是按儿科医生的明确建议开始的——计划今天解锁，我们会把推荐控制在细腻、可压成泥的初期食物。",
   },
   notYetTitle: { en: "Not yet — and that's normal", zh: "还没到时候——这很正常" },
   /** Rendered inside the accent-colored span that closes the headline. */
@@ -205,7 +205,7 @@ export const onboardingMsgs = {
   },
   pedAdviceDesc: {
     en: "That unlocks the program from 4 months — we'll keep picks to smooth, mashable first foods.",
-    zh: "这会从 4 个月起解锁计划——推荐会控制在顺滑、可压成泥的初期食物。",
+    zh: "这会从 4 个月起解锁计划——推荐会控制在细腻、可压成泥的初期食物。",
   },
   beginToday: { en: "Begin today", zh: "今天就开始" },
   saveProfile: { en: "Save profile", zh: "保存档案" },

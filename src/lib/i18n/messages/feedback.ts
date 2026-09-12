@@ -12,7 +12,7 @@ export const feedbackMsgs = {
   catFood: { en: "Missing food", zh: "缺食物" },
   catIdea: { en: "Idea", zh: "想法" },
   catBug: { en: "Something's broken", zh: "有问题" },
-  messageLabel: { en: "Your message", zh: "你的留言" },
+  messageLabel: { en: "Your message", zh: "留言内容" },
   messagePlaceholder: {
     en: "Type or dictate here…",
     zh: "在这里打字或语音输入…",
@@ -39,6 +39,6 @@ export const feedbackMsgs = {
   moreLabel: { en: "Send feedback", zh: "发送反馈" },
   moreDesc: {
     en: "Request a food, report a bug, or share an idea",
-    zh: "反馈缺失的食物、报告问题，或分享想法",
+    zh: "反馈缺的食物、报告问题，或分享想法",
   },
 } satisfies Msgs;

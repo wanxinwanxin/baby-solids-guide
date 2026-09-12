@@ -49,7 +49,7 @@ export const planMsgs = {
   tapAddsTo: { en: "Tap adds to", zh: "点按添加到" },
   weekSelectAria: {
     en: "Week that tapped foods are added to",
-    zh: "点按食物将添加到的那一周",
+    zh: "点按的食物添加到哪一周",
   },
   startEmpty: { en: "start with an empty board", zh: "从空白看板开始" },
   trayHint: {

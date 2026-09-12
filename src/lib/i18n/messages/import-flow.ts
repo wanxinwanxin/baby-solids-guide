@@ -40,7 +40,7 @@ export const importFlowMsgs = {
   },
   allergenDesc: {
     en: "One try vs. an established routine matters for allergens. Adjust any that need it.",
-    zh: "对过敏原来说，只试过一次和已经形成规律很不一样。需要的话请逐项调整。",
+    zh: "过敏原这里，只试过一次和已经形成规律，差别很大。需要的话逐项调整。",
   },
 
   // Texture stage

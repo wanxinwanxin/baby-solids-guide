@@ -7,7 +7,7 @@ export const datetimeMsgs = {
   timePlaceholder: { en: "7:35 pm", zh: "19:35" },
   timeInvalid: {
     en: "Enter a time like 7:35 pm or 19:35.",
-    zh: "请输入时间，例如 19:35 或 下午7:35。",
+    zh: "请输入时间，例如 19:35 或 下午 7:35。",
   },
   cancel: { en: "Cancel", zh: "取消" },
 } satisfies Msgs;

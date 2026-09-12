@@ -22,11 +22,11 @@ export const DIAGRAM_CAPTION_MSGS: Record<DiagramVariant, Msg> = {
   "bite-size": { en: "Pinky-nail pieces for pincer grasp", zh: "小指指甲盖大小，练习二指捏取" },
   "quarter-lengthwise": {
     en: "Always quartered lengthwise — never coins",
-    zh: "务必纵向切成四条——切勿切成圆片",
+    zh: "务必纵向切成四条——绝不要切成圆片",
   },
   "thin-spread": {
     en: "Paper-thin spread or drizzly-thin mix",
-    zh: "薄薄一层涂抹，或稀到能滴落的糊",
+    zh: "抹成薄薄一层，或稀到能滴落的糊",
   },
   strips: { en: "Finger-width strips", zh: "手指宽的长条" },
   mash: { en: "Smooth, spoonable mash", zh: "细滑、可用勺舀的泥糊" },
@@ -39,7 +39,7 @@ export const DIAGRAM_CAPTION_MSGS: Record<DiagramVariant, Msg> = {
 export const DIAGRAM_LABEL_MSGS: Record<DiagramVariant, Msg> = {
   batons: { en: "2 fingers", zh: "两根手指" },
   "bite-size": { en: "pinky nail", zh: "小指指甲盖" },
-  "quarter-lengthwise": { en: "4 long spears", zh: "4根长条" },
+  "quarter-lengthwise": { en: "4 long spears", zh: "四根长条" },
   "thin-spread": { en: "see-through layer", zh: "薄到透光" },
   strips: { en: "finger-width strips", zh: "手指宽长条" },
   mash: { en: "smooth & spoonable", zh: "细滑可舀" },

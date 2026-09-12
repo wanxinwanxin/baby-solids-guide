@@ -73,7 +73,7 @@ const FPIES_COPY: TriageCopy = {
     },
     {
       en: "Avoid the trigger food until you've spoken with your pediatrician; ask about an allergist referral.",
-      zh: "在与儿科医生沟通之前，先回避这种诱发食物；并询问是否需要转诊过敏专科医生。",
+      zh: "在与儿科医生沟通之前，先回避这种诱发食物，并询问是否需要转诊过敏专科医生。",
     },
   ],
 };
@@ -95,7 +95,7 @@ const SAME_DAY_COPY: TriageCopy = {
     },
     {
       en: "If symptoms worsen — breathing trouble, tongue/lip swelling, floppiness — call 911.",
-      zh: "如果症状加重——呼吸困难、舌头或嘴唇肿胀、软弱无力——立即拨打 911。",
+      zh: "如果症状加重，出现呼吸困难、舌头或嘴唇肿胀、软弱无力——立即拨打 911。",
     },
   ],
 };

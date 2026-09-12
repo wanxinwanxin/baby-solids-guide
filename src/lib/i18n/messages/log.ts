@@ -26,12 +26,12 @@ export const logFormMsgs = {
     zh: "{allergen}这一组已在你的计划中暂停。",
   },
   reactionPlaybook: { en: "See the reaction playbook →", zh: "查看反应应对手册 →" },
-  emergencyGuide: { en: "Emergency guide", zh: "急救指南" },
+  emergencyGuide: { en: "Emergency guide", zh: "安全指南" },
   checkInTitle: { en: "Check-in", zh: "反应观察" },
   logAFood: { en: "Log a food", zh: "记录食物" },
   worriedNow: {
     en: "Worried right now? Emergency guide",
-    zh: "现在就担心？看急救指南",
+    zh: "现在就担心？看安全指南",
   },
   howLooks: {
     en: "How does {name} look after {food}?",
@@ -96,7 +96,7 @@ export const checkInOfferMsgs = {
   /** Where a scheduled reminder actually shows up — set before scheduling. */
   remindersWhere: {
     en: "Reminders pop up on your Today screen — and arrive as a push notification on this device when you're signed in.",
-    zh: "提醒会出现在「今天」页面——登录后还会以推送通知的形式发送到这台设备。",
+    zh: "提醒会出现在“今日”页面——登录后还会以推送通知的形式发送到这台设备。",
   },
   /** Why the schedule button is inert until something is picked. */
   schedulePickFirst: {
@@ -107,11 +107,11 @@ export const checkInOfferMsgs = {
   scheduleMany: { en: "Schedule check-ins", zh: "安排观察提醒" },
   scheduledOne: {
     en: "✓ {n} check-in scheduled — they'll wait for you on the Today screen.",
-    zh: "✓ 已安排 {n} 个观察提醒——它们会在「今天」页面等你。",
+    zh: "✓ 已安排 {n} 个观察提醒——它们会在“今日”页面等你。",
   },
   scheduledMany: {
     en: "✓ {n} check-ins scheduled — they'll wait for you on the Today screen.",
-    zh: "✓ 已安排 {n} 个观察提醒——它们会在「今天」页面等你。",
+    zh: "✓ 已安排 {n} 个观察提醒——它们会在“今日”页面等你。",
   },
   putInCalendar: {
     en: "Closing the browser? Put them in your calendar so nothing slips:",

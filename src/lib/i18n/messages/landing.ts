@@ -25,7 +25,7 @@ export const landingMsgs = {
   mockEyebrow: { en: "TODAY FOR JUNI · 6.4 MO", zh: "JUNI 的今天 · 6.4 个月" },
   mockHeadline: {
     en: "Salmon, first fish — serve early in the day.",
-    zh: "三文鱼，第一种鱼——安排在白天早些时候吃。",
+    zh: "三文鱼，第一种鱼——安排在一天早些时候吃。",
   },
   mockMeta: {
     en: "Iron-rich pick · fish allergen №3 of 9 · watch for 2 hours after.",
@@ -68,7 +68,7 @@ export const LANDING_BAND_LABELS: Record<string, Msg> = {
 export const LANDING_BAND_CAPTIONS: Record<string, Msg> = {
   "6-8m": {
     en: "Half a banana in its own peel handle — grippy, food-safe, nothing to cut.",
-    zh: "半根香蕉留着果皮当握把——好抓、安全，连刀都不用动。",
+    zh: "半根香蕉留着果皮当手柄——好抓、安全，连刀都不用动。",
   },
   "9-12m": {
     en: "Split along its seams, chopped to pinky-nail pieces for the new pincer grasp.",

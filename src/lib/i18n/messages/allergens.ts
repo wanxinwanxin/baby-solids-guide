@@ -9,7 +9,7 @@ export const allergensMsgs = {
     en: "The nine common allergens, one at a time, early in the day, with ~3 days between new ones. Once a food is tolerated, keeping it in the diet (about twice a week) is what maintains tolerance.",
     zh: "九大常见过敏原：一次只引入一种，安排在一天的早些时候，两种新过敏原之间间隔约 3 天。一种食物耐受后，让它留在日常饮食里（大约每周两次）才能维持耐受。",
   },
-  higherRiskTitle: { en: "Higher-risk profile", zh: "较高风险档案" },
+  higherRiskTitle: { en: "Higher-risk profile", zh: "风险较高的宝宝" },
   higherRiskBody: {
     en: "Severe eczema or an existing food allergy means peanut should wait for your pediatrician or allergist's go-ahead (ideally discussed around 4–6 months). When they clear you, record it below.",
     zh: "如果宝宝有严重湿疹或已确诊食物过敏，花生应等儿科医生或过敏专科医生点头后再引入（最好在 4–6 个月左右就和医生讨论）。医生同意后，请在下方记录。",
@@ -18,7 +18,7 @@ export const allergensMsgs = {
   setupLink: { en: "Set up a profile", zh: "设置宝宝档案" },
   setupAfter: {
     en: " to track allergen progress. You can still read each program below.",
-    zh: "，即可跟踪过敏原进度。下面的每个引入方案现在也可以阅读。",
+    zh: "，即可追踪过敏原进度。下面的每个引入方案现在也可以阅读。",
   },
   exposureOne: { en: "{n} exposure", zh: "已尝试 {n} 次" },
   exposureOther: { en: "{n} exposures", zh: "已尝试 {n} 次" },
@@ -64,7 +64,7 @@ export const allergensMsgs = {
   },
   reactionCall: { en: "call 911 now", zh: "立即拨打 911" },
   reactionSee: { en: ". See the ", zh: "。另请参阅" },
-  emergencyGuide: { en: "emergency guide", zh: "紧急情况指南" },
+  emergencyGuide: { en: "emergency guide", zh: "安全指南" },
   reactionEnd: { en: ".", zh: "。" },
   goodToKnow: { en: "Good to know", zh: "值得了解" },
   foodsDeliver: { en: "Foods that deliver it", zh: "含有这种过敏原的食物" },
@@ -72,7 +72,7 @@ export const allergensMsgs = {
   retrieved: { en: "(retrieved {date})", zh: "（检索于 {date}）" },
   disclaimer: {
     en: "Educational guidance, not medical advice — allergy decisions belong with your pediatrician or allergist.",
-    zh: "本内容为科普指导，不构成医疗建议——有关过敏的决定，请交给你的儿科医生或过敏专科医生。",
+    zh: "以上内容为科普指导，不构成医疗建议——有关过敏的决定，请交给你的儿科医生或过敏专科医生。",
   },
 } satisfies Msgs;
 

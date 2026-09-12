@@ -6,17 +6,17 @@ export const recipesMsgs = {
   metaTitle: { en: "Recipes", zh: "食谱" },
   metaDescription: {
     en: "Blender-simple baby recipes: blend, mash, stir, or freeze into cubes. Built only from foods in the database, with iron + vitamin-C pairings marked.",
-    zh: "适合宝宝的极简食谱：搅打、压泥、拌匀，或冷冻成小方块。全部由食物库里的食材组成，并标注了铁 + 维生素C 的搭配。",
+    zh: "适合宝宝的极简食谱：搅打、压泥、拌匀，或冷冻成小方块。全部由食物库里的食材组成，并标注了铁 + 维生素 C 的搭配。",
   },
   heading: { en: "{n} blender-simple recipes", zh: "{n} 道搅一搅就好的食谱" },
   /** Rendered inside the accent-colored span that closes the headline. */
   headingDot: { en: ".", zh: "。" },
   intro: {
     en: "Nothing here is a cooking project: blend, mash, stir, or freeze into cubes and reheat. Every ingredient links to its safe-prep page, and iron + vitamin-C pairings are marked — that combination helps plant iron absorb.",
-    zh: "这里没有什么大工程：搅一搅、压一压、拌一拌，或冷冻成小方块再加热就行。每种食材都链接到它的安全做法页面，铁 + 维生素C 的搭配也已标出——这种组合能帮助植物性铁吸收。",
+    zh: "这里没有什么大工程：搅一搅、压一压、拌一拌，或冷冻成小方块再加热就行。每种食材都链接到它的安全做法页面，铁 + 维生素 C 的搭配也已标出——这种组合能帮助植物性铁吸收。",
   },
   ironShort: { en: "Iron + vit C", zh: "铁 + 维C" },
-  ironLong: { en: "Iron + vitamin C", zh: "铁 + 维生素C" },
+  ironLong: { en: "Iron + vitamin C", zh: "铁 + 维生素 C" },
   breadcrumbRecipes: { en: "Recipes", zh: "食谱" },
   whatsInIt: { en: "What's in it", zh: "有什么食材" },
   ingredientNote: {
@@ -39,7 +39,7 @@ export const recipesMsgs = {
   familyIngredients: { en: "Ingredients", zh: "食材" },
   familyTips: { en: "Tips", zh: "小贴士" },
   familyTime: { en: "Time", zh: "耗时" },
-  familyServes: { en: "Serves", zh: "份量" },
+  familyServes: { en: "Serves", zh: "分量" },
   familyBabyNote: {
     en: "Cooking for a baby too? Set aside an unseasoned portion before the salt and sauces go in, then check the food's own page for the safe form at their age.",
     zh: "同时也要喂宝宝？在放盐和调味料之前先盛出一份原味的，再到对应食物页面查看适合月龄的安全形态。",

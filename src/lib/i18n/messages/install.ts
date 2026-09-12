@@ -9,7 +9,7 @@ export const installMsgs = {
   },
   androidBody: {
     en: "Put it on your home screen — it opens full-screen and keeps working offline.",
-    zh: "把它放到主屏幕——全屏打开，离线也能用。",
+    zh: "添加到主屏幕——全屏打开，离线也能用。",
   },
   install: {
     en: "Install app",

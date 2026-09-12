@@ -329,7 +329,7 @@ export type PlanWarning = {
 const WARNING_MSGS: Record<PlanWarning["kind"], Msg> = {
   "known-allergy": {
     en: "{name} carries {allergen}, which is on the confirmed-allergy list — remove it from the plan.",
-    zh: "{name}含有{allergen}，而它在已确认过敏清单上——请把它从计划中移除。",
+    zh: "{name}含有{allergen}，这组过敏原在已确认过敏清单上——请把{name}从计划中移除。",
   },
   "doctor-avoid": {
     en: "{name} is on your doctor-avoid list.",
@@ -337,7 +337,7 @@ const WARNING_MSGS: Record<PlanWarning["kind"], Msg> = {
   },
   "min-age": {
     en: "{name} is a {months}-month-plus food — the baby will be younger than that in week {week}.",
-    zh: "{name}适合{months}个月以上的宝宝——到第{week}周时宝宝还没到这个月龄。",
+    zh: "{name}适合 {months} 个月以上的宝宝——到第 {week} 周时宝宝还没到这个月龄。",
   },
   "allergen-paused": {
     en: "The {allergen} group is currently paused — clear it with your pediatrician before planning it.",
@@ -345,11 +345,11 @@ const WARNING_MSGS: Record<PlanWarning["kind"], Msg> = {
   },
   "allergen-crowding": {
     en: "{count} new allergens land in week {week} ({list}). One new allergen per week keeps reactions traceable.",
-    zh: "第{week}周会同时引入{count}种新过敏原（{list}）。每周只引入一种新过敏原，出现反应时更容易追溯。",
+    zh: "第 {week} 周会同时引入 {count} 种新过敏原（{list}）。每周只引入一种新过敏原，出现反应时更容易追溯。",
   },
   "stage-caution": {
     en: "{name} is a high-choking-risk food — double-check the prep page before serving it this early.",
-    zh: "{name}属于高窒息风险食物——这么早喂之前，请先仔细查看备餐页面。",
+    zh: "{name}属于高窒息风险食物——这么早喂之前，请先仔细查看安全做法页面。",
   },
 };
 

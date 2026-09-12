@@ -4,7 +4,7 @@ import type { Msg, Msgs } from "../config";
 
 /** History page copy (src/app/history/page.tsx). */
 export const historyMsgs = {
-  title: { en: "History", zh: "记录" },
+  title: { en: "History", zh: "历史" },
   exportJson: { en: "Export JSON", zh: "导出 JSON" },
   /** Why the export button is inert — there is simply nothing on this device yet. */
   exportEmpty: {

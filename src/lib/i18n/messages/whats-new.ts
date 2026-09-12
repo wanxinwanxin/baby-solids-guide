@@ -5,7 +5,7 @@ export const whatsNewMsgs = {
   feedbackTitle: { en: "New — tell us what to build", zh: "新功能——告诉我们做什么" },
   feedbackBody: {
     en: "Tap here anytime to request a food or a feature. We read every note and add what families ask for.",
-    zh: "随时点这里反馈缺的食物或想要的功能。每条我们都会看，并按大家的需求添加。",
+    zh: "随时点这里反馈缺的食物或想要的功能。每条我们都会看，并补上大家想要的。",
   },
   fullDayTitle: { en: "New — Full day view", zh: "新功能——全天视图" },
   fullDayBody: {
