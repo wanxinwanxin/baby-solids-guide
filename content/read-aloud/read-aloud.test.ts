@@ -6,7 +6,7 @@ const CJK = /[一-鿿]/;
 describe("read-aloud content", () => {
   it("collections are non-trivial and slugs are unique", () => {
     expect(englishPieces.length).toBeGreaterThanOrEqual(30);
-    expect(chinesePoems.length).toBeGreaterThanOrEqual(200);
+    expect(chinesePoems.length).toBeGreaterThanOrEqual(225);
     const slugs = [...englishPieces, ...chinesePoems].map((p) => p.slug);
     expect(new Set(slugs).size).toBe(slugs.length);
   });
