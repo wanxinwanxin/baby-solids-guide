@@ -83,7 +83,7 @@ const salmon: Food = {
     "Freeze cooked, de-boned flakes flat in a zip bag and snap off a portion at a time to keep weekly fish servings effortless.",
   ],
   sources: [SOURCES.fdaFish, SOURCES.eatStudy, SOURCES.wicGuide],
-  nutrients: ["protein", "omega3", "vitaminD"],
+  nutrients: ["iron", "protein", "omega3", "vitaminD"],
   servingGuidance: [
     {
       band: "6-8m",

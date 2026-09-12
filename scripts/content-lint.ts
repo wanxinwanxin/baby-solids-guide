@@ -104,6 +104,12 @@ async function main() {
     if (!f.nutrients || f.nutrients.length === 0) {
       errors.push(`${label}: missing nutrients tags (1-4 required)`);
     }
+    // Charts must agree: the weekly iron chart counts ironRich foods, the
+    // nutrient-coverage chart counts the "iron" tag — a food flagged ironRich
+    // without the tag reads as iron on one chart and zero on the other.
+    if (f.ironRich && !f.nutrients?.includes("iron")) {
+      errors.push(`${label}: ironRich food is missing the "iron" nutrients tag`);
+    }
     if (!f.emoji) errors.push(`${label}: missing emoji`);
     const MEASURE_WORD =
       /(teaspoon|tablespoon|stick|strip|piece|cube|slice|handful|half|quarter|cup|spoonful|smear|drizzle|dollop|pinch|wedge|segment|spear|floret|ounce)/i;
