@@ -226,9 +226,15 @@ export function SleepClient() {
   const todaySessions = babySessions
     .filter((s) => localDateKey(s.start) === todayKey || (s.end && localDateKey(s.end) === todayKey))
     .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+  // The total clips at local midnight: an overnight row still shows its full
+  // span, but only the after-midnight portion counts as today — the same
+  // criterion dailySleep applies on the history card, the Full-day tile, and
+  // the /care roll-up. Yesterday's portion already counted for yesterday.
+  const dayStartMs = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const totalTodayMin = todaySessions.reduce((sum, s) => {
     const end = s.end ? new Date(s.end).getTime() : nowMs;
-    return sum + Math.max(0, end - new Date(s.start).getTime()) / MIN;
+    const start = Math.max(new Date(s.start).getTime(), dayStartMs);
+    return sum + Math.max(0, end - start) / MIN;
   }, 0);
 
   const logFellAsleep = (d: Date) => {

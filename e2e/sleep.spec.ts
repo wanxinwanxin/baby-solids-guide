@@ -60,6 +60,29 @@ async function seedSleepHistory(page: Page) {
   await page.reload();
 }
 
+test("today's total clips an overnight session at local midnight", async ({ page }) => {
+  await completeOnboarding(page);
+  // One night: yesterday 20:00 → today 06:30. The row shows the whole span,
+  // but only the 6 h 30 min after midnight count as today.
+  await page.evaluate(() => {
+    const raw = JSON.parse(localStorage.getItem("opensolids-v1")!);
+    const babyId = raw.state.babies[0].id;
+    const at = (daysAgo: number, h: number, m = 0) => {
+      const d = new Date();
+      d.setDate(d.getDate() - daysAgo);
+      d.setHours(h, m, 0, 0);
+      return d.toISOString();
+    };
+    raw.state.sleepSessions = [{ id: "night1", babyId, start: at(1, 20, 0), end: at(0, 6, 30) }];
+    localStorage.setItem("opensolids-v1", JSON.stringify(raw));
+  });
+  await page.reload();
+  await page.goto("/sleep");
+
+  await expect(page.getByText("10 h 30 min")).toBeVisible(); // the full row
+  await expect(page.getByText("Today's total: 6 h 30 min")).toBeVisible(); // the clipped total
+});
+
 test("sleep history shows per-day totals and a when-baby-slept timeline", async ({ page }) => {
   await completeOnboarding(page);
   await seedSleepHistory(page);
@@ -108,12 +131,12 @@ test("predicts a window from a wake anchor and logs a session", async ({ page })
   await page.getByRole("button", { name: "Woke up", exact: true }).click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByText(WINDOW_TITLE)).toBeVisible();
-  await expect(page.getByText(/Total:/)).toBeVisible();
+  await expect(page.getByText(/Today's total:/)).toBeVisible();
   await expect(page.getByText("No sleep logged today yet.")).toHaveCount(0);
 
   // The log survives a reload (persisted, and now synced when signed in).
   await page.reload();
-  await expect(page.getByText(/Total:/)).toBeVisible();
+  await expect(page.getByText(/Today's total:/)).toBeVisible();
 });
 
 test("a session can be edited with typed times, and deleted from the edit panel", async ({

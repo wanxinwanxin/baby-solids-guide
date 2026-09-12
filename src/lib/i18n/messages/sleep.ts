@@ -82,7 +82,7 @@ export const sleepMsgs = {
   // Today's sessions
   todayTitle: { en: "Today's sleep", zh: "今天的睡眠" },
   todayEmpty: { en: "No sleep logged today yet.", zh: "今天还没有睡眠记录。" },
-  totalToday: { en: "Total: {dur}", zh: "合计：{dur}" },
+  totalToday: { en: "Today's total: {dur}", zh: "今日合计：{dur}" },
   ongoing: { en: "ongoing", zh: "进行中" },
 
   // Manual entry
