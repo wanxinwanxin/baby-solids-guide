@@ -43,8 +43,8 @@ test("adds a custom food, logs it, and shows it in history without a link", asyn
   await page.goto("/log");
 
   // A name not in the database offers a custom-food add.
-  await page.getByLabel("Search food to log").fill("Ackee");
-  const addBtn = page.getByRole("button", { name: /Add "Ackee" as a custom food/ });
+  await page.getByLabel("Search food to log").fill("Zorbafruit");
+  const addBtn = page.getByRole("button", { name: /Add "Zorbafruit" as a custom food/ });
   await expect(addBtn).toBeVisible();
   await addBtn.click();
 
@@ -56,6 +56,6 @@ test("adds a custom food, logs it, and shows it in history without a link", asyn
 
   // History shows the custom name as plain text (no food-page link).
   await page.goto("/history");
-  await expect(page.getByText("Ackee").first()).toBeVisible();
-  await expect(page.getByRole("link", { name: "Ackee" })).toHaveCount(0);
+  await expect(page.getByText("Zorbafruit").first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Zorbafruit" })).toHaveCount(0);
 });

@@ -61,12 +61,12 @@ test("adding a custom food fires a food-request", async ({ page }) => {
 
   await completeOnboarding(page);
   await page.goto("/log");
-  await page.getByLabel("Search food to log").fill("Ackee");
-  await page.getByRole("button", { name: /Add "Ackee" as a custom food/ }).click();
+  await page.getByLabel("Search food to log").fill("Zorbafruit");
+  await page.getByRole("button", { name: /Add "Zorbafruit" as a custom food/ }).click();
   await page.getByRole("button", { name: "Save log" }).click();
   await expect(page.getByText(/Logged — nice work/)).toBeVisible();
 
-  expect(posted.some((p) => p.category === "food-request" && String(p.message).includes("Ackee"))).toBe(
+  expect(posted.some((p) => p.category === "food-request" && String(p.message).includes("Zorbafruit"))).toBe(
     true,
   );
 });
