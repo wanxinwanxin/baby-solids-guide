@@ -3,7 +3,7 @@ import type { FoodL10n } from "@/content-schema/l10n";
 const zh: FoodL10n = {
   slug: "rice-noodles",
   name: "米线",
-  aliases: ["米线", "河粉", "越南粉"],
+  aliases: ["河粉", "越南粉"],
   nutritionHighlights: [
     "天然无麸质、性质温和，家里要把小麦接触分开安排时特别顺手",
     "糙米版本多了全谷物纤维。普通白米线主要给好消化的碳水能量",

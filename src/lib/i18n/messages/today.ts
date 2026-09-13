@@ -74,7 +74,7 @@ export const todayMsgs = {
 
   // ——— Preview banner ———
   previewingTomorrow: { en: "Previewing tomorrow", zh: "预览明天" },
-  previewingDay: { en: "Previewing {day}", zh: "预览 {day}" },
+  previewingDay: { en: "Previewing {day}", zh: "预览{day}" },
   previewBefore: {
     en: "Suggestions assume the history you have today — each food you actually log sharpens the days after it. Changes on the ",
     zh: "这些建议基于你今天已有的记录——每实际记录一种食物，之后几天的建议就会更准。你在",

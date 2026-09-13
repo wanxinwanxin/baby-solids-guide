@@ -3,7 +3,7 @@ import type { FoodL10n } from "@/content-schema/l10n";
 const zh: FoodL10n = {
   slug: "orange",
   name: "橙子",
-  aliases: ["橘子", "柑橘", "砂糖橘"],
+  aliases: ["柑橘"],
   chokingNotes:
     "危险在于每瓣果肉外那层韧膜：它可能在嘴里剥落成一片粘着的薄膜，盖在气道上。应对方法：只给去膜果肉（supreme，即把每一丝膜都切干净的果瓣）——小月龄切碎给，等二指捏取出现后可以给完整的大块去膜果瓣。",
   nutritionHighlights: [

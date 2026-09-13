@@ -3,7 +3,7 @@ import type { FoodL10n } from "@/content-schema/l10n";
 const zh: FoodL10n = {
   slug: "sole",
   name: "龙利鱼",
-  aliases: ["比目鱼", "鳎鱼", "鲽鱼"],
+  aliases: ["鳎鱼", "鲽鱼"],
   nutritionHighlights: [
     "鱼摊上数一数二的柔软质地——鱼片在光牙龈上一抿就化",
     "味道清淡的低脂完整蛋白质，含维生素 B12 和硒",

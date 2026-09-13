@@ -3,7 +3,7 @@ import type { FoodL10n } from "@/content-schema/l10n";
 const zh: FoodL10n = {
   slug: "oat-cereal",
   name: "强化铁婴儿燕麦米粉",
-  aliases: ["婴儿燕麦米粉", "高铁米粉", "燕麦米糊"],
+  aliases: ["婴儿燕麦米粉", "高铁燕麦米粉", "燕麦米糊"],
   nutritionHighlights: [
     "强化了铁——强化正是这类米粉存在的意义，宝宝出生自带的铁储备在 6 个月前后见底，它正好接上",
     "通常还强化了锌和 B 族维生素",
