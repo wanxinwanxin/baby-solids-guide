@@ -316,7 +316,7 @@ const COPY = {
   },
   gateConfirmSigns: {
     en: "Confirm the readiness signs first: sits with minimal support, steady head control, brings objects to the mouth, shows interest in food, and the tongue-thrust reflex has faded.",
-    zh: "请先确认宝宝的准备信号：几乎不用支撑就能坐稳、头部控制稳定、会把东西送到嘴边、对食物表现出兴趣，而且吐舌反射已经消退。",
+    zh: "请先确认宝宝的准备信号：几乎不用支撑就能坐稳、头部控制稳定、会把东西送到嘴边、对食物表现出兴趣，而且挺舌反射已经消退。",
   },
   warnEarlyStart: (beforeSix: boolean): Msg => ({
     en:
@@ -339,7 +339,7 @@ const COPY = {
   }),
   exclDoctorAvoid: {
     en: "On your doctor-avoid list.",
-    zh: "在医生建议回避的清单上。",
+    zh: "在儿科医生建议回避的清单上。",
   },
   exclFoodHold: {
     en: "On hold: symptoms were logged with this food — check with your pediatrician.",

@@ -78,7 +78,7 @@ const zh: FoodL10n = {
     {
       typicalAmount:
         "一小把小指指甲盖大小的湿润鱼片，一次撒几片。",
-      frequency: "每周 1–2 次，让鱼类过敏原稳稳留在食谱里。",
+      frequency: "每周 1–2 次，鱼类过敏原就稳稳留在饮食里。",
     },
     {
       typicalAmount:

@@ -50,12 +50,12 @@ export const safetyMsgs = {
   severeLead: { en: "Severe reaction", zh: "严重反应" },
   severeMid: {
     en: " (trouble breathing; tongue/lip swelling; widespread hives with vomiting; pale or floppy): ",
-    zh: "（呼吸困难；舌头或嘴唇肿胀；全身大面积荨麻疹并伴呕吐；面色苍白或四肢发软）：",
+    zh: "（呼吸困难、舌头或嘴唇肿胀、全身大面积荨麻疹并伴呕吐、面色苍白或四肢发软）：",
   },
   severeCall: { en: "call 911 first.", zh: "先拨打 911。" },
   severeTail: {
     en: " If infant epinephrine has been prescribed, use it as directed, then call.",
-    zh: "如果医生开过婴儿肾上腺素，先按医嘱使用，再打电话。",
+    zh: "如果儿科医生开过婴儿肾上腺素，先按医嘱使用，再打电话。",
   },
   milderLead: { en: "Milder reaction", zh: "较轻反应" },
   milderTail: {
@@ -65,7 +65,7 @@ export const safetyMsgs = {
   delayedLead: { en: "Delayed heavy vomiting", zh: "延迟性剧烈呕吐" },
   delayedTail: {
     en: " (1–4 hours after a meal, baby wiped out): can be FPIES — call the pediatrician urgently; go to the ER if baby can't keep fluids down.",
-    zh: "（进食后 1–4 小时出现，宝宝虚弱无力）：可能是 FPIES——立即联系儿科医生；如果宝宝喝什么吐什么、连液体都留不住，就直接去急诊。",
+    zh: "（进食后 1–4 小时出现，宝宝虚弱无力）：可能是 FPIES——立即联系儿科医生。如果宝宝喝什么吐什么、连液体都留不住，就直接去急诊。",
   },
   chokingLead: { en: "Choking", zh: "窒息" },
   chokingTail: {
@@ -147,7 +147,7 @@ export const NEVER_SERVE_ROWS: { hazard: Msg; alt: Msg }[] = [
     },
     alt: {
       en: "Finely ground nuts or nut butter thinned to a drizzle / spread paper-thin (whole nuts: not until ~age 4)",
-      zh: "把坚果磨成细粉，或把坚果酱稀释到能淋洒的程度/涂成极薄一层（整粒坚果：大约 4 岁前都不要给）",
+      zh: "把坚果磨成细粉，或把坚果酱稀释到能淋下来的稠度、抹成纸一样薄的一层（整粒坚果：大约 4 岁前都不要给）",
     },
   },
   {

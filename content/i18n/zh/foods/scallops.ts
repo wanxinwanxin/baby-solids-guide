@@ -84,7 +84,7 @@ const zh: FoodL10n = {
     {
       typicalAmount:
         "几汤匙纵切小块，拌进湿润的家常菜里。",
-      frequency: "带壳海鲜每周约两次，别断了。",
+      frequency: "每周约两次，让带壳海鲜留在轮换里。",
     },
   ],
 };

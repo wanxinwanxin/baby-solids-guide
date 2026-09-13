@@ -48,7 +48,7 @@ export const onboardingMsgs = {
     en: "Milk or formula is all {name} needs right now. Set the profile up anyway: we'll show you what to watch for, and food picks turn on around {date}.",
     zh: "现在{name}只需要母乳或配方奶。你还是可以先建好档案：我们会告诉你该观察什么，食物推荐会在 {date} 前后开启。",
   },
-  earlyWindowTitle: { en: "In the pediatrician-guided window", zh: "处于儿科医生指导可提前开始的阶段" },
+  earlyWindowTitle: { en: "In the pediatrician-guided window", zh: "儿科医生指导下的提前窗口" },
   earlyWindowBody: {
     en: "Most babies start at 6 months — for {name}, around {date}. Between 4 and 6 months we only unlock the plan if your pediatrician has told you to start.",
     zh: "大多数宝宝在 6 个月开始——{name}大约在 {date}。在 4–6 个月之间，只有当儿科医生明确让你开始时，我们才会解锁计划。",
@@ -225,12 +225,12 @@ export const onboardingMsgs = {
 
 /** The five readiness signs, in display order (checkbox rows + "watching for" list). */
 export const READINESS_SIGN_MSGS: Msg[] = [
-  { en: "Sits upright with little or no support", zh: "几乎不需要支撑就能坐直" },
-  { en: "Steady head control", zh: "头部控制稳定" },
-  { en: "Brings hands and toys to the mouth", zh: "会把手和玩具放进嘴里" },
-  { en: "Watches your food with real interest", zh: "对你吃的食物表现出浓厚兴趣" },
+  { en: "Sits upright with little or no support", zh: "几乎不用扶就能坐直" },
+  { en: "Steady head control", zh: "头部稳定，不摇晃" },
+  { en: "Brings hands and toys to the mouth", zh: "会把手和玩具送进嘴里" },
+  { en: "Watches your food with real interest", zh: "盯着你的食物，兴趣十足" },
   {
     en: "The tongue-thrust reflex has faded (food isn't automatically pushed back out)",
-    zh: "吐舌反射已经消退（食物不会被自动顶出来）",
+    zh: "挺舌反射已消退（食物不会被自动顶出来）",
   },
 ];

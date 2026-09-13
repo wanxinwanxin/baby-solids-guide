@@ -9,7 +9,7 @@ export const fullDayMsgs = {
   allCaughtUp: { en: "All caught up for today. 🎉", zh: "今天都做完啦。🎉" },
   tryFood: { en: "Try {food}", zh: "尝试{food}" },
   markEaten: { en: "Ate it", zh: "已吃" },
-  readHabit: { en: "Read to baby", zh: "读给宝宝听" },
+  readHabit: { en: "Read to baby", zh: "读给宝宝" },
   markRead: { en: "Read it", zh: "已读" },
 
   doneTitle: { en: "Done today", zh: "今天已完成" },

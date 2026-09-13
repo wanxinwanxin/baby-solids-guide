@@ -63,7 +63,7 @@ export const todayMsgs = {
   backToToday: { en: "← back to today", zh: "← 回到今天" },
   todayFor: { en: "Today for {name}", zh: "{name}的今天" },
   tomorrowFor: { en: "Tomorrow for {name}", zh: "{name}的明天" },
-  dayFor: { en: "{day} for {name}", zh: "{name}的 {day}" },
+  dayFor: { en: "{day} for {name}", zh: "{name}的{day}" },
   syncing: { en: "syncing…", zh: "同步中…" },
   syncRetrying: { en: "sync retrying", zh: "同步重试中" },
   synced: { en: "synced ✓", zh: "已同步 ✓" },
@@ -100,7 +100,7 @@ export const todayMsgs = {
   // ——— Check-ins ———
   checkIns: { en: "Check-ins", zh: "观察提醒" },
   checkReaction: { en: "Check for a reaction to {food}", zh: "看看{food}有没有引起反应" },
-  dueAt: { en: "due {time}", zh: "{time} 到期" },
+  dueAt: { en: "due {time}", zh: "{time} 该看了" },
   logWhatYouSee: { en: "Log what you see", zh: "记录观察结果" },
   allClear: { en: "All clear ✓", zh: "一切正常 ✓" },
   upcomingCheck: {
@@ -154,7 +154,7 @@ export const todayMsgs = {
   // ——— Today's picks ———
   todaysPicks: { en: "Today's picks", zh: "今日推荐" },
   tomorrowsPicks: { en: "Tomorrow's picks", zh: "明日推荐" },
-  picksForDay: { en: "Picks for {day}", zh: "{day} 的推荐" },
+  picksForDay: { en: "Picks for {day}", zh: "{day}的推荐" },
   picksCriteria: {
     en: "Iron · allergen pace · variety · texture",
     zh: "铁 · 过敏原节奏 · 多样性 · 质地",
@@ -165,7 +165,7 @@ export const todayMsgs = {
   },
   allergenBadge: { en: "Allergen: {allergen}", zh: "过敏原：{allergen}" },
   familiar: { en: "Familiar", zh: "已熟悉" },
-  greatFirstFood: { en: "Great first food", zh: "初食优选" },
+  greatFirstFood: { en: "Great first food", zh: "优选第一口辅食" },
   newFood: { en: "New food", zh: "新食物" },
   ironRichSuffix: { en: " · iron-rich", zh: " · 富含铁" },
   howToServe: { en: "How to serve →", zh: "做法 →" },
@@ -205,7 +205,7 @@ export const todayMsgs = {
   },
   nextUpAllergen: { en: "Next up: {allergen}", zh: "下一个：{allergen}" },
   onHold: { en: "on hold", zh: "暂停" },
-  manageTracker: { en: "Manage in the allergen tracker →", zh: "去过敏原追踪器管理 →" },
+  manageTracker: { en: "Manage in the allergen tracker →", zh: "去过敏原追踪管理 →" },
   allNineUnderway: {
     en: "All nine common allergens are underway or done — keep them in rotation.",
     zh: "九大常见过敏原都已开始或完成——记得保持轮换。",
@@ -222,7 +222,7 @@ export const todayMsgs = {
   // ——— Meals / combos ———
   mealIdeasBefore: {
     en: "Meal ideas appear here once a few foods are logged safe — in the meantime, browse all ",
-    zh: "等几种食物被记录为安全后，这里会出现餐食灵感——现在可以先浏览全部",
+    zh: "等有几种食物记录为安全，这里就会出现餐食灵感——现在可以先浏览全部",
   },
   recipesLink: { en: "{n} blender-simple recipes", zh: "{n} 道用搅拌机就能做的简单食谱" },
   mealIdeasAfter: { en: ".", zh: "。" },
@@ -268,7 +268,7 @@ export const caregiverMsgs = {
     en: "What to serve {name} today, and exactly how to prepare it.",
     zh: "今天给{name}吃什么，以及具体怎么准备。",
   },
-  howToPrepare: { en: "How to prepare", zh: "如何准备" },
+  howToPrepare: { en: "How to prepare", zh: "制作步骤" },
   textureCheck: { en: "Safe-texture check:", zh: "安全质地检查：" },
   typicalAmount: { en: "Typical amount:", zh: "常见分量：" },
   fullGuide: { en: "Full guide →", zh: "查看完整指南 →" },

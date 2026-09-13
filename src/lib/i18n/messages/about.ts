@@ -43,7 +43,7 @@ export const aboutMsgs = {
     en: "Links are re-verified weekly by an automated check, and each citation records the date it was retrieved.",
     zh: "链接由自动检查每周重新验证，每条引用都记录了检索日期。",
   },
-  sourcesTitle: { en: "Sources", zh: "参考来源" },
+  sourcesTitle: { en: "Sources", zh: "资料来源" },
   /** {date} = SOURCES[*].retrievedOn. */
   retrieved: { en: "(retrieved {date})", zh: "（检索于 {date}）" },
   privacyTitle: { en: "Privacy", zh: "隐私" },

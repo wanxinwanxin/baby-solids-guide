@@ -15,7 +15,7 @@ export const recipesMsgs = {
     en: "Nothing here is a cooking project: blend, mash, stir, or freeze into cubes and reheat. Every ingredient links to its safe-prep page, and iron + vitamin-C pairings are marked — that combination helps plant iron absorb.",
     zh: "这里没有什么大工程：搅一搅、压一压、拌一拌，或冷冻成小方块再加热就行。每种食材都链接到它的安全做法页面，铁 + 维生素 C 的搭配也已标出——这种组合能帮助植物性铁吸收。",
   },
-  ironShort: { en: "Iron + vit C", zh: "铁 + 维C" },
+  ironShort: { en: "Iron + vit C", zh: "铁 + 维生素 C" },
   ironLong: { en: "Iron + vitamin C", zh: "铁 + 维生素 C" },
   breadcrumbRecipes: { en: "Recipes", zh: "食谱" },
   whatsInIt: { en: "What's in it", zh: "有什么食材" },

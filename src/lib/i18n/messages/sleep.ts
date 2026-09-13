@@ -76,7 +76,7 @@ export const sleepMsgs = {
   },
   newbornNote: {
     en: "Under 2 months, the day–night rhythm is still forming. Treat the window as a loose guide and follow sleepy cues.",
-    zh: "两个月以内昼夜节律仍在形成。时段仅供参考，请以宝宝的睡意信号为准。",
+    zh: "2 个月以内昼夜节律还在形成。这个时段只是个大概，看宝宝的睡意信号更准。",
   },
 
   // Today's sessions
@@ -142,6 +142,6 @@ export const sleepMsgs = {
   },
   medicalNote: {
     en: "This is an educational guide, not medical advice. Talk to your pediatrician about sleep concerns.",
-    zh: "本功能仅供参考，不构成医疗建议。如有睡眠方面的疑问，请咨询儿科医生。",
+    zh: "这是科普指南，不是医疗建议。睡眠上拿不准，请咨询儿科医生。",
   },
 } satisfies Msgs;
