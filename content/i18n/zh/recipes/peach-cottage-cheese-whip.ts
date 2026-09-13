@@ -4,8 +4,8 @@ const zh: RecipeL10n = {
   slug: "peach-cottage-cheese-whip",
   name: "蜜桃茅屋奶酪泥",
   steps: [
-    "把 3 汤匙茅屋奶酪（cottage cheese）打至完全顺滑，中途刮一次杯壁。",
-    "加入半个去皮的熟桃子，再打到细腻绵滑。",
+    "把 3 汤匙茅屋奶酪（cottage cheese）打至完全细腻，中途刮一次杯壁。",
+    "加入半个去皮的熟桃子，再打到像奶油一样细腻。",
     "用提前装好的勺子喂，9 个月起也可以当软水果长条的蘸酱。",
   ],
   whyItWorks:
