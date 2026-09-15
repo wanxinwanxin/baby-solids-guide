@@ -2,8 +2,10 @@ import { expect, test, type Page } from "@playwright/test";
 
 /**
  * The always-visible feedback button, its composer, and the automatic
- * food-request signal when a custom food is added. The e2e dev server has no
- * database, so /api/feedback is intercepted to make the flow deterministic.
+ * food-request signal when a custom food is added. /api/feedback is
+ * intercepted in every test here: it makes the flow deterministic, and it
+ * keeps test submissions out of the real feedback table, which the local dev
+ * server reaches through the DATABASE_URL in .env.local.
  */
 
 const DAY = 86400000;

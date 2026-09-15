@@ -3,6 +3,11 @@ import { expect, test, type Page } from "@playwright/test";
 /**
  * Cross-language food search in the /log picker, and adding a custom food
  * that logs by name and appears in history without a (nonexistent) food page.
+ *
+ * Saving a custom food fires a food-request to /api/feedback. The local dev
+ * server reads .env.local and so talks to the real database, which once put
+ * test rows in the production feedback table. Every spec that adds a custom
+ * food must therefore intercept that route.
  */
 
 const DAY = 86400000;
@@ -39,6 +44,11 @@ test("finds a food in the log picker by its Chinese name", async ({ page }) => {
 });
 
 test("adds a custom food, logs it, and shows it in history without a link", async ({ page }) => {
+  // Keep the food-request signal off the real feedback table (see file note).
+  await page.route("**/api/feedback", (route) =>
+    route.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true}' }),
+  );
+
   await completeOnboarding(page);
   await page.goto("/log");
 
