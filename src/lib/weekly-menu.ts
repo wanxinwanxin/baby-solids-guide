@@ -46,14 +46,26 @@ export type WeeklyMenu = {
 };
 
 /**
- * Pick this day's recipes, preferring ones the week has not used yet. A
- * repeat is allowed only when the pantry is too small to fill the day, which
- * is the honest answer early on — the alternative is an empty day.
+ * Pick this day's recipes: anything the week has not used yet, then whatever
+ * was served longest ago. A small pantry therefore rotates through its few
+ * dishes instead of printing the top-ranked one every day, which is what a
+ * parent would do anyway. Ranking breaks every tie, and Array.sort is stable,
+ * so the same input still gives the same week.
  */
-function pickForDay(ranked: RankedCombo[], used: Set<string>, perDay: number): RankedCombo[] {
-  const fresh = ranked.filter((c) => !used.has(c.recipe.slug));
-  const repeats = ranked.filter((c) => used.has(c.recipe.slug));
-  return [...fresh, ...repeats].slice(0, perDay);
+function pickForDay(
+  ranked: RankedCombo[],
+  lastUsedOn: Map<string, number>,
+  perDay: number,
+): RankedCombo[] {
+  const pool = [...ranked].sort((a, b) => {
+    const seenA = lastUsedOn.get(a.recipe.slug);
+    const seenB = lastUsedOn.get(b.recipe.slug);
+    if (seenA === undefined && seenB === undefined) return 0;
+    if (seenA === undefined) return -1;
+    if (seenB === undefined) return 1;
+    return seenA - seenB;
+  });
+  return pool.slice(0, perDay);
 }
 
 export function weeklyMenu(input: {
@@ -79,29 +91,47 @@ export function weeklyMenu(input: {
   // unproven foods on one plate.
   const established = establishedSlugs(input.logs, input.today);
 
-  const used = new Set<string>();
-  const out: MenuDay[] = [];
-
+  // Pass 1: what each day could serve.
+  const candidates: { date: string; newFoodSlug?: string; ranked: RankedCombo[] }[] = [];
   for (let dayIndex = 0; dayIndex < days; dayIndex += 1) {
     const date = localIsoDate(new Date(input.today.getTime() + dayIndex * DAY_MS));
     const newFoodSlug = input.plannedByDate.get(date);
-    const ranked = rankCombos({
-      recipes: input.recipes,
-      foods: input.foods,
-      safeSlugs: input.safeSlugs,
-      establishedSlugs: established,
-      todaysPickSlugs: newFoodSlug ? [newFoodSlug] : [],
-      ageMonths: input.ageMonths + dayIndex / DAYS_PER_MONTH,
-      blockedSlugs: input.blockedSlugs,
+    candidates.push({
+      date,
+      newFoodSlug,
+      ranked: rankCombos({
+        recipes: input.recipes,
+        foods: input.foods,
+        safeSlugs: input.safeSlugs,
+        establishedSlugs: established,
+        todaysPickSlugs: newFoodSlug ? [newFoodSlug] : [],
+        ageMonths: input.ageMonths + dayIndex / DAYS_PER_MONTH,
+        blockedSlugs: input.blockedSlugs,
+      }),
     });
-    const combos = pickForDay(ranked, used, perDay);
-    for (const combo of combos) used.add(combo.recipe.slug);
-    out.push({ date, dayIndex, newFoodSlug, combos });
   }
+
+  // Size the menu to the pantry, measured on the leanest day of the week.
+  // Serving k recipes a day without repeating yesterday's needs k choices
+  // plus k held back, so a thin pantry gets a shorter day rather than a
+  // rerun. One a day is the floor: below that the pantry holds a single
+  // recipe, and a week of it is the honest answer. Days with nothing at all
+  // sit out and do not drag the rest of the week down with them.
+  const counts = candidates.map((c) => c.ranked.length).filter((n) => n > 0);
+  const pool = counts.length > 0 ? Math.min(...counts) : 0;
+  const perDayHere = Math.max(1, Math.min(perDay, Math.floor(pool / 2)));
+
+  /** Recipe slug → the day it was last served, for the rotation above. */
+  const lastUsedOn = new Map<string, number>();
+  const out: MenuDay[] = candidates.map(({ date, newFoodSlug, ranked }, dayIndex) => {
+    const combos = pickForDay(ranked, lastUsedOn, perDayHere);
+    for (const combo of combos) lastUsedOn.set(combo.recipe.slug, dayIndex);
+    return { date, dayIndex, newFoodSlug, combos };
+  });
 
   return {
     days: out,
     daysWithFood: out.filter((d) => d.combos.length > 0).length,
-    recipeCount: used.size,
+    recipeCount: lastUsedOn.size,
   };
 }

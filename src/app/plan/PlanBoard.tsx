@@ -18,7 +18,7 @@ import {
 import type { Food } from "@/content-schema/food";
 import { useActiveBaby, useActiveLogs, useActiveOverrides, useActivePlan, useHydrated } from "@/lib/hooks";
 import { fmt, type Locale } from "@/lib/i18n/config";
-import { useL10nFoods } from "@/lib/i18n/content-client";
+import { useL10nFoods, useL10nRecipes } from "@/lib/i18n/content-client";
 import { allergenLabel } from "@/lib/i18n/labels";
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
 import { planMsgs } from "@/lib/i18n/messages/plan";
@@ -35,7 +35,12 @@ import {
 } from "@/lib/planner";
 import { eligibilityAgeMonths, foodExclusions, planBlocker, planWeekIndex } from "@/lib/engine";
 import { planProgress, type PlanStep } from "@/lib/plan-progress";
+import { weeklyMenu, MENU_DAYS } from "@/lib/weekly-menu";
+import { correctedAgeMonths } from "@/lib/age";
+import { deriveFoodStats } from "@/lib/engine";
+import { localIsoDate } from "@/lib/food-utils";
 import { stepChip, stepWhen } from "@/components/plan/PlanSteps";
+import { WeeklyMenu } from "@/components/plan/WeeklyMenu";
 import { useGuideStore } from "@/lib/storage/store";
 import type { Plan, PlanEntry } from "@/lib/storage/types";
 import { mondayOf } from "@/lib/planner";
@@ -333,6 +338,7 @@ export function PlanBoard() {
   const t = useMsgs(planMsgs);
   const locale = useLocale();
   const { foods, foodBySlug } = useL10nFoods();
+  const { recipes } = useL10nRecipes();
   const hydrated = useHydrated();
   const baby = useActiveBaby();
   const logs = useActiveLogs();
@@ -369,22 +375,56 @@ export function PlanBoard() {
    * to print the dates the plan was written with, which stopped being true
    * the first time a family fell behind or a group went on hold.
    */
+  const exclusions = useMemo(
+    () => (baby ? foodExclusions({ baby, logs, overrides, foods, today }, locale) : null),
+    [baby, logs, overrides, foods, today, locale],
+  );
   const progress = useMemo(
     () =>
-      baby && plan
-        ? planProgress({
-            plan,
-            logs,
-            today,
-            isBlocked: planBlocker(foodExclusions({ baby, logs, overrides, foods, today }, locale)),
-          })
+      baby && plan && exclusions
+        ? planProgress({ plan, logs, today, isBlocked: planBlocker(exclusions) })
         : null,
-    [baby, plan, logs, overrides, foods, today, locale],
+    [baby, plan, logs, today, exclusions],
   );
   const stepBySlug = useMemo(
     () => new Map((progress?.steps ?? []).map((step) => [step.foodSlug, step])),
     [progress],
   );
+
+  /**
+   * The week's menu. The plan says which food arrives on which day; the logs
+   * say what is already cleared. `weeklyMenu` turns that pair into meals, and
+   * reads the same exclusion map the board and Today read, so no page can
+   * put a food on the table that another page calls blocked.
+   */
+  const menu = useMemo(() => {
+    if (!baby || !progress || !exclusions) return null;
+    const stats = deriveFoodStats(logs);
+    const safeSlugs = new Set<string>();
+    for (const log of logs) {
+      if (log.amountEaten !== "none" && !stats.get(log.foodSlug)?.hasPausingSymptoms) {
+        safeSlugs.add(log.foodSlug);
+      }
+    }
+    const plannedByDate = new Map<string, string>();
+    const due = progress.now ?? progress.watching;
+    if (due) plannedByDate.set(localIsoDate(today), due.foodSlug);
+    for (const step of progress.upcoming) {
+      if (step.projectedDate === undefined) continue;
+      if (step.daysAway === undefined || step.daysAway < 0 || step.daysAway >= MENU_DAYS) continue;
+      if (!plannedByDate.has(step.projectedDate)) plannedByDate.set(step.projectedDate, step.foodSlug);
+    }
+    return weeklyMenu({
+      recipes,
+      foods: foodBySlug,
+      logs,
+      safeSlugs,
+      blockedSlugs: new Set(exclusions.keys()),
+      plannedByDate,
+      ageMonths: correctedAgeMonths(baby, today),
+      today,
+    });
+  }, [baby, progress, exclusions, logs, recipes, foodBySlug, today]);
 
   if (!hydrated) return null;
 
@@ -662,6 +702,10 @@ export function PlanBoard() {
             </div>
           )}
         </section>
+      )}
+
+      {menu && progress && progress.total > 0 && (
+        <WeeklyMenu menu={menu} babyName={baby.nickname} foodBySlug={foodBySlug} />
       )}
 
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>

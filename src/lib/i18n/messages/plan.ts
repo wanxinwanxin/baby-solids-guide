@@ -102,6 +102,37 @@ export const planMsgs = {
   },
   resumeOnHold: { en: "Manage holds →", zh: "管理暂停 →" },
 
+  // --- Weekly menu (src/components/plan/WeeklyMenu.tsx) ---
+  menuTitle: { en: "This week on the table", zh: "本周上桌" },
+  menuLede: {
+    en: "Recipes built only from what {name} has already cleared, with each day's new food worked into that day.",
+    zh: "这些食谱只用{name}已经排敏成功的食物，并把每天要引入的新食物安排在当天。",
+  },
+  /** {n} = distinct recipes across the seven days. */
+  menuCount: { en: "{n} recipes", zh: "{n} 道" },
+  menuToday: { en: "Today", zh: "今天" },
+  menuTomorrow: { en: "Tomorrow", zh: "明天" },
+  /** {food} = the food the plan introduces that day. */
+  menuNewFood: { en: "new: {food}", zh: "新食物：{food}" },
+  /** Shown when a day has no recipe at all, not when it has no new food. */
+  menuNoRecipe: {
+    en: "No recipe fits this day yet — serve from the pantry as usual.",
+    zh: "这天暂时没有合适的食谱——照常用已有的食材做。",
+  },
+  menuServePlain: {
+    en: "No recipe fits it yet — offer it plain beside the meal below.",
+    zh: "暂时没有合适的食谱——把它单独放在下面这道菜旁边给宝宝尝。",
+  },
+  menuNothingYet: {
+    en: "Log a few foods and the week fills in. A recipe appears only when every ingredient is already cleared.",
+    zh: "多记录几种食物，这一周就会排满。只有每种食材都已排敏成功，食谱才会出现。",
+  },
+  menuAllRecipes: { en: "All recipes →", zh: "全部食谱 →" },
+  menuFootnote: {
+    en: "One new food a day at most, and it always shares the plate with foods settled for a week — so a reaction has one plausible cause.",
+    zh: "每天最多一种新食物，而且总是和已经稳定一周的食物搭配——这样出现反应时，原因只有一个。",
+  },
+
   // --- Step status, shared with Today ---
   stepIntroduced: { en: "introduced", zh: "已引入" },
   stepOffered: { en: "offered", zh: "已尝试" },

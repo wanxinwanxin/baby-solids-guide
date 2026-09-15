@@ -85,6 +85,28 @@ describe("weeklyMenu", () => {
     expect(new Set(firstFour).size).toBe(4);
   });
 
+  it("rotates a small pantry instead of printing the best recipe every day", () => {
+    // Three recipes, two slots asked for: a parent should see the week
+    // cycle, not the top-ranked dish six times over.
+    const menu = weeklyMenu({ ...base, recipes: RECIPES.slice(0, 3), perDay: 2 });
+    const served = menu.days.map((d) => d.combos.map((c) => c.recipe.slug));
+    // A pool of three cannot fill two slots a day without a rerun, so the
+    // day gets shorter instead.
+    expect(served).toEqual([["a"], ["b"], ["c"], ["a"], ["b"], ["c"], ["a"]]);
+  });
+
+  it("serves two a day once the pantry is wide enough for both", () => {
+    const menu = weeklyMenu({ ...base, perDay: 2 });
+    expect(menu.days.every((d) => d.combos.length === 2)).toBe(true);
+    // No dish carries over from yesterday.
+    for (let i = 1; i < menu.days.length; i += 1) {
+      const yesterday = menu.days[i - 1].combos.map((c) => c.recipe.slug);
+      for (const combo of menu.days[i].combos) {
+        expect(yesterday).not.toContain(combo.recipe.slug);
+      }
+    }
+  });
+
   it("repeats rather than leaving a day empty once the pantry runs out", () => {
     const menu = weeklyMenu({ ...base, recipes: [RECIPES[0]], perDay: 1 });
     expect(menu.days.every((d) => d.combos.map((c) => c.recipe.slug).includes("a"))).toBe(true);

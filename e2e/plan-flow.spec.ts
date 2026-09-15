@@ -189,3 +189,96 @@ test.describe("A plan that tracks what actually happened", () => {
     await expect(page.getByText(/Running 6 days behind/)).toBeVisible();
   });
 });
+
+/**
+ * A pantry wide enough to cook from: eight foods eaten cleanly ten or more
+ * days ago, so every one of them is established and may partner a new food.
+ * Egg arrives today, avocado and butter are already settled beside it.
+ */
+function seedPantryAndPlan(page: Page) {
+  const pantry = [
+    ["apple", 16],
+    ["cinnamon", 15],
+    ["oatmeal", 14],
+    ["blueberry", 13],
+    ["pear", 12],
+    ["yogurt", 11],
+    ["avocado", 11],
+    ["butter", 10],
+  ] as const;
+  return mutateStore(
+    page,
+    `(state) => {
+      const babyId = state.babies[0].id;
+      const base = { babyId, prepBandUsed: "6-8m", amountEaten: "some",
+        enjoyment: "loved", gagging: false, symptoms: [] };
+      ${pantry
+        .map(
+          ([slug, days], i) =>
+            `state.logs.push({ ...base, id: "pantry-${i}", foodSlug: "${slug}", date: "${isoDaysAgo(days)}" });`,
+        )
+        .join("\n      ")}
+      state.plans.push({
+        babyId,
+        anchorMonday: "${ANCHOR_ISO}",
+        entries: [
+          { id: "plan-egg", foodSlug: "egg", dayIndex: ${TODAY_DAY}, weekIndex: 0 },
+          { id: "plan-broccoli", foodSlug: "broccoli", dayIndex: ${TODAY_DAY + 3}, weekIndex: 0 },
+        ],
+        updatedAt: new Date().toISOString(),
+      });
+    }`,
+  );
+}
+
+test.describe("This week on the table", () => {
+  test("cooks the week from the cleared pantry, and works the new food into its own day", async ({
+    page,
+  }) => {
+    await completeOnboarding(page);
+    await seedPantryAndPlan(page);
+    await page.goto("/plan");
+
+    const menu = page.locator("section", {
+      has: page.getByRole("heading", { name: "This week on the table" }),
+    });
+    await expect(menu).toBeVisible();
+
+    // Seven days, today first.
+    const rows = menu.locator("li");
+    await expect(rows).toHaveCount(7);
+    await expect(rows.first().getByText("Today", { exact: true })).toBeVisible();
+    await expect(rows.nth(1).getByText("Tomorrow", { exact: true })).toBeVisible();
+
+    // Egg is the plan's food for today, and it is cooked on today's row only.
+    await expect(rows.first().getByText("new: Egg")).toBeVisible();
+    await expect(
+      rows.first().getByRole("link", { name: /Scrambled egg avocado mash/ }),
+    ).toBeVisible();
+    await expect(menu.getByRole("link", { name: /Scrambled egg avocado mash/ })).toHaveCount(1);
+
+    // The rest of the week comes from foods already cleared, and it rotates:
+    // the same dish never lands on two days running.
+    await expect(menu.getByRole("link", { name: /Apple cinnamon oatmeal/ }).first()).toBeVisible();
+    await expect(menu.getByRole("link", { name: /Blueberry yogurt swirl/ }).first()).toBeVisible();
+    const perDay = await rows.evaluateAll((lis) =>
+      lis.map((li) => [...li.querySelectorAll("a[href^='/recipes/']")].map((a) => a.getAttribute("href"))),
+    );
+    for (let i = 1; i < perDay.length; i += 1) {
+      for (const href of perDay[i]) expect(perDay[i - 1]).not.toContain(href);
+    }
+  });
+
+  test("says what it needs instead of showing an empty week", async ({ page }) => {
+    await completeOnboarding(page);
+    await page.goto("/plan");
+    await page.getByRole("button", { name: "Suggest a plan" }).click();
+
+    const menu = page.locator("section", {
+      has: page.getByRole("heading", { name: "This week on the table" }),
+    });
+    // Nothing is logged yet, so no ingredient is cleared and no recipe is safe.
+    await expect(menu.getByText(/Log a few foods and the week fills in/)).toBeVisible();
+    await expect(menu.getByRole("link", { name: "All recipes →" })).toBeVisible();
+  });
+});
