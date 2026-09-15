@@ -2,31 +2,45 @@
 
 import { useActiveActivityLogs, useActiveBaby, useHydrated } from "@/lib/hooks";
 import { todayIso } from "@/lib/food-utils";
-import { useMsgs } from "@/lib/i18n/LocaleProvider";
-import { readMsgs } from "@/lib/i18n/messages/read";
 import { newId, useGuideStore } from "@/lib/storage/store";
+import type { ActivityId } from "@/lib/storage/types";
 import { cn } from "@/lib/utils";
 
 /**
- * Per-piece "read this to baby" logging (2026-09-11): one tap adds an
- * itemized activity log carrying the piece's slug and title, so the family
- * sees WHICH poem was read, not just that reading happened. Tapping again
- * the same day undoes it. Renders nothing until a profile exists — the
- * shelf stays a plain reading page for guests.
+ * Per-item activity logging: one tap adds an itemized activity log carrying
+ * the item's slug and title, so the family sees WHICH poem was read or WHICH
+ * movement was done, not just that reading or exercise happened. Tapping
+ * again the same day undoes it.
+ *
+ * Renders nothing until a profile exists — the shelves stay plain reading
+ * pages for a guest. The labels arrive already resolved, because the pages
+ * that use this are server components and each one names the action
+ * differently ("Read this to baby", "Did this today").
  */
-export function MarkReadButton({ slug, title }: { slug: string; title: string }) {
+export function LogItemButton({
+  activity,
+  itemId,
+  itemTitle,
+  markLabel,
+  doneLabel,
+}: {
+  activity: ActivityId;
+  itemId: string;
+  itemTitle: string;
+  markLabel: string;
+  doneLabel: string;
+}) {
   const hydrated = useHydrated();
   const baby = useActiveBaby();
   const activityLogs = useActiveActivityLogs();
   const addActivityLog = useGuideStore((s) => s.addActivityLog);
   const deleteActivityLog = useGuideStore((s) => s.deleteActivityLog);
-  const t = useMsgs(readMsgs);
 
   if (!hydrated || !baby) return null;
 
   const today = todayIso();
   const existing = activityLogs.find(
-    (a) => a.activity === "read" && a.date === today && a.itemId === slug,
+    (a) => a.activity === activity && a.date === today && a.itemId === itemId,
   );
 
   return (
@@ -38,10 +52,10 @@ export function MarkReadButton({ slug, title }: { slug: string; title: string })
           : addActivityLog({
               id: newId(),
               babyId: baby.id,
-              activity: "read",
+              activity,
               date: today,
-              itemId: slug,
-              itemTitle: title,
+              itemId,
+              itemTitle,
             })
       }
       className={cn(
@@ -51,7 +65,7 @@ export function MarkReadButton({ slug, title }: { slug: string; title: string })
           : "text-muted-foreground hover:border-primary hover:text-primary",
       )}
     >
-      {existing ? t.readToday : t.markRead}
+      {existing ? doneLabel : markLabel}
     </button>
   );
 }
