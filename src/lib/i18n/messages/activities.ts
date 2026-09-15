@@ -27,6 +27,22 @@ export const activitiesMsgs = {
     en: "Activities sync to everyone in the family, like meals and sleep.",
     zh: "活动和喂食、睡眠一样，会同步给全家人。",
   },
+  movementTitle: { en: "Things to do with the baby", zh: "可以和宝宝做的事" },
+  movementIntro: {
+    en: "Ideas grouped by the age they usually start working, youngest first. Open one for the steps, the reason it helps, and the sign to stop. Every idea logs with one tap, the same way the read shelf does.",
+    zh: "按通常开始有效的月龄分组，从小月龄排起。展开一条就能看到步骤、它为什么有用，以及该停下来的信号。每一条都能一键记录，和“读给宝宝”书架一样。",
+  },
+  movementFromAge: { en: "From {from} months", zh: "{from} 个月起" },
+  /** The 0-month group. "From 0 months" and "0 个月起" both read as machine output. */
+  movementFromBirth: { en: "From birth", zh: "出生起" },
+  movementWhy: { en: "Why it helps", zh: "为什么有用" },
+  movementWatchFor: { en: "Watch for", zh: "注意" },
+  movementAgeNote: {
+    en: "Ages say when an idea usually starts working, not when your baby should manage it. Babies reach these months in their own order.",
+    zh: "月龄说的是一条建议通常什么时候开始有效，不是宝宝应该在什么时候做到。每个宝宝到达这些月龄的顺序都不一样。",
+  },
+  markDone: { en: "Did this today ✓", zh: "今天做了 ✓" },
+  doneToday: { en: "Done today ✓ (tap to undo)", zh: "今天做过 ✓（点一下撤销）" },
 } satisfies Msgs;
 
 /** Display names for the activity registry (ACTIVITY_IDS). */

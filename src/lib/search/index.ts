@@ -103,7 +103,11 @@ const FEATURES: Feature[] = [
     href: "/activities",
     en: "Activities",
     zh: "亲子活动",
-    keywords: ["sing", "singing", "exercise", "tummy time", "outdoors", "play", "早教", "唱歌", "运动", "户外", "活动"],
+    keywords: [
+      "sing", "singing", "exercise", "tummy time", "outdoors", "play",
+      "movement", "crawling", "rolling", "cruising", "milestones", "what to do with baby",
+      "早教", "唱歌", "运动", "户外", "活动", "趴卧", "大运动", "爬", "翻身", "和宝宝玩什么",
+    ],
   },
   {
     href: "/gallery",

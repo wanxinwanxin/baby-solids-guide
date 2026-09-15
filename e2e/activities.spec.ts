@@ -55,3 +55,40 @@ test("marks a specific piece as read on /read and it shows itemized", async ({ p
   await page.goto("/today");
   await expect(page.getByText("Read today ✓")).toBeVisible();
 });
+
+test("logs a movement idea from the shelf and shows it itemized", async ({ page }) => {
+  await completeOnboarding(page);
+  await page.goto("/activities");
+
+  // The shelf groups by starting age, youngest first.
+  await expect(page.getByRole("heading", { name: /Things to do with the baby/ })).toBeVisible();
+  await expect(page.getByText(/From birth · \d+/)).toBeVisible();
+  await expect(page.getByText(/From 6 months · \d+/)).toBeVisible();
+
+  // Open one idea: steps, the reason, and the limit all render.
+  await page.getByText("Tummy time on your chest").click();
+  await expect(page.getByText(/Lay the baby tummy-down on your chest/)).toBeVisible();
+  await expect(page.getByText("Why it helps").first()).toBeVisible();
+  await expect(page.getByText("Watch for").first()).toBeVisible();
+
+  // One tap logs it, carrying the idea's title.
+  await page.getByRole("button", { name: "Did this today ✓" }).first().click();
+  await expect(page.getByRole("button", { name: /Done today ✓/ })).toBeVisible();
+  await expect(
+    page.getByRole("listitem").getByText("🐢 Tummy time · Tummy time on your chest"),
+  ).toBeVisible();
+
+  // Tapping again undoes it.
+  await page.getByRole("button", { name: /Done today ✓/ }).first().click();
+  await expect(page.getByText("Nothing logged today yet.")).toBeVisible();
+});
+
+test("the movement shelf reads for a visitor with no baby yet", async ({ page }) => {
+  // No onboarding: the quick-log row becomes a setup prompt, but the ideas
+  // must still be readable, and no log button may appear without a profile.
+  await page.goto("/activities");
+
+  await expect(page.getByText("Set up a profile to log activities")).toBeVisible();
+  await expect(page.getByText("Tummy time on your chest")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Did this today/ })).toHaveCount(0);
+});

@@ -239,6 +239,78 @@ async function main() {
     errors.push(`corpus: only ${allFamilyRecipes.length} family recipes (need ≥${FAMILY_RECIPES_MIN})`);
   }
 
+  // ——— Movement ideas (/activities, 2026-09-15) ———
+  // Both languages live in one file here rather than in a base plus an
+  // overlay, so there are no array lengths to pair. What can still go wrong
+  // is a stub: an entry whose zh field is a copy of the en field, or a
+  // watchFor too short to name an actual limit.
+  const MOVEMENT_MIN = Number(process.env.MOVEMENT_MIN ?? 20);
+  const { movementIdeaSchema, MOVEMENT_ACTIVITIES } = await import(
+    "../src/content-schema/activity-ideas"
+  );
+  const { ACTIVITY_IDS } = await import("../src/lib/storage/types");
+  const { movementIdeas } = await import("../content/activities");
+
+  // A movement idea logs as one of ACTIVITY_IDS. If an id here is absent
+  // from that registry, a tap writes a row the UI cannot label.
+  for (const activity of MOVEMENT_ACTIVITIES) {
+    if (!(ACTIVITY_IDS as readonly string[]).includes(activity)) {
+      errors.push(`movement: activity "${activity}" is not in ACTIVITY_IDS`);
+    }
+  }
+
+  const movementSlugs = new Set<string>();
+  const movementWindows = new Set<string>();
+  for (const idea of movementIdeas) {
+    const mlabel = `movement:${idea.slug ?? "?"}`;
+    const parsed = movementIdeaSchema.safeParse(idea);
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        errors.push(`${mlabel}: ${issue.path.join(".")} — ${issue.message}`);
+      }
+      continue;
+    }
+    const m = parsed.data;
+
+    if (movementSlugs.has(m.slug)) errors.push(`${mlabel}: duplicate slug`);
+    movementSlugs.add(m.slug);
+    movementWindows.add(String(m.fromMonths));
+
+    // An untranslated field is the failure this corpus is shaped to avoid.
+    const pairs: [string, { en: string; zh: string }][] = [
+      ["title", m.title],
+      ["why", m.why],
+      ["watchFor", m.watchFor],
+      ...m.steps.map((s, i) => [`steps[${i}]`, s] as [string, { en: string; zh: string }]),
+    ];
+    for (const [field, pair] of pairs) {
+      if (pair.en.trim() === pair.zh.trim()) {
+        errors.push(`${mlabel}: ${field} zh is a copy of en (untranslated)`);
+      }
+      if (!/[\u4e00-\u9fff]/.test(pair.zh)) {
+        errors.push(`${mlabel}: ${field} zh contains no Chinese characters`);
+      }
+    }
+
+    // The stop sign has to be a real instruction, not a placeholder.
+    if (m.watchFor.en.trim().split(/\s+/).length < 8) {
+      errors.push(`${mlabel}: watchFor.en must name an actual limit (\u22658 words)`);
+    }
+  }
+  if (movementIdeas.length < MOVEMENT_MIN) {
+    errors.push(
+      `corpus: only ${movementIdeas.length} movement ideas (need \u2265${MOVEMENT_MIN})`,
+    );
+  }
+  // The shelf prints one heading per starting age, so a starting age with a
+  // single idea renders as a heading with one row under it.
+  for (const w of movementWindows) {
+    const n = movementIdeas.filter((i) => String(i.fromMonths) === w).length;
+    if (n < 2) {
+      errors.push(`corpus: movement start age ${w}m has only ${n} idea(s) (need \u22652)`);
+    }
+  }
+
   // ——— zh translation overlays (i18n) ———
   // Structural checks only: every base entry has an overlay, no orphans, and
   // every overlay array mirrors its base array length so the index-aligned
@@ -351,7 +423,7 @@ async function main() {
   }
 
   console.log(
-    `content-lint: ${allFoods.length} foods, ${allergensCovered.size}/9 allergens, ${ironRichCount} iron-rich, ${allGuides.length} guides, ${allRecipes.length} recipes (${ironPairingCount} iron-pairing), ${allFamilyRecipes.length} family recipes, zh overlays: ${zhCounts.foods} foods / ${zhCounts.recipes} recipes / ${zhCounts.guides} guides / ${zhCounts.allergens} allergens.`,
+    `content-lint: ${allFoods.length} foods, ${allergensCovered.size}/9 allergens, ${ironRichCount} iron-rich, ${allGuides.length} guides, ${allRecipes.length} recipes (${ironPairingCount} iron-pairing), ${allFamilyRecipes.length} family recipes, ${movementIdeas.length} movement ideas, zh overlays: ${zhCounts.foods} foods / ${zhCounts.recipes} recipes / ${zhCounts.guides} guides / ${zhCounts.allergens} allergens.`,
   );
   finish(errors);
 }
