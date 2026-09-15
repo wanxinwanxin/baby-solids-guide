@@ -5,6 +5,7 @@ import { allGuides } from "../../../content/guides";
 import { allergenPrograms } from "../../../content/allergens";
 import type { AllergenL10n, FoodL10n, GuideL10n, RecipeL10n } from "@/content-schema/l10n";
 import type { Locale } from "@/lib/i18n/config";
+import { rankMatches } from "./rank";
 
 /**
  * App-wide search: one flat index over destinations ("features") and the
@@ -213,29 +214,7 @@ export function buildSearchIndex(locale: Locale, zh: ZhOverlays | null): SearchE
   return entries;
 }
 
-function score(e: SearchEntry, q: string): number {
-  const name = e.name.toLowerCase();
-  if (name === q) return 100;
-  if (name.startsWith(q)) return 90;
-  if (name.includes(q)) return 70;
-  let best = 0;
-  for (const raw of e.alt) {
-    const a = raw.toLowerCase();
-    if (a === q) best = Math.max(best, 60);
-    else if (a.startsWith(q)) best = Math.max(best, 50);
-    else if (a.includes(q)) best = Math.max(best, 30);
-  }
-  return best;
-}
-
 /** Rank matches; ties break toward shorter names (the more exact hit). */
 export function searchEntries(entries: SearchEntry[], query: string, limit = 14): SearchEntry[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return [];
-  return entries
-    .map((e) => ({ e, s: score(e, q) }))
-    .filter((x) => x.s > 0)
-    .sort((a, b) => b.s - a.s || a.e.name.length - b.e.name.length)
-    .slice(0, limit)
-    .map((x) => x.e);
+  return rankMatches(entries, query, (e) => ({ name: e.name, alt: e.alt }), limit);
 }

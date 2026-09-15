@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { AgeBand, FoodCategory } from "@/content-schema/food";
+import { FOOD_SEARCH_TERMS } from "../../../content/foods/search-terms";
 import { deriveFoodStats } from "@/lib/engine";
 import { ALLERGEN_LABELS, type SlimFood } from "@/lib/food-utils";
 import { fmt, msg } from "@/lib/i18n/config";
@@ -10,6 +11,7 @@ import { allergenLabel, CATEGORY_MSGS, categoryLabel } from "@/lib/i18n/labels";
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
 import { BROWSER_BAND_MSGS, foodBrowserMsgs } from "@/lib/i18n/messages/foods";
 import { useActiveLogs, useHydrated } from "@/lib/hooks";
+import { rankMatches } from "@/lib/search/rank";
 import { CutDiagram, isDiagramVariant } from "@/components/diagrams/CutDiagram";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -103,28 +105,26 @@ export function FoodBrowser({ foods }: { foods: SlimFood[] }) {
   }, [logs]);
 
   const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return foods
-      .filter((f) => {
-        if (
-          q &&
-          !f.name.toLowerCase().includes(q) &&
-          !f.slug.includes(q) &&
-          !f.aliases.some((a) => a.toLowerCase().includes(q))
-        )
-          return false;
-        if (band && f.minAgeMonths > BAND_CAP[band]) return false;
-        if (filter === "all") return true;
-        if (filter === "iron") return f.ironRich;
-        if (filter === "allergen") return f.commonAllergen !== null;
-        if (filter === "first-picks") return f.firstFoodPick;
-        if (filter === "omega3") return f.nutrients?.includes("omega3") ?? false;
-        if (filter === "vitaminC") return f.nutrients?.includes("vitaminC") ?? false;
-        if (filter === "safe") return triedState.safe.has(f.slug);
-        if (filter === "untried") return !triedState.tried.has(f.slug);
-        return f.category === filter;
-      })
-      .sort((a, b) => a.name.localeCompare(b.name));
+    const chipped = foods.filter((f) => {
+      if (band && f.minAgeMonths > BAND_CAP[band]) return false;
+      if (filter === "all") return true;
+      if (filter === "iron") return f.ironRich;
+      if (filter === "allergen") return f.commonAllergen !== null;
+      if (filter === "first-picks") return f.firstFoodPick;
+      if (filter === "omega3") return f.nutrients?.includes("omega3") ?? false;
+      if (filter === "vitaminC") return f.nutrients?.includes("vitaminC") ?? false;
+      if (filter === "safe") return triedState.safe.has(f.slug);
+      if (filter === "untried") return !triedState.tried.has(f.slug);
+      return f.category === filter;
+    });
+    // No query: alphabetical, because the whole list is a shelf to browse.
+    if (!query.trim()) return chipped.sort((a, b) => a.name.localeCompare(b.name));
+    // With a query: best match first, and match the Chinese names too, so
+    // 豌豆 finds peas on the English UI exactly as it does in the nav search.
+    return rankMatches(chipped, query, (f) => ({
+      name: f.name,
+      alt: [...(FOOD_SEARCH_TERMS[f.slug] ?? f.aliases), f.slug],
+    }));
   }, [foods, query, filter, band, triedState]);
 
   return (

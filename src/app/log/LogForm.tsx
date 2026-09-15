@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from"next/navigation";
 import { useMemo, useState } from"react";
 import type { AgeBand } from"@/content-schema/food";
 import { FOOD_SEARCH_TERMS } from"../../../content/foods/search-terms";
+import { rankMatches } from"@/lib/search/rank";
 import { bandForAgeMonths, customFoodSlug, todayIso } from"@/lib/food-utils";
 import { reportFoodRequest } from"@/lib/feedback";
 import { correctedAgeMonths } from"@/lib/age";
@@ -107,20 +108,22 @@ export function LogForm() {
       food.prepSpecs[0].band)
     : "6-8m";
 
-  const matches = useMemo(() => {
-    const q = foodQuery.trim().toLowerCase();
-    if (!q) return [];
-    // Match any common name in either language (see content/foods/search-terms),
-    // so 番茄 / 土豆 / 奇异果 find the food whatever the UI language is.
-    return foods
-      .filter(
-        (f) =>
-          f.name.toLowerCase().includes(q) ||
-          f.slug.includes(q) ||
-          (FOOD_SEARCH_TERMS[f.slug] ?? f.aliases).some((t) => t.toLowerCase().includes(q)),
-      )
-      .slice(0, 8);
-  }, [foodQuery, foods]);
+  const matches = useMemo(
+    () =>
+      // Match any common name in either language (see content/foods/search-terms),
+      // so 番茄 / 土豆 / 奇异果 find the food whatever the UI language is. Ranked,
+      // never merely filtered: this list shows eight rows, and an unranked
+      // filter once spent all eight on "pearl barley", "chickpea dip", and
+      // "spearmint" while peas — the food the parent typed — sat at position
+      // nine and never appeared.
+      rankMatches(
+        foods,
+        foodQuery,
+        (f) => ({ name: f.name, alt: [...(FOOD_SEARCH_TERMS[f.slug] ?? f.aliases), f.slug] }),
+        8,
+      ),
+    [foodQuery, foods],
+  );
 
   // Custom foods the family already logged (by name) — offered for reuse so a
   // one-off name does not become a new entry every time.

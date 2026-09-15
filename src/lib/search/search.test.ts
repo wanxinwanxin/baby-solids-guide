@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { buildSearchIndex, featureEntries, searchEntries } from "./index";
+import { rankMatches, scoreMatch } from "./rank";
+import { allFoods } from "../../../content/foods";
+import { FOOD_SEARCH_TERMS } from "../../../content/foods/search-terms";
 import { ZH_FOODS } from "../../../content/i18n/zh/foods";
 import { ZH_RECIPES } from "../../../content/i18n/zh/recipes";
 import { ZH_GUIDES } from "../../../content/i18n/zh/guides";
@@ -67,5 +70,57 @@ describe("app-wide search", () => {
     const hrefs = features.map((f) => f.href);
     expect(new Set(hrefs).size).toBe(hrefs.length);
     for (const h of hrefs) expect(h.startsWith("/")).toBe(true);
+  });
+});
+
+describe("food picker ranking (src/lib/search/rank.ts)", () => {
+  /** What the /log form and the /foods browser feed rankMatches. */
+  const pickerTerms = (f: { name: string; slug: string; aliases: string[] }) => ({
+    name: f.name,
+    alt: [...(FOOD_SEARCH_TERMS[f.slug] ?? f.aliases), f.slug],
+  });
+
+  it('puts every pea in the first eight results for "pea"', () => {
+    // The bug this ranking exists for: 11 foods match "pea", and the
+    // unranked first eight were barley, chickpeas, couscous, hummus, mint,
+    // peach, peanut butter, and pear. Peas ranked ninth and never rendered,
+    // so a parent feeding peas was told the app had no such food.
+    const hits = rankMatches(allFoods, "pea", pickerTerms, 8).map((f) => f.slug);
+    for (const slug of ["peas", "snap-peas", "split-peas"]) {
+      expect(hits, slug).toContain(slug);
+    }
+    // Foods actually named Pea* lead; "pear" ties with "peas" on the prefix
+    // rule and on name length, so assert the cluster, not one winner.
+    expect(hits.slice(0, 4).sort()).toEqual(["peach", "peanut-butter", "pear", "peas"]);
+  });
+
+  it("ranks a name hit above a hit on someone else's alias", () => {
+    const hits = rankMatches(allFoods, "pea", pickerTerms);
+    const rank = (slug: string) => hits.findIndex((f) => f.slug === slug);
+    for (const alias of ["barley", "couscous", "hummus", "mint"]) {
+      expect(rank("peas"), alias).toBeLessThan(rank(alias));
+    }
+  });
+
+  it("finds a food by its Chinese name through the picker terms", () => {
+    for (const [q, slug] of [
+      ["豌豆", "peas"],
+      ["西红柿", "tomato"],
+      ["牛油果", "avocado"],
+    ] as const) {
+      expect(rankMatches(allFoods, q, pickerTerms, 8)[0]?.slug, q).toBe(slug);
+    }
+  });
+
+  it("scores an exact name above a prefix above a substring above an alias", () => {
+    expect(scoreMatch("Peas", [], "peas")).toBeGreaterThan(scoreMatch("Peas", [], "pea"));
+    expect(scoreMatch("Peas", [], "pea")).toBeGreaterThan(scoreMatch("Snap peas", [], "pea"));
+    expect(scoreMatch("Snap peas", [], "pea")).toBeGreaterThan(scoreMatch("Barley", ["pearl barley"], "pea"));
+    expect(scoreMatch("Barley", ["barley"], "zzz")).toBe(0);
+  });
+
+  it("returns nothing for a blank query and truncates only after ranking", () => {
+    expect(rankMatches(allFoods, "   ", pickerTerms)).toHaveLength(0);
+    expect(rankMatches(allFoods, "pea", pickerTerms, 3)).toHaveLength(3);
   });
 });
