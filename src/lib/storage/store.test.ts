@@ -1,5 +1,10 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { BabyProfile, ExposureLog } from "./types";
+
+// Photo blobs live in IndexedDB, which node has none of. The store only ever
+// calls deletePhoto, so the spy stands in for the whole module here.
+const { deletePhotoMock } = vi.hoisted(() => ({ deletePhotoMock: vi.fn() }));
+vi.mock("@/lib/media/photos", () => ({ deletePhoto: deletePhotoMock }));
 import { importLegacyHabits, importLegacySleep, migrateV1ToV2, newId, selectPlanForActive, useGuideStore } from "./store";
 
 const makeBaby = (id = "b1", nickname = "Testling"): BabyProfile => ({
@@ -82,6 +87,22 @@ describe("GuideStore v2 (multi-baby, local-first)", () => {
     expect(st.logs).toHaveLength(0);
     expect(st.deletedLogIds).toContain(l.id);
     expect(st.checkIns).toHaveLength(0);
+  });
+
+  it("keeps a meal's photo until the last food of that meal is deleted", () => {
+    const s = useGuideStore.getState();
+    s.saveBaby(makeBaby());
+    const egg = { ...log("egg", "2026-09-16"), photoId: "photo-1" };
+    const sweetPotato = { ...log("sweet-potato", "2026-09-16"), photoId: "photo-1" };
+    s.addLog(egg);
+    s.addLog(sweetPotato);
+    deletePhotoMock.mockClear();
+
+    useGuideStore.getState().deleteLog(egg.id);
+    expect(deletePhotoMock).not.toHaveBeenCalled();
+
+    useGuideStore.getState().deleteLog(sweetPotato.id);
+    expect(deletePhotoMock).toHaveBeenCalledWith("photo-1");
   });
 
   it("clearPlan leaves a stamped, entries-less plan that reads as no plan", () => {

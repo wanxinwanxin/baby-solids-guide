@@ -41,6 +41,16 @@ export function pick<T extends Msgs>(msgs: T, locale: Locale): { [K in keyof T]:
   return out;
 }
 
+/**
+ * Join names into one phrase: "egg, toast and pear" in English, and the
+ * Chinese list separator plus 和 in Chinese.
+ */
+export function joinList(items: string[], locale: Locale): string {
+  if (items.length <= 1) return items[0] ?? "";
+  const head = items.slice(0, -1).join(locale === "en" ? ", " : "、");
+  return head + (locale === "en" ? " and " : "和") + items[items.length - 1];
+}
+
 /** Tiny `{name}` interpolation for count/name placeholders. */
 export function fmt(template: string, vars: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (match, name: string) =>

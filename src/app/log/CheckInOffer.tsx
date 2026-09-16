@@ -12,7 +12,7 @@ import {
 import { useSession } from"@/lib/auth-client";
 import { newId, useGuideStore } from"@/lib/storage/store";
 import type { BabyProfile, CheckInPreset } from"@/lib/storage/types";
-import { fmt, msg } from"@/lib/i18n/config";
+import { fmt, joinList, msg } from"@/lib/i18n/config";
 import { useLocale, useMsgs } from"@/lib/i18n/LocaleProvider";
 import { useL10nAllergens } from"@/lib/i18n/content-client";
 import { checkInOfferMsgs, FALLBACK_REACTION_SIGNS } from"@/lib/i18n/messages/log";
@@ -23,19 +23,49 @@ import { cn } from"@/lib/utils";
  * Phase 8A — offered right after saving a log: schedule symptom check-ins,
  * delivered via the in-app Today card plus optional calendar links that work
  * even when the browser is closed.
+ *
+ * A meal can hold several foods (see lib/meal-log). `foods` are the ones the
+ * check-ins follow — every common allergen on the plate, or the first food of
+ * a familiar meal — and `logIdBySlug` ties each one to the row it just wrote.
+ * `mealSize` is the whole plate, which is what decides whether the offer says
+ * which food it follows.
  */
-export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProfile; logId: string }) {
+export function CheckInOffer({
+  foods,
+  baby,
+  logIdBySlug,
+  mealSize,
+}: {
+  foods: Food[];
+  baby: BabyProfile;
+  logIdBySlug: Record<string, string>;
+  mealSize: number;
+}) {
   const addCheckIns = useGuideStore((s) => s.addCheckIns);
   const { data: session } = useSession();
   const locale = useLocale();
   const t = useMsgs(checkInOfferMsgs);
   const allergens = useL10nAllergens();
   const [selected, setSelected] = useState<Set<CheckInPreset>>(new Set(["2h"]));
-  const [scheduled, setScheduled] = useState<{ dueAts: string[] } | null>(null);
+  const [scheduled, setScheduled] = useState<{ dueAts: string[]; count: number } | null>(null);
 
-  const reactionSigns = food.commonAllergen
-    ? (allergens.find((p) => p.id === food.commonAllergen)?.reactionSigns ?? [])
-    : FALLBACK_REACTION_SIGNS.map((m) => msg(m, locale));
+  const allergenFoods = foods.filter((f) => f.commonAllergen);
+  const foodNames = joinList(
+    foods.map((f) => f.name),
+    locale,
+  );
+  // The signs to watch for: those of the allergens on the plate, else the
+  // general list. Deduplicated, because two allergens share several signs.
+  const reactionSigns =
+    allergenFoods.length > 0
+      ? [
+          ...new Set(
+            allergenFoods.flatMap(
+              (f) => allergens.find((p) => p.id === f.commonAllergen)?.reactionSigns ?? [],
+            ),
+          ),
+        ]
+      : FALLBACK_REACTION_SIGNS.map((m) => msg(m, locale));
 
   function toggle(preset: CheckInPreset) {
     const next = new Set(selected);
@@ -49,12 +79,15 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
     const dueAts = CHECKIN_PRESETS.filter((p) => selected.has(p.id)).map((p) =>
       dueAtForPreset(p.id, now),
     );
+    // A check-in row names one food, because that is the food its symptoms
+    // land on. Two allergens in one meal therefore get one row each.
+    const pairs = foods.flatMap((f) => dueAts.map((dueAt) => ({ food: f, dueAt })));
     addCheckIns(
-      dueAts.map((dueAt) => ({
+      pairs.map(({ food, dueAt }) => ({
         id: newId(),
         babyId: baby.id,
         foodSlug: food.slug,
-        logId,
+        logId: logIdBySlug[food.slug] ?? "",
         createdAt: now.toISOString(),
         dueAt,
         status: "pending"as const,
@@ -66,7 +99,7 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          reminders: dueAts.map((dueAt) => ({
+          reminders: pairs.map(({ food, dueAt }) => ({
             kind: "check-in",
             title: fmt(t.pushTitle, { nickname: baby.nickname, food: food.name }),
             body: fmt(t.pushBody, {
@@ -78,14 +111,14 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
         }),
       }).catch(() => {});
     }
-    setScheduled({ dueAts });
+    setScheduled({ dueAts, count: pairs.length });
   }
 
   function downloadIcs() {
     if (!scheduled) return;
     const ics = icsForCheckIns(
       {
-        foodName: food.name,
+        foodName: foodNames,
         babyNickname: baby.nickname,
         dueAts: scheduled.dueAts,
         reactionSigns,
@@ -97,7 +130,7 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `check-ins-${food.slug}.ics`;
+    a.download = `check-ins-${foods.map((f) => f.slug).join("-")}.ics`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -106,8 +139,8 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
     return (
       <div className="space-y-3 rounded-lg border border-primary/40 p-4 text-sm">
         <p className="font-medium">
-          {fmt(scheduled.dueAts.length === 1 ? t.scheduledOne : t.scheduledMany, {
-            n: scheduled.dueAts.length,
+          {fmt(scheduled.count === 1 ? t.scheduledOne : t.scheduledMany, {
+            n: scheduled.count,
           })}
         </p>
         <p className="text-muted-foreground">
@@ -119,7 +152,7 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
               key={dueAt}
               href={googleCalendarUrl(
                 {
-                  foodName: food.name,
+                  foodName: foodNames,
                   babyNickname: baby.nickname,
                   dueAt,
                   reactionSigns,
@@ -150,7 +183,11 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
 
   // An allergen exposure is exactly when a check-in matters most, so that
   // variant gets the honey warning treatment instead of a quiet grey box.
-  const allergen = !!food.commonAllergen;
+  const allergen = allergenFoods.length > 0;
+  const allergenPrompt =
+    allergenFoods.length === 1
+      ? fmt(t.allergenPrompt, { food: foodNames })
+      : fmt(t.allergenPromptMany, { foods: foodNames });
   return (
     <div
       className={cn(
@@ -159,8 +196,15 @@ export function CheckInOffer({ food, baby, logId }: { food: Food; baby: BabyProf
       )}
     >
       <p className={cn("font-semibold", allergen && "text-base")}>
-        {allergen ? fmt(t.allergenPrompt, { food: food.name }) : t.genericPrompt}
+        {allergen ? allergenPrompt : t.genericPrompt}
       </p>
+      {/* A plate of several foods says which of them the check-ins follow, so
+          the offer never looks as if it forgot the rest of the meal. */}
+      {mealSize > foods.length && (
+        <p className="text-[13px] leading-relaxed text-muted-foreground">
+          {fmt(allergen ? t.watchAllergens : t.watchFirstFood, { foods: foodNames })}
+        </p>
+      )}
       <p className="text-[13px] leading-relaxed text-muted-foreground">{t.remindersWhere}</p>
       <div className="flex flex-wrap gap-2">
         {CHECKIN_PRESETS.map((p) => (

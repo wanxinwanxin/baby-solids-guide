@@ -19,6 +19,10 @@ export const logFormMsgs = {
     en: "{food} is in the book for {name}.",
     zh: "已经把{food}记进{name}的记录里了。",
   },
+  inTheBookMany: {
+    en: "{foods} are in the book for {name}.",
+    zh: "{foods}都记进{name}的记录里了。",
+  },
   backToToday: { en: "Back to Today", zh: "返回今天" },
   logAnother: { en: "Log another food", zh: "再记一种食物" },
   allergenPaused: {
@@ -43,8 +47,14 @@ export const logFormMsgs = {
   },
   allClear: { en: "All clear — no symptoms ✓", zh: "一切正常——没有症状 ✓" },
   foodSection: { en: "Food", zh: "食物" },
-  change: { en: "change", zh: "更换" },
   searchPlaceholder: { en: "Type to search (e.g. carrot)…", zh: "输入搜索（如：胡萝卜）…" },
+  /** The same picker, once the meal already holds a food. */
+  addMorePlaceholder: { en: "Add another food to this meal…", zh: "再加一种这餐吃的食物…" },
+  removeFood: { en: "Remove {food}", zh: "去掉{food}" },
+  mealCount: {
+    en: "{n} foods in this meal. Each one gets its own entry, saved in one go.",
+    zh: "这餐有 {n} 种食物。每种单独成一条记录，一次保存。",
+  },
   addCustom: { en: 'Add "{food}" as a custom food', zh: "把“{food}”添加为自定义食物" },
   customTag: { en: "custom", zh: "自定义" },
   customNoPrep: {
@@ -53,6 +63,17 @@ export const logFormMsgs = {
   },
   searchAria: { en: "Search food to log", zh: "搜索要记录的食物" },
   prepUsed: { en: "Prep used", zh: "所用做法" },
+  /** Why the plate shows stage buttons instead of one food's prep text. */
+  mealPrepNote: {
+    en: "One stage for the whole plate. Each food records the prep it is served at.",
+    zh: "整盘用同一个阶段。每种食物按它自己的做法记录。",
+  },
+  /** One new allergen at a time — said before the save, not after. */
+  newAllergensTitle: { en: "New allergens: {allergens}", zh: "新过敏原：{allergens}" },
+  newAllergensBody: {
+    en: "Give one new allergen at a time. After two new ones in the same meal, a reaction does not show which food caused it. You can still save this meal, and the check-ins follow both.",
+    zh: "新过敏原一次只加一种。一餐里加两种，万一有反应就分不清是哪一种引起的。这餐仍然可以保存，观察提醒会同时盯着这两种。",
+  },
   howMuch: { en: "How much went in?", zh: "吃进去多少？" },
   howDidItGo: { en: "How did it go?", zh: "吃得怎么样？" },
   /** Trailing space in `en` is intentional — it sits before the inline link. */
@@ -88,6 +109,19 @@ export const checkInOfferMsgs = {
   allergenPrompt: {
     en: "{food} is a common allergen — want a reminder to check for symptoms?",
     zh: "{food}是常见过敏原——要不要设个提醒，回头看看有没有症状？",
+  },
+  allergenPromptMany: {
+    en: "{foods} are common allergens — want a reminder to check for symptoms?",
+    zh: "{foods}都是常见过敏原——要不要设个提醒，回头看看有没有症状？",
+  },
+  /** Which food of a several-food meal the check-ins are filed under, and why. */
+  watchAllergens: {
+    en: "The check-ins follow {foods}. A common allergen is what a symptom check is for.",
+    zh: "观察提醒盯着{foods}。常见过敏原正是需要回头查看症状的那一类。",
+  },
+  watchFirstFood: {
+    en: "One check-in covers the meal, filed under {foods}.",
+    zh: "整餐用一个观察提醒，记在{foods}名下。",
   },
   genericPrompt: {
     en: "Want a reminder to check on how this went down?",

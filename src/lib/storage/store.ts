@@ -208,6 +208,16 @@ export const selectPlanForActive = (s: GuideState): Plan | null => {
 
 const now = () => new Date().toISOString();
 
+/**
+ * Evict a photo blob, unless another log still points at it. One photo of the
+ * plate is shared by every food in a meal (see lib/meal-log), so removing one
+ * food of that meal must leave the image for the foods beside it.
+ */
+function evictUnusedPhoto(photoId: string, logs: ExposureLog[], changedLogId: string): void {
+  const stillUsed = logs.some((l) => l.id !== changedLogId && l.photoId === photoId);
+  if (!stillUsed) void deletePhoto(photoId);
+}
+
 /** In-memory fallback so the store is usable during SSR and in node tests. */
 const memoryStorage = (() => {
   const map = new Map<string, string>();
@@ -364,7 +374,7 @@ export const useGuideStore = create<GuideState>()(
         // Dropping or replacing a photo evicts the old blob, so an edit can't
         // leak an orphan that nothing references any more.
         if ("photoId" in patch && existing.photoId && patch.photoId !== existing.photoId) {
-          void deletePhoto(existing.photoId);
+          evictUnusedPhoto(existing.photoId, get().logs, id);
         }
         set({
           logs: get().logs.map((l) =>
@@ -375,7 +385,7 @@ export const useGuideStore = create<GuideState>()(
 
       deleteLog: (id) => {
         const existing = get().logs.find((l) => l.id === id);
-        if (existing?.photoId) void deletePhoto(existing.photoId);
+        if (existing?.photoId) evictUnusedPhoto(existing.photoId, get().logs, id);
         set({
           logs: get().logs.filter((l) => l.id !== id),
           deletedLogIds: [...new Set([...get().deletedLogIds, id])],
