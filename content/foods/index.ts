@@ -112,6 +112,7 @@ import pita from "./pita";
 import plum from "./plum";
 import polenta from "./polenta";
 import pomegranate from "./pomegranate";
+import porkLiver from "./pork-liver";
 import pork from "./pork";
 import potato from "./potato";
 import prunes from "./prunes";
@@ -274,6 +275,7 @@ export const allFoods: Food[] = [
   plum,
   polenta,
   pomegranate,
+  porkLiver,
   pork,
   potato,
   prunes,

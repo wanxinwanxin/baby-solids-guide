@@ -112,6 +112,7 @@ import pita from "./pita";
 import plum from "./plum";
 import polenta from "./polenta";
 import pomegranate from "./pomegranate";
+import porkLiver from "./pork-liver";
 import pork from "./pork";
 import potato from "./potato";
 import prunes from "./prunes";
@@ -271,6 +272,7 @@ export const ZH_FOODS: Record<string, FoodL10n> = {
   [plum.slug]: plum,
   [polenta.slug]: polenta,
   [pomegranate.slug]: pomegranate,
+  [porkLiver.slug]: porkLiver,
   [pork.slug]: pork,
   [potato.slug]: potato,
   [prunes.slug]: prunes,

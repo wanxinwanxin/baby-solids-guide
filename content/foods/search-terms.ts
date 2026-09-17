@@ -120,6 +120,7 @@ export const FOOD_SEARCH_TERMS: Record<string, string[]> = {
   "plum": ["plum","李子","布林","黑布林"],
   "polenta": ["polenta","cornmeal porridge","grits","意式玉米糊","玉米糊","玉米粥","波伦塔"],
   "pomegranate": ["pomegranate arils","pomegranate","pomegranate seeds","石榴籽粒","石榴","石榴籽"],
+  "pork-liver": ["pork liver","pig liver","pork liver powder","猪肝","猪肝泥","猪肝粉"],
   "pork": ["pork","猪肉"],
   "potato": ["potato","white potato","土豆","马铃薯","洋芋"],
   "prunes": ["prunes","dried plums","西梅干","西梅","梅干"],
