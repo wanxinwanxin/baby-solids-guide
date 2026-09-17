@@ -12,6 +12,7 @@ import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
 import { BROWSER_BAND_MSGS, foodBrowserMsgs } from "@/lib/i18n/messages/foods";
 import { useActiveLogs, useHydrated } from "@/lib/hooks";
 import { rankMatches } from "@/lib/search/rank";
+import { FOOD_CLASS_TERMS } from "../../../content/foods/search-classes";
 import { CutDiagram, isDiagramVariant } from "@/components/diagrams/CutDiagram";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -124,6 +125,8 @@ export function FoodBrowser({ foods }: { foods: SlimFood[] }) {
     return rankMatches(chipped, query, (f) => ({
       name: f.name,
       alt: [...(FOOD_SEARCH_TERMS[f.slug] ?? f.aliases), f.slug],
+      // 猪肝 also surfaces chicken liver (content/foods/search-classes).
+      cls: FOOD_CLASS_TERMS[f.slug],
     }));
   }, [foods, query, filter, band, triedState]);
 

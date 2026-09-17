@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildSearchIndex, featureEntries, searchEntries } from "./index";
 import { rankMatches, scoreMatch } from "./rank";
+import { FOOD_CLASS_TERMS } from "../../../content/foods/search-classes";
 import { allFoods } from "../../../content/foods";
 import { FOOD_SEARCH_TERMS } from "../../../content/foods/search-terms";
 import { ZH_FOODS } from "../../../content/i18n/zh/foods";
@@ -78,6 +79,7 @@ describe("food picker ranking (src/lib/search/rank.ts)", () => {
   const pickerTerms = (f: { name: string; slug: string; aliases: string[] }) => ({
     name: f.name,
     alt: [...(FOOD_SEARCH_TERMS[f.slug] ?? f.aliases), f.slug],
+    cls: FOOD_CLASS_TERMS[f.slug],
   });
 
   it('puts every pea in the first eight results for "pea"', () => {
@@ -110,6 +112,35 @@ describe("food picker ranking (src/lib/search/rank.ts)", () => {
     ] as const) {
       expect(rankMatches(allFoods, q, pickerTerms, 8)[0]?.slug, q).toBe(slug);
     }
+  });
+
+  it("shows the other livers when a parent searches one of them", () => {
+    // 猪肝 and 鸡肝 share no substring, so the term index alone shows one
+    // liver and hides the other — the choice a parent is actually making.
+    const forPorkLiver = rankMatches(allFoods, "猪肝", pickerTerms, 8).map((f) => f.slug);
+    expect(forPorkLiver[0]).toBe("pork-liver");
+    expect(forPorkLiver).toContain("liver");
+
+    const forChickenLiver = rankMatches(allFoods, "鸡肝", pickerTerms, 8).map((f) => f.slug);
+    expect(forChickenLiver[0]).toBe("liver");
+    expect(forChickenLiver).toContain("pork-liver");
+
+    const forLiver = rankMatches(allFoods, "liver", pickerTerms, 8).map((f) => f.slug);
+    expect(forLiver).toEqual(expect.arrayContaining(["liver", "pork-liver"]));
+  });
+
+  it("keeps a class hit below every direct hit", () => {
+    // "Chicken liver" names one food; pork liver only answers the class.
+    const hits = rankMatches(allFoods, "chicken liver", pickerTerms, 8).map((f) => f.slug);
+    expect(hits[0]).toBe("liver");
+    expect(hits).toContain("pork-liver");
+    expect(scoreMatch("Pork liver", ["猪肝"], "鸡肝", ["liver", "肝"])).toBeLessThan(
+      scoreMatch("Chicken liver", ["鸡肝"], "鸡肝", ["liver", "肝"]),
+    );
+  });
+
+  it("a class term reaches nothing on its own when the query names no class", () => {
+    expect(scoreMatch("Pork liver", ["猪肝"], "tomato", ["liver", "肝"])).toBe(0);
   });
 
   it("scores an exact name above a prefix above a substring above an alias", () => {

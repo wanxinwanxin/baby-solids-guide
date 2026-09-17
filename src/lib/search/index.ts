@@ -1,5 +1,6 @@
 import { allFoods } from "../../../content/foods";
 import { FOOD_SEARCH_TERMS } from "../../../content/foods/search-terms";
+import { FOOD_CLASS_TERMS } from "../../../content/foods/search-classes";
 import { allRecipes } from "../../../content/recipes";
 import { allGuides } from "../../../content/guides";
 import { allergenPrograms } from "../../../content/allergens";
@@ -23,6 +24,8 @@ export type SearchEntry = {
   /** Secondary match strings: the other locale's name, aliases, synonyms. */
   alt: string[];
   group: SearchGroup;
+  /** Class terms: a query that contains one also reaches this entry. */
+  cls?: string[];
   emoji?: string;
 };
 
@@ -195,7 +198,14 @@ export function buildSearchIndex(locale: Locale, zh: ZhOverlays | null): SearchE
     // UI locale — a Chinese user on the English UI still finds 番茄 / 土豆.
     const alt = [...(FOOD_SEARCH_TERMS[f.slug] ?? f.aliases)];
     if (name !== f.name) alt.push(f.name);
-    entries.push({ href: `/foods/${f.slug}`, name, alt, group: "food", emoji: f.emoji });
+    entries.push({
+      href: `/foods/${f.slug}`,
+      name,
+      alt,
+      group: "food",
+      cls: FOOD_CLASS_TERMS[f.slug],
+      emoji: f.emoji,
+    });
   }
   for (const r of allRecipes) {
     const overlay = zh?.recipes[r.slug];
@@ -220,5 +230,5 @@ export function buildSearchIndex(locale: Locale, zh: ZhOverlays | null): SearchE
 
 /** Rank matches; ties break toward shorter names (the more exact hit). */
 export function searchEntries(entries: SearchEntry[], query: string, limit = 14): SearchEntry[] {
-  return rankMatches(entries, query, (e) => ({ name: e.name, alt: e.alt }), limit);
+  return rankMatches(entries, query, (e) => ({ name: e.name, alt: e.alt, cls: e.cls }), limit);
 }

@@ -19,8 +19,19 @@
  * and lowercased. Zero means no match at all. A hit on the display name
  * always outranks a hit on a secondary term, so "pea" prefers the food named
  * Peas over the food whose Chinese alias contains 豌豆.
+ *
+ * `cls` holds the class terms of the entry, if it has any: words that name a
+ * whole group of foods (see content/foods/search-classes). A class term
+ * matches the other way round — the QUERY contains the term — so 猪肝 (pork
+ * liver) also reaches chicken liver. A class hit scores below every direct
+ * hit, so the food the parent actually named still comes first.
  */
-export function scoreMatch(name: string, alt: readonly string[], q: string): number {
+export function scoreMatch(
+  name: string,
+  alt: readonly string[],
+  q: string,
+  cls: readonly string[] = [],
+): number {
   const n = name.toLowerCase();
   if (n === q) return 100;
   if (n.startsWith(q)) return 90;
@@ -31,6 +42,12 @@ export function scoreMatch(name: string, alt: readonly string[], q: string): num
     if (a === q) best = Math.max(best, 60);
     else if (a.startsWith(q)) best = Math.max(best, 50);
     else if (a.includes(q)) best = Math.max(best, 30);
+  }
+  if (best === 0) {
+    for (const raw of cls) {
+      const c = raw.toLowerCase();
+      if (c && q.includes(c)) return 20;
+    }
   }
   return best;
 }
@@ -47,15 +64,15 @@ export function scoreMatch(name: string, alt: readonly string[], q: string): num
 export function rankMatches<T>(
   items: readonly T[],
   query: string,
-  terms: (item: T) => { name: string; alt: readonly string[] },
+  terms: (item: T) => { name: string; alt: readonly string[]; cls?: readonly string[] },
   limit?: number,
 ): T[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
   const scored: { item: T; score: number; length: number }[] = [];
   for (const item of items) {
-    const { name, alt } = terms(item);
-    const score = scoreMatch(name, alt, q);
+    const { name, alt, cls } = terms(item);
+    const score = scoreMatch(name, alt, q, cls);
     if (score > 0) scored.push({ item, score, length: name.length });
   }
   scored.sort((a, b) => b.score - a.score || a.length - b.length);

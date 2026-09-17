@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from"next/navigation";
 import { useMemo, useState } from"react";
 import type { AgeBand } from"@/content-schema/food";
 import { FOOD_SEARCH_TERMS } from"../../../content/foods/search-terms";
+import { FOOD_CLASS_TERMS } from"../../../content/foods/search-classes";
 import { rankMatches } from"@/lib/search/rank";
 import { bandForAgeMonths, todayIso } from"@/lib/food-utils";
 import { reportFoodRequest } from"@/lib/feedback";
@@ -163,7 +164,11 @@ export function LogForm() {
       rankMatches(
         foods,
         foodQuery,
-        (f) => ({ name: f.name, alt: [...(FOOD_SEARCH_TERMS[f.slug] ?? f.aliases), f.slug] }),
+        (f) => ({
+          name: f.name,
+          alt: [...(FOOD_SEARCH_TERMS[f.slug] ?? f.aliases), f.slug],
+          cls: FOOD_CLASS_TERMS[f.slug],
+        }),
         8,
       ),
     [foodQuery, foods],
