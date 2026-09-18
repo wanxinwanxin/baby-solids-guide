@@ -10,11 +10,14 @@ import {
   useActiveCareLogs,
   useActiveLogs,
   useActiveSleepSessions,
+  useIntervention,
 } from "@/lib/hooks";
 import { fmt } from "@/lib/i18n/config";
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
 import { ACTIVITY_EMOJI } from "@/lib/i18n/messages/activities";
 import { fullDayMsgs } from "@/lib/i18n/messages/full-day";
+import { interventionMsgs } from "@/lib/i18n/messages/intervention";
+import { nextFeed, nextSleep, planEvents } from "@/lib/plan/engine";
 import { dailySleep } from "@/lib/sleep/history";
 import { formatDuration, formatTime, openSession, predictNextSleep } from "@/lib/sleep/model";
 import { useSleepStore } from "@/lib/sleep/store";
@@ -75,6 +78,8 @@ export function FullDayToday({
 }) {
   const locale = useLocale();
   const t = useMsgs(fullDayMsgs);
+  const iv = useMsgs(interventionMsgs);
+  const plan = useIntervention();
   const logs = useActiveLogs();
   const careLogs = useActiveCareLogs();
   const sleepSessions = useActiveSleepSessions();
@@ -138,6 +143,25 @@ export function FullDayToday({
         : predictNextSleep({ sessions: sleepSessions, ageMonths, now, wakeAnchor: wakeAnchors[baby.id] }),
     [open, sleepSessions, ageMonths, now, wakeAnchors, baby.id],
   );
+
+  // Intervention mode: the plan's next step rides the sleep and formula tiles.
+  const planSleep = useMemo(
+    () => (plan ? nextSleep(plan, sleepSessions, planEvents(careLogs), now, prediction) : null),
+    [plan, sleepSessions, careLogs, now, prediction],
+  );
+  const planFeed = useMemo(() => (plan ? nextFeed(plan, careLogs, now) : null), [plan, careLogs, now]);
+  const planSleepLine =
+    planSleep?.kind === "asleep"
+      ? fmt(iv.tileWakeBy, { time: formatTime(planSleep.wakeBy, locale) })
+      : planSleep?.kind === "nap"
+        ? fmt(iv.tilePutDown, { time: formatTime(planSleep.startAt, locale) })
+        : planSleep?.kind === "bedtime"
+          ? fmt(iv.tilePutDown, { time: formatTime(planSleep.at, locale) })
+          : null;
+  const planFeedLine =
+    planFeed && planFeed.state !== "done"
+      ? fmt(iv.tileNextBottle, { time: formatTime(planFeed.windowAt, locale), ml: planFeed.targetMl })
+      : null;
 
   // Care tallies for today. `at` is a UTC ISO datetime, so compare LOCAL
   // calendar dates — a UTC slice drops evening logs in western timezones.
@@ -241,12 +265,13 @@ export function FullDayToday({
             title={t.sleepTitle}
             value={sleepMinToday > 0 ? fmt(t.sleepSoFar, { dur: formatDuration(sleepMinToday, locale) }) : t.noneYet}
             sub={
-              prediction
+              planSleepLine ??
+              (prediction
                 ? fmt(t.nextWindow, {
                     a: formatTime(prediction.windowStart, locale),
                     b: formatTime(prediction.windowEnd, locale),
                   })
-                : undefined
+                : undefined)
             }
             href="/sleep"
             linkLabel={t.logSleep}
@@ -258,6 +283,7 @@ export function FullDayToday({
                 ? fmt(t.bottlesToday, { n: bottles.length, total: bottleTotals })
                 : t.noneYet
             }
+            sub={planFeedLine ?? undefined}
             href="/care"
             linkLabel={t.logBottle}
           />
