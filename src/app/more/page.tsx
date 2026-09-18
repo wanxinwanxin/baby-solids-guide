@@ -4,6 +4,7 @@ import { pick } from "@/lib/i18n/config";
 import { getLocale } from "@/lib/i18n/server";
 import { chromeMsgs } from "@/lib/i18n/messages/chrome";
 import { moreMsgs } from "@/lib/i18n/messages/more";
+import { ShareApp } from "@/components/ShareApp";
 import { TourButton } from "./TourButton";
 import { FeedbackMoreButton } from "./FeedbackMoreButton";
 
@@ -75,6 +76,7 @@ export default async function MorePage() {
         </h2>
         {extras.map(row)}
         <TourButton />
+        <ShareApp />
         <FeedbackMoreButton />
       </section>
     </div>

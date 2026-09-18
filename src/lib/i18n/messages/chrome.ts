@@ -32,6 +32,25 @@ export const chromeMsgs = {
   tagline: { en: "free, science-based baby solids guide", zh: "免费、科学的宝宝辅食指南" },
   share: { en: "Share", zh: "分享" },
   shareCopied: { en: "Link copied", zh: "链接已复制" },
+  // --- Sharing the app itself (src/components/ShareApp.tsx) ---
+  /**
+   * A parent telling a friend about the app, not a page sending its own URL.
+   * The message is what lands in the other person's chat, so it says what the
+   * app is and that it costs nothing, in one line a parent would actually
+   * send.
+   */
+  shareAppTitle: { en: "Tell a friend", zh: "推荐给朋友" },
+  shareAppBody: {
+    en: "Know another family starting solids? Send them this.",
+    zh: "身边有朋友也在给宝宝加辅食吗？把这个发给他们。",
+  },
+  shareAppButton: { en: "Share {brand}", zh: "分享 {brand}" },
+  /** {brand} = product name. The text that travels with the link. */
+  shareAppMessage: {
+    en: "I use {brand} for starting solids — safe textures for every food by age, and allergen introduction step by step. It is free and there are no ads.",
+    zh: "我在用 {brand} 给宝宝加辅食——每种食物在各月龄的安全做法，还有过敏原一步步引入的方案。免费，没有广告。",
+  },
+  shareAppCopied: { en: "Copied — paste it anywhere", zh: "已复制——可以粘贴到任何地方" },
   siteDescription: {
     en: "A free, open, science-based guide for starting your baby on solid foods: exact safe textures for every food, dynamic daily recommendations, and allergy playbooks grounded in NIAID and AAP guidance.",
     zh: "一份免费、开放、以科学为依据的宝宝辅食添加指南：每种食物在各月龄的安全质地、每日动态推荐、基于 NIAID 和 AAP 指南的过敏原引入方案。",

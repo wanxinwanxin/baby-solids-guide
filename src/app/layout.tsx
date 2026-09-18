@@ -6,6 +6,7 @@ import { AppNav } from "@/components/AppNav";
 import { MobileTabBar } from "@/components/MobileTabBar";
 import { PageViewPing } from "@/components/PageViewPing";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { ShareApp } from "@/components/ShareApp";
 import { SyncProvider } from "@/components/SyncProvider";
 import { TourController } from "@/components/Tour";
 import { WhatsNewController } from "@/components/WhatsNew";
@@ -90,7 +91,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               ·{" "}
               <a href={`mailto:${SUPPORT_EMAIL}`} className="underline underline-offset-2">
                 {t.footerContact}
-              </a>
+              </a>{" "}
+              · <ShareApp variant="inline" />
             </p>
           </footer>
         </LocaleProvider>
