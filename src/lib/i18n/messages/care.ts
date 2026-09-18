@@ -39,8 +39,14 @@ export const careMsgs = {
   bottleSummary: { en: "{n} bottles · {total}", zh: "{n} 瓶 · {total}" },
   diaperSummary: { en: "{n} diapers", zh: "尿布 {n} 次" },
   sleepSummary: { en: "sleep {dur}", zh: "睡眠 {dur}" },
-  recentTitle: { en: "Recent days", zh: "最近几天" },
+  recentTitle: { en: "Past days", zh: "往日记录" },
+  recentHint: {
+    en: "Tap a day to see every bottle, diaper, and sleep — and to fix one.",
+    zh: "点一天，查看当天每一次喝奶、尿布和睡眠，也可以在这里修改。",
+  },
   recentEmpty: { en: "Older days appear here as you log.", zh: "记了几天之后，这里会按天汇总。" },
+  daySleepTitle: { en: "Sleep", zh: "睡眠" },
+  dayNoCare: { en: "No bottles or diapers logged.", zh: "没有喝奶或尿布记录。" },
 
   // Entry rows + edit panel
   formulaEntry: { en: "Bottle · {amount}", zh: "喂奶 · {amount}" },

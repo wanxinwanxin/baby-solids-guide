@@ -333,8 +333,15 @@ export function CareClient() {
     return [...byDay.entries()]
       .filter(([key]) => key !== todayKey)
       .sort((a, b) => b[1].at - a[1].at)
-      .slice(0, 7);
+      .slice(0, 30);
   }, [careLogs, sleepSessions, todayKey]);
+
+  // Every sleep that touches a given local day, oldest first — the detail
+  // behind the one-line sleep total when a day is opened.
+  const sleepOnDay = (key: string) =>
+    sleepSessions
+      .filter((s) => localDateKey(s.start) === key || (s.end && localDateKey(s.end) === key))
+      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
 
   if (!hydrated) return null;
 
@@ -560,18 +567,75 @@ export function CareClient() {
         <CardHeader>
           <CardTitle>{t.recentTitle}</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           {recentDays.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t.recentEmpty}</p>
           ) : (
-            <ul className="space-y-2 text-sm">
-              {recentDays.map(([key, day]) => (
-                <li key={key} className="flex flex-wrap justify-between gap-x-3 gap-y-0.5">
-                  <span className="font-data">{dayLabel(day.at)}</span>
-                  <span className="text-muted-foreground">{daySummary(day.logs, day.sleepMin)}</span>
-                </li>
-              ))}
-            </ul>
+            <>
+              <p className="text-xs text-muted-foreground">{t.recentHint}</p>
+              <ul className="space-y-1 text-sm">
+                {recentDays.map(([key, day]) => {
+                  const dayLogs = [...day.logs].sort(
+                    (a, b) => new Date(a.at).getTime() - new Date(b.at).getTime(),
+                  );
+                  const sleeps = sleepOnDay(key);
+                  return (
+                    <li key={key}>
+                      <details className="group rounded-xl border">
+                        <summary className="flex cursor-pointer flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 px-3 py-2 marker:content-none [&::-webkit-details-marker]:hidden">
+                          <span className="font-data font-medium">{dayLabel(day.at)}</span>
+                          <span className="text-muted-foreground">{daySummary(day.logs, day.sleepMin)}</span>
+                        </summary>
+                        <div className="space-y-3 border-t px-3 py-3">
+                          {dayLogs.length === 0 ? (
+                            <p className="text-xs text-muted-foreground">{t.dayNoCare}</p>
+                          ) : (
+                            <ul className="space-y-2">
+                              {dayLogs.map((l) =>
+                                l.kind === "event" ? (
+                                  <EventRow key={l.id} log={l} />
+                                ) : (
+                                  <CareRow
+                                    key={l.id}
+                                    log={l}
+                                    kindLabels={kindLabels}
+                                    onUpdate={updateCareLog}
+                                    onDelete={deleteCareLog}
+                                  />
+                                ),
+                              )}
+                            </ul>
+                          )}
+                          {sleeps.length > 0 && (
+                            <div className="space-y-1">
+                              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                                {t.daySleepTitle}
+                              </p>
+                              <ul className="space-y-1">
+                                {sleeps.map((s) => {
+                                  const a = new Date(s.start).getTime();
+                                  const b = s.end ? new Date(s.end).getTime() : null;
+                                  return (
+                                    <li key={s.id} className="font-data text-sm">
+                                      🌙 {formatTime(a, locale)} – {b === null ? "…" : formatTime(b, locale)}
+                                      {b !== null && (
+                                        <span className="ml-2 text-muted-foreground">
+                                          {formatDuration((b - a) / MIN, locale)}
+                                        </span>
+                                      )}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </details>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
           )}
         </CardContent>
       </Card>
