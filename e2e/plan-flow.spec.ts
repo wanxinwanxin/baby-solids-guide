@@ -112,6 +112,36 @@ test.describe("A plan that tracks what actually happened", () => {
     ).toBeVisible();
   });
 
+  test("a plan with nothing eaten yet explains its own first food", async ({ page }) => {
+    await completeOnboarding(page);
+    await page.goto("/plan");
+    await page.getByRole("button", { name: "Suggest a plan" }).click();
+
+    const panel = page.locator("section", {
+      has: page.getByRole("heading", { name: "This plan starts at the first bite" }),
+    });
+    await expect(panel).toBeVisible();
+    // Answers the three questions a parent asks here: are these foods new,
+    // which one is the first bite, and why is that one first.
+    await expect(panel.getByText("Nothing here has been eaten yet")).toBeVisible();
+    await expect(panel.getByText(/leads because the iron a baby is born with/)).toBeVisible();
+    await expect(panel.getByRole("link", { name: /How to serve/ })).toBeVisible();
+
+    // The first eaten log retires the panel — the plan is under way.
+    await mutateStore(
+      page,
+      `(state) => {
+        const babyId = state.babies[0].id;
+        state.logs.push({ id: "seed-first", babyId, foodSlug: "beef",
+          date: "${isoDaysAgo(0)}", prepBandUsed: "6-8m", amountEaten: "taste",
+          enjoyment: "neutral", gagging: false, symptoms: [] });
+      }`,
+    );
+    await expect(
+      page.getByRole("heading", { name: "This plan starts at the first bite" }),
+    ).toHaveCount(0);
+  });
+
   test("shows what is coming with enough notice to shop for it", async ({ page }) => {
     await completeOnboarding(page);
     await seedPlan(page);

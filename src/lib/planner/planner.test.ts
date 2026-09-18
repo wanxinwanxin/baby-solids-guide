@@ -5,8 +5,10 @@ import { allergenOrderFromPlan, planWeekIndex, recommend, PLAN_BONUS } from "@/l
 import {
   addFoodToWeek,
   INTRO_SPACING_DAYS,
+  entryDay,
   generatePlan,
   migrateLegacyPlan,
+  leadReason,
   mondayOf,
   removeFoodFromPlan,
   scheduleSlugs,
@@ -135,6 +137,22 @@ describe("generatePlan (deterministic, gate-respecting)", () => {
     ];
     const plan2 = generatePlan({ baby: makeBaby(), ...emptyInput, logs });
     expect(plan2.entries.some((e) => e.foodSlug === "avocado")).toBe(false);
+  });
+});
+
+describe("leadReason (why the first food is first)", () => {
+  it("names iron for the food a fresh plan opens with", () => {
+    const plan = generatePlan({ baby: makeBaby(), ...emptyInput });
+    const first = plan.entries.reduce((a, b) => (entryDay(a) <= entryDay(b) ? a : b));
+    const food = FOODS.find((f) => f.slug === first.foodSlug)!;
+    expect(food.ironRich).toBe(true);
+    expect(leadReason(food)).toBe("iron");
+  });
+
+  it("falls back through the first-food pick to plain age", () => {
+    expect(leadReason(makeFood({ slug: "x", ironRich: true, firstFoodPick: true }))).toBe("iron");
+    expect(leadReason(makeFood({ slug: "x", firstFoodPick: true }))).toBe("first-food");
+    expect(leadReason(makeFood({ slug: "x" }))).toBe("age");
   });
 });
 

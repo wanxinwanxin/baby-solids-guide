@@ -31,6 +31,38 @@ export const planMsgs = {
     zh: "“生成建议计划”会根据{name}的月龄、过敏档案和你已记录的内容，搭好一个 12 周的起点——每一处都可以修改。",
   },
   worthALook: { en: "Worth a look", zh: "值得看一眼" },
+  // --- First bite (shown while nothing has been eaten yet) ---
+  /**
+   * A mother wrote in from this exact state: a fresh plan, beef at the top,
+   * and no way to tell whether the board assumed foods she had already
+   * cleared. These lines say what the plan is, which food is the first bite,
+   * and why that food leads.
+   */
+  firstBiteTitle: { en: "This plan starts at the first bite", zh: "这份计划从第一口辅食开始" },
+  /** {food} = lead food, {date} = its short date. */
+  firstBiteNew: {
+    en: "Nothing here has been eaten yet, so every food on the board is a new one. {food} on {date} is the first bite.",
+    zh: "这里的食物都还没吃过，所以看板上每一种都是新食物。{date}的{food}就是第一口。",
+  },
+  /** {food} = lead food. One line per rule that can put a food first. */
+  firstBiteIron: {
+    en: "{food} leads because the iron a baby is born with runs out at about six months. An iron-rich food early is one of the two rules with evidence behind it.",
+    zh: "{food}排在最前面，是因为宝宝出生时带的铁储备在六个月左右就用完了。早点吃富含铁的食物，是两条有证据支持的规则之一。",
+  },
+  firstBiteFirstFood: {
+    en: "{food} leads because its texture is one of the easiest to get right at a first meal.",
+    zh: "{food}排在最前面，是因为它的质地在第一餐里最容易做对。",
+  },
+  firstBiteAge: {
+    en: "{food} leads because it is ready for this age and opens the plan with a food group the later weeks come back to.",
+    zh: "{food}排在最前面，是因为它适合这个月龄，而且后面几周还会再吃到同一类食物。",
+  },
+  /** {food} = lead food. Sends a parent to the prep page for the first meal. */
+  firstBiteHowTo: { en: "How to serve {food} →", zh: "{food}怎么做给宝宝吃 →" },
+  firstBiteFollow: {
+    en: "You can serve it as written. To open with a different food, drag that food into week 1 — the board keeps the {days}-day spacing and the one-new-allergen-a-week rule for you.",
+    zh: "可以照着这份计划喂。如果想换一种食物开头，把它拖到第 1 周——间隔 {days} 天、每周只加一种新过敏原，这两条看板会替你守住。",
+  },
   thisWeek: { en: "This week", zh: "本周" },
   thisWeekBadge: { en: "this week", zh: "本周" },
   /** {n} = 1-based week number. */

@@ -191,6 +191,21 @@ function generalScore(food: Food, position: number, recent: string[]): number {
   return score;
 }
 
+/**
+ * Why the plan opens with the food it opens with. The first pick of a fresh
+ * plan is the first bite of solids, and a parent who reads "beef" there needs
+ * the rule that put it there. The branches come after `generalScore` in the
+ * same order the score applies them, so an explanation cannot drift from the
+ * choice it explains.
+ */
+export type LeadReason = "iron" | "first-food" | "age";
+
+export function leadReason(food: Food): LeadReason {
+  if (food.ironRich) return "iron";
+  if (food.firstFoodPick) return "first-food";
+  return "age";
+}
+
 export type GeneratePlanInput = {
   baby: BabyProfile;
   foods: Food[];

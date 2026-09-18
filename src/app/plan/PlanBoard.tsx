@@ -27,6 +27,7 @@ import {
   entryDay,
   generatePlan,
   INTRO_SPACING_DAYS,
+  leadReason,
   PLAN_WEEKS,
   removeFoodFromPlan,
   scheduleSlugs,
@@ -39,7 +40,7 @@ import { weeklyMenu, MENU_DAYS } from "@/lib/weekly-menu";
 import { correctedAgeMonths } from "@/lib/age";
 import { deriveFoodStats } from "@/lib/engine";
 import { localIsoDate } from "@/lib/food-utils";
-import { stepChip, stepWhen } from "@/components/plan/PlanSteps";
+import { stepChip, stepDate, stepWhen } from "@/components/plan/PlanSteps";
 import { WeeklyMenu } from "@/components/plan/WeeklyMenu";
 import { useGuideStore } from "@/lib/storage/store";
 import type { Plan, PlanEntry } from "@/lib/storage/types";
@@ -128,6 +129,22 @@ function PlannedChip({
       </button>
     </span>
   );
+}
+
+/**
+ * The line that explains the food at the top of a fresh plan, chosen by the
+ * same rule that put it there. `leadReason` reads the food, this reads the
+ * reason, so the board and the planner cannot tell a parent two things.
+ */
+function leadReasonText(food: Food, t: ReturnType<typeof useMsgs<typeof planMsgs>>): string {
+  const reason = leadReason(food);
+  const template =
+    reason === "iron"
+      ? t.firstBiteIron
+      : reason === "first-food"
+        ? t.firstBiteFirstFood
+        : t.firstBiteAge;
+  return fmt(template, { food: food.name });
 }
 
 type AddOption = {
@@ -392,6 +409,23 @@ export function PlanBoard() {
   );
 
   /**
+   * The first bite of solids, while it is still ahead. A plan built before
+   * the first meal holds nothing but new foods, and the board never said so:
+   * a parent who read an iron-rich meat at the top could not tell whether the
+   * app had assumed foods the baby already ate. The panel leaves with the
+   * first eaten log, which is the same test the planner uses to skip a food.
+   */
+  const firstBite = useMemo(() => {
+    if (!progress || progress.total === 0) return null;
+    if (logs.some((log) => log.amountEaten !== "none")) return null;
+    // A blocked food reserves no date, so the first bite is the first food
+    // the parent can actually serve.
+    const step = progress.steps.find((s) => s.status !== "blocked");
+    const food = step ? foodBySlug.get(step.foodSlug) : undefined;
+    return step && food ? { step, food } : null;
+  }, [progress, logs, foodBySlug]);
+
+  /**
    * The week's menu. The plan says which food arrives on which day; the logs
    * say what is already cleared. `weeklyMenu` turns that pair into meals, and
    * reads the same exclusion map the board and Today read, so no page can
@@ -624,6 +658,33 @@ export function PlanBoard() {
           <AlertTitle>{t.noPlanTitle}</AlertTitle>
           <AlertDescription>{fmt(t.noPlanBody, { name: baby.nickname })}</AlertDescription>
         </Alert>
+      )}
+
+      {firstBite && (
+        <section className="space-y-2 rounded-lg border border-primary/40 bg-secondary/30 p-4">
+          <h2 className="text-sm font-semibold">{t.firstBiteTitle}</h2>
+          <p className="text-[13px] leading-relaxed text-foreground/80">
+            {fmt(t.firstBiteNew, {
+              food: chipLabel(firstBite.step.foodSlug),
+              date: stepDate(
+                firstBite.step.projectedDate ?? firstBite.step.scheduledDate,
+                locale,
+              ),
+            })}
+          </p>
+          <p className="text-[13px] leading-relaxed text-foreground/80">
+            {leadReasonText(firstBite.food, t)}
+          </p>
+          <p className="text-[13px] leading-relaxed text-muted-foreground">
+            {fmt(t.firstBiteFollow, { days: INTRO_SPACING_DAYS })}
+          </p>
+          <Link
+            href={`/foods/${firstBite.step.foodSlug}`}
+            className="inline-flex min-h-11 items-center text-[13px] font-semibold underline underline-offset-2"
+          >
+            {fmt(t.firstBiteHowTo, { food: firstBite.food.name })}
+          </Link>
+        </section>
       )}
 
       {progress && progress.total > 0 && (
