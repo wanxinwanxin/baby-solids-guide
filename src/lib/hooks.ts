@@ -8,6 +8,7 @@ import type {
   CareLog,
   CheckIn,
   ExposureLog,
+  Intervention,
   Plan,
   SleepSession,
 } from "@/lib/storage/types";
@@ -91,4 +92,14 @@ export function useActivePlan(): Plan | null {
     const plan = plans.find((p) => p.babyId === baby.id);
     return isEmptyPlan(plan) ? null : (plan ?? null);
   }, [plans, baby]);
+}
+
+/**
+ * The active baby's intervention plan when the family has switched it on,
+ * else null. Intervention mode is a per-baby setting on the profile, so it
+ * reaches every member through the ordinary profile sync.
+ */
+export function useIntervention(): Intervention | null {
+  const baby = useActiveBaby();
+  return baby?.intervention?.enabled ? baby.intervention : null;
 }

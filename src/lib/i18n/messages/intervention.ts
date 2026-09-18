@@ -1,0 +1,179 @@
+import type { Msgs } from "../config";
+
+/**
+ * Intervention mode (2026-09-18): the /more switch and editor, and the plan
+ * bands on /care, /sleep, and the Full-day Today. Grandparents read the
+ * bands in Chinese, so every instruction here is a plain sentence a
+ * caregiver can act on without knowing the theory behind it.
+ */
+export const interventionMsgs = {
+  // ——— /more card + editor ———
+  title: { en: "Intervention mode", zh: "干预模式" },
+  body: {
+    en: "Working on a change — fewer, bigger bottles, shorter naps, an earlier night? Set the schedule once and every device in the family shows the same next step, with the usual prediction kept alongside for reference.",
+    zh: "正在调整宝宝的作息——喝奶次数更少、每次更多，小睡更短，晚上睡得更早？在这里设好时间表，全家每台设备都会看到同样的下一步，原来的预测仍然显示在旁边作参考。",
+  },
+  onNote: {
+    en: "Intervention mode is on for {name}. Everyone in the family sees the plan.",
+    zh: "{name}的干预模式已开启。全家人都会看到这份计划。",
+  },
+  toggleOn: { en: "Turn on for {name}", zh: "为{name}开启" },
+  toggleOff: { en: "Turn off", zh: "关闭" },
+  goalsLabel: { en: "What are you working on?", zh: "你们在调整什么？" },
+  goalConsolidate: { en: "Fewer, bigger bottles", zh: "喝奶次数更少、每次更多" },
+  goalCapDay: { en: "Shorter day sleep", zh: "白天少睡一点" },
+  goalBedtime: { en: "Earlier bedtime", zh: "更早入睡" },
+  goalNightWean: { en: "Fewer night feeds", zh: "减少夜奶" },
+  goalSelfSettle: { en: "Falling asleep alone", zh: "自己入睡" },
+  stepLabel: { en: "Step", zh: "步骤" },
+  flexLabel: { en: "Hunger may open a bottle this early (min)", zh: "饿了最多可以提前多少分钟喝（分钟）" },
+  bottlesTitle: { en: "Bottles", zh: "喝奶" },
+  bottlesHint: {
+    en: "Fixed clock times. Between them, no milk unless the plan says so.",
+    zh: "固定时间。两次之间不喂奶，除非计划另有说明。",
+  },
+  timeLabel: { en: "Time", zh: "时间" },
+  mlLabel: { en: "ml", zh: "毫升" },
+  addBottle: { en: "Add a bottle", zh: "添加一次喝奶" },
+  napsTitle: { en: "Naps", zh: "小睡" },
+  napsHint: {
+    en: "Put down at the start time; wake at the cap. A hard stop wins over the cap.",
+    zh: "到开始时间放下，睡到上限就叫醒。硬性截止时间优先于上限。",
+  },
+  startLabel: { en: "Put down", zh: "放下" },
+  capLabel: { en: "Cap (min)", zh: "上限（分钟）" },
+  hardStopLabel: { en: "Hard stop", zh: "硬性截止" },
+  addNap: { en: "Add a nap", zh: "添加一次小睡" },
+  bedtimeLabel: { en: "Into the crib at", zh: "放进婴儿床" },
+  nightTitle: { en: "Night", zh: "夜间" },
+  nightCutoffLabel: { en: "Before this time, resettle first", zh: "这个时间之前先安抚" },
+  nightFeedLabel: { en: "Night bottle (ml)", zh: "夜奶（毫升）" },
+  remove: { en: "Remove", zh: "删除" },
+  save: { en: "Save plan", zh: "保存计划" },
+  saved: { en: "Saved. Every device will pick it up on the next sync.", zh: "已保存。其他设备下次同步时会更新。" },
+  resetDefaults: { en: "Reset to defaults for {age} months", zh: "恢复为 {age} 个月的默认值" },
+  invalid: { en: "Check the times and amounts — something is out of range.", zh: "请检查时间和数量——有一项超出范围。" },
+
+  // ——— /care band ———
+  nextBottle: { en: "Next bottle", zh: "下一瓶" },
+  bottlesDone: { en: "All of today's bottles are done", zh: "今天的奶都喝完了" },
+  firstTomorrow: { en: "First tomorrow: {time} · {ml} ml", zh: "明天第一瓶：{time} · {ml} 毫升" },
+  dontOfferBefore: { en: "Don't offer before {time}.", zh: "{time} 之前不要喂。" },
+  opensIn: { en: "Opens in {dur}.", zh: "还有 {dur}。" },
+  openNow: { en: "Offer it now.", zh: "现在可以喂。" },
+  lateBy: { en: "{dur} past the window — offer it now.", zh: "已经晚了 {dur}——现在就喂。" },
+  lastBottleLine: { en: "Last: {time} · {ml} ml of {target}", zh: "上一瓶：{time} · {ml}/{target} 毫升" },
+  lastBottleNoTarget: { en: "Last: {time} · {ml} ml", zh: "上一瓶：{time} · {ml} 毫升" },
+  outcomeFull: { en: "took it", zh: "喝完了" },
+  outcomePartial: { en: "partial", zh: "喝了一部分" },
+  outcomeRefused: { en: "refused", zh: "不肯喝" },
+  reofferLine: {
+    en: "Offer the same bottle once more at {at}. Throw the rest away at {discard} — after an hour it's not safe.",
+    zh: "{at} 再用同一瓶喂一次。{discard} 把剩下的倒掉——超过一小时就不安全了。",
+  },
+  sinceLast: { en: "{dur} since the last bottle", zh: "距上一瓶 {dur}" },
+  fussyBtn: { en: "He's fussy", zh: "他闹了" },
+  fussyTitle: { en: "Fussy before the window", zh: "时间没到就闹" },
+  adviceOpenNow: {
+    en: "Close enough — feed him now, the full amount. The next bottle stays on its time.",
+    zh: "已经很接近了——现在就喂，给足量。下一瓶时间不变。",
+  },
+  adviceCheckOther: {
+    en: "Not hunger yet, most likely. Check in order: is a nap due? Diaper? Bored? Bring a solid meal forward if one is coming.",
+    zh: "多半还不是饿。按顺序看看：该睡了吗？尿布？无聊了？如果快到辅食时间，可以提前吃。",
+  },
+  adviceProbablyTired: {
+    en: "He finished the last bottle, so this is probably tiredness, not hunger. Check the sleep page.",
+    zh: "上一瓶他喝完了，所以这次多半是累了，不是饿。看看睡眠页面。",
+  },
+  adviceFeedIfCrying: {
+    en: "If he cries hard for 10 minutes and nothing helps, feed him. One early bottle costs nothing.",
+    zh: "如果他大哭 10 分钟、什么都不管用，就喂他。提前喂一次没有任何损失。",
+  },
+  eventFussy: { en: "Fussy — advice shown", zh: "闹了——已给建议" },
+  eventNapSkipped: { en: "Nap skipped", zh: "跳过了一次小睡" },
+  eventNightResettled: { en: "Night wake · back to sleep alone in {n} min", zh: "夜醒 · {n} 分钟后自己睡了" },
+  eventOffDay: { en: "Off day — plan paused", zh: "特殊日子——计划暂停" },
+  offDayBtn: { en: "Off day (ill, teething, shot)", zh: "特殊日子（生病、长牙、打针）" },
+  offDayNote: {
+    en: "Plan paused for today. Feed when he wants, let him sleep. Tomorrow it comes back.",
+    zh: "今天的计划已暂停。他想吃就喂，想睡就睡。明天恢复。",
+  },
+  planTargetChip: { en: "{ml} ml (plan)", zh: "{ml} 毫升（计划）" },
+  usualPattern: { en: "His usual pattern", zh: "他平时的规律" },
+
+  // ——— /sleep band ———
+  putDownAt: { en: "Put him down", zh: "放下睡觉" },
+  wakeBy: { en: "Wake him by {time}", zh: "{time} 前叫醒" },
+  wakeByHard: { en: "Wake him by {time} — hard stop", zh: "{time} 一定叫醒——硬性截止" },
+  overdue: { en: "{dur} past wake-by. Wake him now.", zh: "已经超过 {dur}。现在就叫醒。" },
+  napState: { en: "Nap {n} of {total}", zh: "第 {n}/{total} 觉" },
+  planWaiting: { en: "In {dur}.", zh: "还有 {dur}。" },
+  planOpen: { en: "Now.", zh: "就是现在。" },
+  planLate: { en: "{dur} past the plan — put him down now.", zh: "比计划晚了 {dur}——现在就放下。" },
+  planSkip: {
+    en: "Too close to the hard stop to be worth it. Skip this nap and move bedtime 30 min earlier.",
+    zh: "离硬性截止太近，睡不了多久了。跳过这一觉，睡觉时间提前 30 分钟。",
+  },
+  deltaEarlier: { en: "{dur} earlier than his pattern", zh: "比他平时早 {dur}" },
+  deltaLater: { en: "{dur} later than his pattern", zh: "比他平时晚 {dur}" },
+  deltaSame: { en: "Same as his pattern", zh: "和他平时一样" },
+  wontSleepBtn: { en: "Won't sleep", zh: "不肯睡" },
+  adviceTwentyThenUp: {
+    en: "Give it 20 minutes in the crib. Calm and awake is fine. If he is still awake at 20, get him up and try again in 30. No protest work — that's not this stage.",
+    zh: "在床里等 20 分钟。安静地醒着没关系。20 分钟后还醒着就抱起来，30 分钟后再试。不要让他哭着练——这不是现在这个阶段的事。",
+  },
+  adviceGraduated: {
+    en: "Wait 5 minutes. Go in, one hand on his chest, one quiet phrase, two minutes, leave. Repeat once. Still awake after 20 — get him up and try again in 30.",
+    zh: "先等 5 分钟。进去，一只手放在他胸口，说一句话，两分钟，离开。重复一次。20 分钟后还醒着就抱起来，30 分钟后再试。",
+  },
+  skipNapBtn: { en: "Skip this nap", zh: "跳过这一觉" },
+  bedtimeTitle: { en: "Bedtime", zh: "睡觉时间" },
+  bedtimeAdjustedShort: { en: "30 min earlier tonight — the last nap was short.", zh: "今晚提前 30 分钟——最后一觉睡得短。" },
+  bedtimeAdjustedSkipped: { en: "30 min earlier tonight — the last nap was skipped.", zh: "今晚提前 30 分钟——最后一觉跳过了。" },
+  detailsTitle: { en: "How he fell asleep (optional)", zh: "他是怎么睡着的（选填）" },
+  inBedSince: { en: "In the crib since", zh: "放进床里的时间" },
+  howLabel: { en: "How", zh: "方式" },
+  howFed: { en: "Fed", zh: "喂着睡" },
+  howRocked: { en: "Rocked", zh: "抱着哄" },
+  howPatted: { en: "Patted", zh: "轻拍" },
+  howAlone: { en: "On his own", zh: "自己睡" },
+  whereLabel: { en: "Where", zh: "地点" },
+  whereCrib: { en: "Crib", zh: "婴儿床" },
+  whereArms: { en: "Arms", zh: "怀里" },
+  whereStroller: { en: "Stroller", zh: "推车" },
+  whereBed: { en: "Bed", zh: "大床" },
+  latencyLine: { en: "{dur} to fall asleep", zh: "{dur}后睡着" },
+
+  // ——— /sleep night card ———
+  nightCardTitle: { en: "Night wake", zh: "夜里醒了" },
+  nightCardBody: {
+    en: "Before {cutoff}: walk the steps. After: feed him — it is nearly morning.",
+    zh: "{cutoff} 之前：按步骤来。之后：直接喂——快天亮了。",
+  },
+  heWokeBtn: { en: "He woke up", zh: "他醒了" },
+  sinceWake: { en: "{dur} since he woke", zh: "醒了 {dur}" },
+  nightWait5: { en: "Wait. Don't go in yet — most of his noises are not a wake.", zh: "先等着。别进去——他的很多动静不是真的醒了。" },
+  nightComfort2: {
+    en: "Go in. Hand on his chest, the same quiet phrase, two minutes. Then leave, settled or not.",
+    zh: "进去。手放在他胸口，说同一句话，两分钟。然后离开，不管他有没有安静下来。",
+  },
+  nightRepeatOnce: { en: "Wait five more minutes, then go in once more, same two minutes.", zh: "再等五分钟，再进去一次，同样两分钟。" },
+  nightFeed: {
+    en: "Feed him now — {ml} ml, dark room, no talking. This is the plan, not a failure.",
+    zh: "现在喂他——{ml} 毫升，房间保持黑暗，不说话。这是计划的一部分，不是失败。",
+  },
+  nightAfterCutoff: { en: "After the cutoff — just feed him. {ml} ml.", zh: "已过界限时间——直接喂。{ml} 毫升。" },
+  resettledBtn: { en: "Back to sleep alone", zh: "自己睡着了" },
+  fedBtn: { en: "Fed him", zh: "喂了" },
+  cancel: { en: "Cancel", zh: "取消" },
+  nightHardCry: {
+    en: "Crying hard for 20 minutes straight? Feed him, whatever the step says, and move the cutoff 30 min later tomorrow.",
+    zh: "连续大哭 20 分钟？不管在哪一步都喂他，明天把界限时间往后推 30 分钟。",
+  },
+
+  // ——— Today tile ———
+  tileWakeBy: { en: "Wake by {time}", zh: "{time} 前叫醒" },
+  tilePutDown: { en: "Plan: down at {time}", zh: "计划：{time} 放下" },
+  tileNextBottle: { en: "Plan: {time} · {ml} ml", zh: "计划：{time} · {ml} 毫升" },
+} satisfies Msgs;

@@ -4,6 +4,7 @@ import { pick } from "@/lib/i18n/config";
 import { getLocale } from "@/lib/i18n/server";
 import { chromeMsgs } from "@/lib/i18n/messages/chrome";
 import { moreMsgs } from "@/lib/i18n/messages/more";
+import { InterventionCard } from "@/components/InterventionCard";
 import { ShareApp } from "@/components/ShareApp";
 import { TourButton } from "./TourButton";
 import { FeedbackMoreButton } from "./FeedbackMoreButton";
@@ -79,6 +80,8 @@ export default async function MorePage() {
         <ShareApp />
         <FeedbackMoreButton />
       </section>
+      {/* Deliberately last and unannounced: one family is trialing this. */}
+      <InterventionCard />
     </div>
   );
 }
