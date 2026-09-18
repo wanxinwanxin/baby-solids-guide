@@ -3,11 +3,19 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { correctedAgeMonths } from "@/lib/age";
-import { useActiveBaby, useActiveSleepSessions, useHydrated } from "@/lib/hooks";
+import {
+  useActiveBaby,
+  useActiveCareLogs,
+  useActiveSleepSessions,
+  useHydrated,
+  useIntervention,
+} from "@/lib/hooks";
 import { fmt } from "@/lib/i18n/config";
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
 import { datetimeMsgs } from "@/lib/i18n/messages/datetime";
+import { interventionMsgs } from "@/lib/i18n/messages/intervention";
 import { sleepMsgs } from "@/lib/i18n/messages/sleep";
+import { isNightSessionOpenNow, nextSleep, planEvents } from "@/lib/plan/engine";
 import {
   PERSONALIZED_AT,
   formatDuration,
@@ -18,12 +26,16 @@ import {
 } from "@/lib/sleep/model";
 import { useSleepStore } from "@/lib/sleep/store";
 import { newId, useGuideStore } from "@/lib/storage/store";
+import type { FellAsleepHow, WhereSlept } from "@/lib/storage/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateTimeField } from "@/components/DateTimeField";
+import { NightWakeCard } from "@/components/plan/NightWakeCard";
+import { SleepPlanBand } from "@/components/plan/SleepPlanBand";
 import { TimeConfirm } from "@/components/TimeConfirm";
 import { SleepHistory } from "@/components/SleepHistory";
+import { cn } from "@/lib/utils";
 
 const MIN = 60 * 1000;
 
@@ -50,6 +62,7 @@ function SessionRow({
 }) {
   const locale = useLocale();
   const t = useMsgs(sleepMsgs);
+  const iv = useMsgs(interventionMsgs);
   const dt = useMsgs(datetimeMsgs);
   const [editing, setEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -59,6 +72,8 @@ function SessionRow({
 
   const startMs = new Date(session.start).getTime();
   const endMs = session.end ? new Date(session.end).getTime() : null;
+  // Sleep latency: the number the predictor cannot see from `start` alone.
+  const latencyMin = session.inBedAt ? (startMs - new Date(session.inBedAt).getTime()) / MIN : null;
 
   function startEditing() {
     setEditStart(new Date(session.start));
@@ -92,6 +107,11 @@ function SessionRow({
           <span className="ml-2 text-muted-foreground">
             {formatDuration(((endMs ?? nowMs) - startMs) / MIN, locale)}
           </span>
+          {latencyMin !== null && latencyMin > 0 && (
+            <span className="ml-2 text-xs text-muted-foreground">
+              · {fmt(iv.latencyLine, { dur: formatDuration(latencyMin, locale) })}
+            </span>
+          )}
         </span>
         <button
           type="button"
@@ -164,6 +184,9 @@ export function SleepClient() {
   const baby = useActiveBaby();
   const locale = useLocale();
   const t = useMsgs(sleepMsgs);
+  const iv = useMsgs(interventionMsgs);
+  const plan = useIntervention();
+  const careLogs = useActiveCareLogs();
 
   // Sessions live in the synced family store; the wake anchor stays local.
   const babySessions = useActiveSleepSessions();
@@ -187,6 +210,12 @@ export function SleepClient() {
   const [addError, setAddError] = useState<null | "order" | "future">(null);
   // Remount key: clears the add fields after a successful add.
   const [addFormKey, setAddFormKey] = useState(0);
+  // Intervention-mode detail on the next "fell asleep": how, where, and
+  // when he went into the crib (latency = start − inBedAt).
+  const [how, setHow] = useState<FellAsleepHow | null>(null);
+  const [where, setWhere] = useState<WhereSlept | null>(null);
+  const [inBedAt, setInBedAt] = useState<Date | null>(null);
+  const [detailsKey, setDetailsKey] = useState(0);
 
   const open = useMemo(() => openSession(babySessions), [babySessions]);
   const ageMonths = baby ? correctedAgeMonths(baby, now) : 0;
@@ -201,6 +230,11 @@ export function SleepClient() {
           })
         : null,
     [baby, open, babySessions, ageMonths, now, wakeAnchors],
+  );
+
+  const sleepAction = useMemo(
+    () => (plan ? nextSleep(plan, babySessions, planEvents(careLogs), now, prediction) : null),
+    [plan, babySessions, careLogs, now, prediction],
   );
 
   if (!hydrated) return null;
@@ -239,8 +273,62 @@ export function SleepClient() {
 
   const logFellAsleep = (d: Date) => {
     if (openSession(babySessions)) return;
-    addSleepSession({ id: newId(), babyId: baby.id, start: d.toISOString() });
+    // Freeze what the plan asked for, so "did they wake him at the cap"
+    // can be judged later even if the plan is edited.
+    const stamp =
+      sleepAction?.kind === "nap"
+        ? { plan: { startAt: new Date(sleepAction.startAt).toISOString(), wakeBy: new Date(sleepAction.wakeBy).toISOString() } }
+        : {};
+    addSleepSession({
+      id: newId(),
+      babyId: baby.id,
+      start: d.toISOString(),
+      ...(how ? { fellAsleepHow: how } : {}),
+      ...(where ? { whereSlept: where } : {}),
+      ...(inBedAt && inBedAt.getTime() < d.getTime() ? { inBedAt: inBedAt.toISOString() } : {}),
+      ...stamp,
+    });
+    setHow(null);
+    setWhere(null);
+    setInBedAt(null);
+    setDetailsKey((k) => k + 1);
   };
+
+  const hows: FellAsleepHow[] = ["fed", "rocked", "patted", "alone"];
+  const wheres: WhereSlept[] = ["crib", "arms", "stroller", "bed"];
+  const howLabel: Record<FellAsleepHow, string> = { fed: iv.howFed, rocked: iv.howRocked, patted: iv.howPatted, alone: iv.howAlone };
+  const whereLabel: Record<WhereSlept, string> = { crib: iv.whereCrib, arms: iv.whereArms, stroller: iv.whereStroller, bed: iv.whereBed };
+  const chip = (active: boolean, onClick: () => void, label: string) => (
+    <button
+      key={label}
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "min-h-8 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors",
+        active ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/60",
+      )}
+    >
+      {label}
+    </button>
+  );
+  // Only in intervention mode: the ordinary one-tap log stays one tap.
+  const fellAsleepDetails = plan ? (
+    <details key={detailsKey} className="rounded-lg border px-3 py-2 text-sm">
+      <summary className="cursor-pointer text-xs font-medium text-muted-foreground">{iv.detailsTitle}</summary>
+      <div className="mt-2 space-y-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="mr-1 text-xs text-muted-foreground">{iv.howLabel}</span>
+          {hows.map((h) => chip(how === h, () => setHow(how === h ? null : h), howLabel[h]))}
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="mr-1 text-xs text-muted-foreground">{iv.whereLabel}</span>
+          {wheres.map((w) => chip(where === w, () => setWhere(where === w ? null : w), whereLabel[w]))}
+        </div>
+        <DateTimeField id="in-bed-at" label={iv.inBedSince} onChange={setInBedAt} />
+      </div>
+    </details>
+  ) : null;
 
   const submitWakeAnchor = () => {
     if (!wakeAt) return;
@@ -333,6 +421,7 @@ export function SleepClient() {
           validate={(d) => (d.getTime() > Date.now() + MIN ? t.futureTime : null)}
           onConfirm={logFellAsleep}
         />
+        {fellAsleepDetails}
       </CardContent>
     </Card>
   ) : (
@@ -360,6 +449,7 @@ export function SleepClient() {
           validate={(d) => (d.getTime() > Date.now() + MIN ? t.futureTime : null)}
           onConfirm={logFellAsleep}
         />
+        {fellAsleepDetails}
       </CardContent>
     </Card>
   );
@@ -374,12 +464,20 @@ export function SleepClient() {
         <p className="text-muted-foreground">{t.intro}</p>
       </div>
 
+      {plan && sleepAction && (
+        <SleepPlanBand plan={plan} action={sleepAction} babyId={baby.id} now={now} napCount={plan.naps.length} />
+      )}
+
       {statusCard}
+
+      {plan && plan.goals.includes("night-wean") && isNightSessionOpenNow(open, now) && (
+        <NightWakeCard plan={plan} babyId={baby.id} now={now} />
+      )}
 
       {basis && (
         <Card>
           <CardHeader>
-            <CardTitle>{t.whyTitle}</CardTitle>
+            <CardTitle>{plan ? iv.usualPattern : t.whyTitle}</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="list-disc space-y-2 pl-5 text-sm">
