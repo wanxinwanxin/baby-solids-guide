@@ -1,27 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useActiveBaby,
   useActiveCareLogs,
   useActiveSleepSessions,
   useHydrated,
+  useIntervention,
 } from "@/lib/hooks";
 import { fmt } from "@/lib/i18n/config";
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
 import { careMsgs } from "@/lib/i18n/messages/care";
 import { datetimeMsgs } from "@/lib/i18n/messages/datetime";
+import { interventionMsgs } from "@/lib/i18n/messages/intervention";
 import { localIsoDate } from "@/lib/food-utils";
+import { bottleMl, bottleOutcome, clockOn, nearestWindow, nextFeed } from "@/lib/plan/engine";
 import { dailySleep } from "@/lib/sleep/history";
 import { formatDuration, formatTime } from "@/lib/sleep/model";
 import { newId, useGuideStore } from "@/lib/storage/store";
-import type { CareLog, DiaperKind, FormulaUnit } from "@/lib/storage/types";
+import type { CareLog, DiaperKind, FormulaUnit, PlanEventKind } from "@/lib/storage/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DateTimeField } from "@/components/DateTimeField";
+import { FeedPlanBand } from "@/components/plan/FeedPlanBand";
 import { TimeConfirm } from "@/components/TimeConfirm";
 import { cn } from "@/lib/utils";
 
@@ -94,11 +98,17 @@ function CareRow({
   const [editKind, setEditKind] = useState<DiaperKind>("wet");
   const [error, setError] = useState<"time" | "amount" | null>(null);
 
+  const iv = useMsgs(interventionMsgs);
   const atMs = new Date(log.at).getTime();
   const label =
     log.kind === "formula"
       ? fmt(t.formulaEntry, { amount: log.amount ? `${log.amount.value} ${log.amount.unit}` : "—" })
       : fmt(t.diaperEntry, { kind: kindLabels[log.diaper ?? "wet"] });
+  // Intervention mode froze the target on the log, so the outcome is stable.
+  const outcome =
+    log.kind === "formula" && log.plan ? bottleOutcome(bottleMl(log), log.plan.targetMl) : null;
+  const outcomeLabel =
+    outcome === "took_full" ? iv.outcomeFull : outcome === "partial" ? iv.outcomePartial : iv.outcomeRefused;
   const emoji = log.kind === "formula" ? "🍼" : DIAPER_EMOJI[log.diaper ?? "wet"];
 
   function startEditing() {
@@ -138,6 +148,16 @@ function CareRow({
             {emoji}
           </span>
           {label}
+          {outcome && (
+            <span
+              className={cn(
+                "ml-2 rounded-full border px-2 py-0.5 text-xs",
+                outcome === "refused" && "border-destructive/50 text-destructive",
+              )}
+            >
+              {outcomeLabel}
+            </span>
+          )}
         </span>
         <button
           type="button"
@@ -235,33 +255,62 @@ function CareRow({
   );
 }
 
+/** An intervention-mode moment in the day list — read-only, quiet. */
+function EventRow({ log }: { log: CareLog }) {
+  const locale = useLocale();
+  const iv = useMsgs(interventionMsgs);
+  const text: Record<PlanEventKind, string> = {
+    fussy: iv.eventFussy,
+    nap_skipped: iv.eventNapSkipped,
+    night_resettled: fmt(iv.eventNightResettled, { n: log.settleMinutes ?? 0 }),
+    off_day: iv.eventOffDay,
+  };
+  return (
+    <li className="rounded-xl border border-dashed px-4 py-2 text-sm text-muted-foreground">
+      <span className="font-data">{formatTime(new Date(log.at).getTime(), locale)}</span>
+      <span className="mx-2">·</span>
+      {log.event ? text[log.event] : ""}
+    </li>
+  );
+}
+
 export function CareClient() {
   const hydrated = useHydrated();
   const baby = useActiveBaby();
   const locale = useLocale();
   const t = useMsgs(careMsgs);
 
+  const iv = useMsgs(interventionMsgs);
   const careLogs = useActiveCareLogs();
   const sleepSessions = useActiveSleepSessions();
   const addCareLog = useGuideStore((s) => s.addCareLog);
   const updateCareLog = useGuideStore((s) => s.updateCareLog);
   const deleteCareLog = useGuideStore((s) => s.deleteCareLog);
 
+  const plan = useIntervention();
+
   const [unit, setUnit] = useState<FormulaUnit>("ml");
   const [amount, setAmount] = useState<number | null>(null);
   const [customText, setCustomText] = useState("");
   const [diaperKind, setDiaperKind] = useState<DiaperKind | null>(null);
+
+  // The plan band counts down, so re-read the clock periodically.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 30 * 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const kindLabels: Record<DiaperKind, string> = useMemo(
     () => ({ wet: t.kindWet, dirty: t.kindDirty, mixed: t.kindMixed, dry: t.kindDry }),
     [t],
   );
 
-  const now = new Date();
   const todayKey = localDateKey(now.toISOString());
   const todayLogs = careLogs
     .filter((l) => localDateKey(l.at) === todayKey)
     .sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+  const feed = plan ? nextFeed(plan, careLogs, now) : null;
 
   // Previous days, newest first — bottles, diapers, and sleep in one line
   // per day, which is the "one place" a grandparent actually wants. Sleep
@@ -305,7 +354,12 @@ export function CareClient() {
     );
   }
 
-  const presets = unit === "ml" ? ML_PRESETS : OZ_PRESETS;
+  const basePresets = unit === "ml" ? ML_PRESETS : OZ_PRESETS;
+  const planTarget = feed && feed.state !== "done" && unit === "ml" ? feed.targetMl : null;
+  const presets =
+    planTarget !== null && !basePresets.includes(planTarget)
+      ? [...basePresets, planTarget].sort((a, b) => a - b)
+      : basePresets;
   const notFuture = (d: Date) => (d.getTime() > Date.now() + MIN ? t.futureTime : null);
 
   const dayLabel = (at: number) =>
@@ -336,6 +390,8 @@ export function CareClient() {
         <h1 className="text-2xl font-bold">{t.heading}</h1>
         <p className="text-muted-foreground">{t.intro}</p>
       </div>
+
+      {plan && <FeedPlanBand plan={plan} careLogs={careLogs} babyId={baby.id} now={now} />}
 
       <Card>
         <CardHeader>
@@ -368,7 +424,7 @@ export function CareClient() {
                   setCustomText("");
                 }}
               >
-                {v} {unit}
+                {v === planTarget ? fmt(iv.planTargetChip, { ml: v }) : `${v} ${unit}`}
               </Chip>
             ))}
             <Input
@@ -395,12 +451,25 @@ export function CareClient() {
             validate={notFuture}
             onConfirm={(d) => {
               if (amount === null) return;
+              // In intervention mode, freeze which window this bottle answers
+              // and the target it is measured against.
+              const wi = plan ? nearestWindow(plan.feedWindows, d.getTime()) : -1;
+              const stamp =
+                plan && wi >= 0
+                  ? {
+                      plan: {
+                        windowAt: new Date(clockOn(d, plan.feedWindows[wi].at)).toISOString(),
+                        targetMl: plan.feedWindows[wi].ml,
+                      },
+                    }
+                  : {};
               addCareLog({
                 id: newId(),
                 babyId: baby.id,
                 kind: "formula",
                 at: d.toISOString(),
                 amount: { value: amount, unit },
+                ...stamp,
               });
             }}
           />
@@ -453,15 +522,19 @@ export function CareClient() {
           ) : (
             <>
               <ul className="space-y-2">
-                {todayLogs.map((l) => (
-                  <CareRow
-                    key={l.id}
-                    log={l}
-                    kindLabels={kindLabels}
-                    onUpdate={updateCareLog}
-                    onDelete={deleteCareLog}
-                  />
-                ))}
+                {todayLogs.map((l) =>
+                  l.kind === "event" ? (
+                    <EventRow key={l.id} log={l} />
+                  ) : (
+                    <CareRow
+                      key={l.id}
+                      log={l}
+                      kindLabels={kindLabels}
+                      onUpdate={updateCareLog}
+                      onDelete={deleteCareLog}
+                    />
+                  ),
+                )}
               </ul>
               <p className="text-sm text-muted-foreground">
                 {[
