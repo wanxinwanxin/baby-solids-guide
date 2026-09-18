@@ -7,6 +7,36 @@ const isoDateTime = z.string().min(10);
 /** Local wall-clock "HH:MM", 24-hour. */
 const clockTime = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 
+/**
+ * Intervention mode (2026-09-18). Bounded like every other family-entered
+ * number: a bottle target over 500 ml or a 6-hour nap cap is a typo, and it
+ * is better refused at the edge than instructed to a grandparent.
+ */
+export const interventionSchema = z.object({
+  enabled: z.boolean(),
+  goals: z
+    .array(z.enum(["consolidate-feeds", "cap-day-sleep", "shift-bedtime", "night-wean", "self-settle"]))
+    .max(5),
+  startedOn: isoDate,
+  step: z.number().int().min(1).max(20),
+  flexMin: z.number().int().min(0).max(120),
+  feedWindows: z
+    .array(z.object({ at: clockTime, ml: z.number().positive().max(500) }))
+    .max(12),
+  naps: z
+    .array(
+      z.object({
+        startAt: clockTime,
+        capMin: z.number().int().min(10).max(240),
+        hardStopAt: clockTime.optional(),
+      }),
+    )
+    .max(6),
+  bedtimeAt: clockTime.optional(),
+  nightCutoffAt: clockTime.optional(),
+  nightFeedMl: z.number().positive().max(500).optional(),
+});
+
 export const babyProfileSchema = z.object({
   id: z.string().min(1),
   nickname: z.string().min(1),
@@ -30,6 +60,7 @@ export const babyProfileSchema = z.object({
     earlyStartApproved: z.boolean().optional(),
   }),
   disclaimerAcknowledgedAt: z.string().optional(),
+  intervention: interventionSchema.optional(),
   updatedAt: isoDateTime.optional(),
 });
 
@@ -97,13 +128,17 @@ export const sleepSessionSchema = z.object({
   babyId: z.string().min(1),
   start: isoDateTime,
   end: isoDateTime.optional(),
+  inBedAt: isoDateTime.optional(),
+  fellAsleepHow: z.enum(["fed", "rocked", "patted", "alone"]).optional(),
+  whereSlept: z.enum(["crib", "arms", "stroller", "bed"]).optional(),
+  plan: z.object({ startAt: isoDateTime, wakeBy: isoDateTime }).optional(),
   updatedAt: isoDateTime.optional(),
 });
 
 export const careLogSchema = z.object({
   id: z.string().min(1),
   babyId: z.string().min(1),
-  kind: z.enum(["formula", "diaper"]),
+  kind: z.enum(["formula", "diaper", "event"]),
   at: isoDateTime,
   // Bounded like exposure quantities: a slipped decimal can't sync as a
   // 5-liter bottle.
@@ -111,6 +146,9 @@ export const careLogSchema = z.object({
     .object({ value: z.number().positive().max(2000), unit: z.enum(["ml", "oz"]) })
     .optional(),
   diaper: z.enum(["wet", "dirty", "mixed", "dry"]).optional(),
+  event: z.enum(["fussy", "nap_skipped", "night_resettled", "off_day"]).optional(),
+  plan: z.object({ windowAt: isoDateTime, targetMl: z.number().positive().max(500) }).optional(),
+  settleMinutes: z.number().int().min(0).max(600).optional(),
   notes: z.string().optional(),
   updatedAt: isoDateTime.optional(),
 });
