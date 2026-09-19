@@ -66,7 +66,7 @@ describe("deriveIntervention", () => {
 
   it("goals gate what the plan contains", () => {
     const feedsOnly = deriveIntervention({ ...base, goals: ["consolidate-feeds"] }).plan;
-    expect(feedsOnly.feedWindows.length).toBe(5);
+    expect(feedsOnly.feedWindows.length).toBe(7); // 70% of his 10, step 1
     expect(feedsOnly.naps).toEqual([]);
     expect(feedsOnly.bedtimeAt).toBeUndefined();
     expect(feedsOnly.nightCutoffAt).toBeUndefined();
@@ -80,10 +80,15 @@ describe("deriveIntervention", () => {
   it("reproduces the hand-built Stage A plan from the logs", () => {
     const { plan, usedDefaults } = deriveIntervention({ ...base, goals: ["consolidate-feeds", "cap-day-sleep"] });
     expect(usedDefaults).toEqual([]);
-    // Five bottles from his 05:30 wake to an hour before the 20:00 bedtime.
-    expect(plan.feedWindows.map((w) => w.at)).toEqual(["05:30", "09:00", "12:15", "15:45", "19:00"]);
-    // Sized from his own ~890 ml/day, last one biggest.
-    expect(plan.feedWindows[4].ml).toBeGreaterThan(plan.feedWindows[0].ml);
+    // Step 1: seven bottles (70% of his ten) from his 05:30 wake to an hour
+    // before the 20:00 bedtime, sized from his own ~890 ml/day — about 125
+    // each, a size he already takes — last one biggest.
+    expect(plan.feedWindows.length).toBe(7);
+    expect(plan.feedWindows[0].at).toBe("05:30");
+    expect(plan.feedWindows[6].at).toBe("19:00");
+    expect(plan.feedWindows[0].ml).toBeGreaterThanOrEqual(120);
+    expect(plan.feedWindows[0].ml).toBeLessThanOrEqual(130);
+    expect(plan.feedWindows[6].ml).toBeGreaterThan(plan.feedWindows[0].ml);
     const total = plan.feedWindows.reduce((s, w) => s + w.ml, 0);
     expect(total).toBeGreaterThanOrEqual(850);
     expect(total).toBeLessThanOrEqual(930);
@@ -97,6 +102,15 @@ describe("deriveIntervention", () => {
     expect(plan.dayStartAt).toBe("05:30");
     expect(plan.feedWindows[0].onWake).toBe(true);
     expect(plan.bedtimeAt).toBe("20:00");
+  });
+
+  it("walks the bottle count down one per step to the age target, sizes rising to match", () => {
+    const at = (step: number) => deriveIntervention({ ...base, goals: ["consolidate-feeds"], step }).plan.feedWindows;
+    expect(at(1).length).toBe(7);
+    expect(at(2).length).toBe(6);
+    expect(at(3).length).toBe(5);
+    expect(at(6).length).toBe(5);
+    expect(at(3)[0].ml).toBeGreaterThan(at(1)[0].ml);
   });
 
   it("walks the last-nap hard stop 60 min per step down to the target", () => {

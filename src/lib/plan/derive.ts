@@ -176,11 +176,15 @@ export type Derived = {
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
 /**
- * Bottles: the age-band count, evenly spaced from his own wake to an hour
- * before bedtime, sized from his own daily total with the last one biggest.
+ * Bottles: evenly spaced from his own wake to an hour before bedtime, sized
+ * from his own daily total with the last one biggest. The count walks from
+ * 70% of what he does today down one per step to the age-band target, so a
+ * baby who takes ten 80 ml bottles is asked for seven of 120 first — a size
+ * he already takes on his good bottles — not five of 165 he has never seen.
  */
-function deriveBottles(o: Observed, band: AgeBand, bedtimeMin: number): { at: string; ml: number }[] {
-  const count = band.bottles;
+function deriveBottles(o: Observed, band: AgeBand, bedtimeMin: number, step: number): { at: string; ml: number }[] {
+  const startCount = o.bottlesPerDay === null ? band.bottles : Math.ceil(o.bottlesPerDay * 0.7);
+  const count = Math.max(band.bottles, Math.min(8, startCount - (step - 1)));
   const first = round15(o.wakeMin ?? 6 * 60);
   const last = round15(bedtimeMin - 60);
   const span = Math.max(last - first, (count - 1) * 120);
@@ -253,7 +257,7 @@ export function deriveIntervention(input: {
   let feedWindows: Intervention["feedWindows"] = [];
   if (goals.includes("consolidate-feeds")) {
     if (!enoughBottles) usedDefaults.push("bottles");
-    feedWindows = deriveBottles(o, band, bedtimeForSpacing);
+    feedWindows = deriveBottles(o, band, bedtimeForSpacing, step);
   }
 
   let naps: NapTarget[] = [];
