@@ -23,11 +23,14 @@ export function FeedPlanBand({
   careLogs,
   babyId,
   now,
+  morningWakeMs = null,
 }: {
   plan: Intervention;
   careLogs: CareLog[];
   babyId: string;
   now: Date;
+  /** This morning's real wake, when known — the first bottle follows it. */
+  morningWakeMs?: number | null;
 }) {
   const t = useMsgs(interventionMsgs);
   const locale = useLocale();
@@ -39,7 +42,9 @@ export function FeedPlanBand({
   const offDay = planEvents(careLogs).some(
     (e) => e.event === "off_day" && new Date(e.at).toDateString() === dayKey,
   );
-  const feed = nextFeed(plan, careLogs, now);
+  const feed = nextFeed(plan, careLogs, now, morningWakeMs);
+  // Before he has woken, the first bottle has no clock yet — it is "when he wakes".
+  const firstOnWake = feed && feed.index === 0 && (plan.feedWindows[0]?.onWake ?? true) && morningWakeMs === null;
 
   const logEvent = (event: CareLog["event"]) =>
     addCareLog({ id: newId(), babyId, kind: "event", at: now.toISOString(), event });
@@ -75,7 +80,8 @@ export function FeedPlanBand({
               {formatTime(feed.windowAt, locale)} · {feed.targetMl} ml
             </p>
             <p className="text-sm">
-              {feed.state === "waiting" && (
+              {firstOnWake && fmt(t.onWakeLine, { time: formatTime(feed.windowAt, locale) })}
+              {!firstOnWake && feed.state === "waiting" && (
                 <>
                   {fmt(t.dontOfferBefore, { time: formatTime(feed.windowAt, locale) })}{" "}
                   <span className="text-muted-foreground">

@@ -277,7 +277,7 @@ export function SleepClient() {
     // can be judged later even if the plan is edited.
     const stamp =
       sleepAction?.kind === "nap"
-        ? { plan: { startAt: new Date(sleepAction.startAt).toISOString(), wakeBy: new Date(sleepAction.wakeBy).toISOString() } }
+        ? { plan: { startAt: new Date(sleepAction.windowStart).toISOString(), wakeBy: new Date(sleepAction.wakeBy).toISOString() } }
         : {};
     addSleepSession({
       id: newId(),
@@ -465,7 +465,7 @@ export function SleepClient() {
       </div>
 
       {plan && sleepAction && (
-        <SleepPlanBand plan={plan} action={sleepAction} babyId={baby.id} now={now} napCount={plan.naps.length} />
+        <SleepPlanBand plan={plan} action={sleepAction} babyId={baby.id} now={now} />
       )}
 
       {statusCard}

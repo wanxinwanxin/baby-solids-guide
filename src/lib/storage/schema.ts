@@ -21,17 +21,21 @@ export const interventionSchema = z.object({
   step: z.number().int().min(1).max(20),
   flexMin: z.number().int().min(0).max(120),
   feedWindows: z
-    .array(z.object({ at: clockTime, ml: z.number().positive().max(500) }))
+    .array(z.object({ at: clockTime, ml: z.number().positive().max(500), onWake: z.boolean().optional() }))
     .max(12),
   naps: z
     .array(
       z.object({
-        startAt: clockTime,
+        from: clockTime.optional(),
+        to: clockTime.optional(),
         capMin: z.number().int().min(10).max(240),
         hardStopAt: clockTime.optional(),
+        startAt: clockTime.optional(),
       }),
     )
     .max(6),
+  maxDaySleepMin: z.number().int().min(30).max(600).optional(),
+  dayStartAt: clockTime.optional(),
   bedtimeAt: clockTime.optional(),
   nightCutoffAt: clockTime.optional(),
   nightFeedMl: z.number().positive().max(500).optional(),

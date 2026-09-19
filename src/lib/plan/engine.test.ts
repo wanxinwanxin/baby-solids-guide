@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { CareLog, Intervention, SleepSession } from "@/lib/storage/types";
 import {
+  bandFor,
   bottleOutcome,
   clockOn,
   defaultIntervention,
   fussyAdvice,
   isDaySleepOn,
+  morningWake,
+  napBands,
   nearestWindow,
   nextFeed,
   nextSleep,
@@ -50,17 +53,19 @@ const plan: Intervention = {
   step: 1,
   flexMin: 45,
   feedWindows: [
-    { at: "06:00", ml: 150 },
+    { at: "06:00", ml: 150, onWake: true },
     { at: "09:30", ml: 150 },
     { at: "13:15", ml: 150 },
     { at: "16:30", ml: 150 },
     { at: "19:00", ml: 180 },
   ],
   naps: [
-    { startAt: "07:15", capMin: 60 },
-    { startAt: "11:30", capMin: 90 },
-    { startAt: "15:15", capMin: 60, hardStopAt: "16:15" },
+    { from: "04:00", to: "09:30", capMin: 60 },
+    { from: "09:30", to: "13:30", capMin: 90 },
+    { from: "13:30", to: "19:00", capMin: 60, hardStopAt: "16:15" },
   ],
+  maxDaySleepMin: 210,
+  dayStartAt: "05:30",
   bedtimeAt: "20:00",
   nightCutoffAt: "04:00",
   nightFeedMl: 120,
@@ -131,6 +136,19 @@ describe("nextFeed", () => {
     expect(toClock(f.windowAt)).toBe("16:30");
   });
 
+  it("opens the first bottle on the morning wake when that comes early", () => {
+    // Woke 04:50 after the night; the 06:00 window is open now, not at 05:15.
+    const f = nextFeed(plan, [], at(4, 52), at(4, 50).getTime())!;
+    expect(f.index).toBe(0);
+    expect(toClock(f.windowAt)).toBe("04:50");
+    expect(f.state).toBe("open");
+    // A 04:50 bottle then counts as that first window.
+    const g = nextFeed(plan, [bottle(at(4, 55), 70)], at(6, 30), at(4, 50).getTime())!;
+    expect(g.index).toBe(1);
+    // A 03:30 wake is a night feed, not the morning bottle.
+    expect(toClock(nextFeed(plan, [], at(3, 40), at(3, 30).getTime())!.windowAt)).toBe("06:00");
+  });
+
   it("does not let a night bottle consume the morning window", () => {
     const f = nextFeed(plan, [bottle(at(1, 30), 130)], at(5, 50))!;
     expect(f.index).toBe(0);
@@ -190,100 +208,149 @@ describe("fussyAdvice", () => {
   });
 });
 
-describe("day sleep + wake-by", () => {
-  it("classifies day sleep by start hour and length", () => {
+describe("bands + wake-by", () => {
+  it("normalizes bands and reads a legacy startAt plan at the midpoints", () => {
+    const bands = napBands(plan);
+    expect(bands.map((b) => b.capMin)).toEqual([60, 90, 60]);
+    const legacy = napBands({ ...plan, naps: [{ startAt: "08:00", capMin: 45 }, { startAt: "11:15", capMin: 90 }, { startAt: "15:15", capMin: 60, hardStopAt: "17:00" }] });
+    expect(legacy.map((b) => [b.fromMin, b.toMin])).toEqual([[240, 578], [578, 795], [795, 1140]]);
+    expect(legacy[2].hardStopAt).toBe("17:00");
+  });
+
+  it("picks the cap by when the nap starts, not by count", () => {
+    const bands = napBands(plan);
+    expect(bandFor(bands, at(5, 30).getTime())?.capMin).toBe(60);
+    expect(bandFor(bands, at(12).getTime())?.capMin).toBe(90);
+    expect(bandFor(bands, at(15, 40).getTime())?.hardStopAt).toBe("16:15");
+    expect(bandFor(bands, at(19, 30).getTime())?.hardStopAt).toBe("16:15"); // past the last band: last band
+  });
+
+  it("classifies day sleep by start hour and length (derive helper)", () => {
     expect(isDaySleepOn(session(at(11, 30), 90), at(12))).toBe(true);
-    expect(isDaySleepOn(session(at(11, 30), null), at(12))).toBe(true);
     expect(isDaySleepOn(session(at(21), 8 * 60), at(22))).toBe(false);
-    expect(isDaySleepOn(session(at(11, 30, -1), 90), at(12))).toBe(false);
   });
 
   it("wakes at the cap, or at the hard stop when that comes first", () => {
-    const nap3 = plan.naps[2];
-    expect(toClock(predictWakeBy(at(15, 15).getTime(), nap3))).toBe("16:15");
-    expect(toClock(predictWakeBy(at(15, 45).getTime(), nap3))).toBe("16:15"); // hard stop wins over 16:45
-    expect(toClock(predictWakeBy(at(14, 30).getTime(), nap3))).toBe("15:30"); // cap wins
-    expect(toClock(predictWakeBy(at(11, 30).getTime(), plan.naps[1]))).toBe("13:00");
+    const last = napBands(plan)[2];
+    expect(toClock(predictWakeBy(at(15, 15).getTime(), last))).toBe("16:15");
+    expect(toClock(predictWakeBy(at(15, 45).getTime(), last))).toBe("16:15");
+    expect(toClock(predictWakeBy(at(14, 30).getTime(), last))).toBe("15:30");
+  });
+});
+
+describe("morningWake", () => {
+  const night = session(at(21, 0, -1), 7 * 60 + 50); // → 04:50
+  it("finds the night's end and treats an early return to sleep as the night continuing", () => {
+    const m1 = morningWake([night], at(5, 0), "05:30");
+    expect(toClock(m1.nightEnd!)).toBe("04:50");
+    expect(m1.earlyAwake).toBe(true);
+    const resleep = session(at(5, 30), 50); // 05:30–06:20
+    const m2 = morningWake([night, resleep], at(6, 30), "05:30");
+    expect(toClock(m2.nightEnd!)).toBe("06:20");
+    expect(m2.earlyAwake).toBe(false);
+    const open = session(at(5, 30), null);
+    expect(morningWake([night, open], at(5, 45), "05:30").stillNight).toBe(true);
+  });
+  it("counts him up for good after an hour awake, and a 10:00 sleep as a nap", () => {
+    expect(morningWake([night], at(5, 55), "05:30").earlyAwake).toBe(false);
+    const late = session(at(10), 60);
+    expect(toClock(morningWake([night, late], at(11), "05:30").nightEnd!)).toBe("04:50");
+  });
+  it("is unknown without a night session", () => {
+    expect(morningWake([], at(9), "05:30").nightEnd).toBeNull();
   });
 });
 
 describe("nextSleep", () => {
-  it("names the wake-by while a nap is running, with hard-stop flagged", () => {
-    const s = nextSleep(plan, [session(at(7, 20), 55), session(at(11, 30), 90), session(at(15, 40), null)], [], at(16));
-    expect(s.kind).toBe("asleep");
-    if (s.kind !== "asleep") return;
-    expect(s.napIndex).toBe(2);
-    expect(toClock(s.wakeBy)).toBe("16:15");
-    expect(s.hardStop).toBe(true);
-    expect(s.overdueMin).toBeLessThan(0);
+  const night = session(at(21, 0, -1), 7 * 60 + 50); // → 04:50
+  const pred = (h: number, m: number) => ({
+    kind: "nap" as const,
+    lastWake: 0,
+    windowStart: at(h, m).getTime(),
+    windowEnd: at(h, m + 30).getTime(),
+    basis: {} as never,
   });
 
-  it("goes overdue past wake-by", () => {
-    const s = nextSleep(plan, [session(at(7, 20), 55), session(at(11, 30), 90), session(at(15, 40), null)], [], at(16, 25));
+  it("says it is still night while he is back asleep before his usual wake", () => {
+    expect(nextSleep(plan, [night, session(at(5, 30), null)], [], at(5, 45)).kind).toBe("night");
+  });
+
+  it("says early morning after an early wake, not 'put him down at 07:45'", () => {
+    const s = nextSleep(plan, [night], [], at(5, 0));
+    expect(s.kind).toBe("early");
+  });
+
+  it("does not count a return-to-sleep as nap 1 — the stroller nap gets the morning cap", () => {
+    const resleep = session(at(5, 30), 50);
+    const stroller = session(at(9, 20), null);
+    const s = nextSleep(plan, [night, resleep, stroller], [], at(9, 40));
     if (s.kind !== "asleep") throw new Error(s.kind);
-    expect(s.overdueMin).toBe(10);
+    expect(toClock(s.wakeBy)).toBe("10:20"); // 60-min morning cap, not the 90 of "nap 2"
   });
 
-  it("plans the next nap with a delta against the predictor", () => {
-    const prediction = {
-      kind: "nap" as const,
-      lastWake: at(14).getTime(),
-      windowStart: at(16, 10).getTime(),
-      windowEnd: at(16, 40).getTime(),
-      basis: {} as never,
-    };
-    const s = nextSleep(plan, [session(at(7, 20), 55), session(at(11, 30), 150)], [], at(14, 30), prediction);
+  it("times the next nap from the predictor and caps it by band and budget", () => {
+    const done = [night, session(at(7, 40), 60), session(at(11, 30), 90)];
+    const s = nextSleep(plan, done, [], at(14, 30), pred(15, 25));
     if (s.kind !== "nap") throw new Error(s.kind);
-    expect(s.napIndex).toBe(2);
-    expect(toClock(s.startAt)).toBe("15:15");
-    expect(toClock(s.wakeBy)).toBe("16:15");
-    expect(s.deltaMin).toBe(-55);
+    expect(toClock(s.windowStart)).toBe("15:25");
+    expect(toClock(s.wakeBy)).toBe("16:15"); // hard stop beats 60-min cap
+    expect(s.hardStop).toBe(true);
+    expect(s.budgetLeftMin).toBe(10);
     expect(s.state).toBe("waiting");
   });
 
-  it("opens 15 minutes before the planned start and runs late after 45", () => {
-    const done = [session(at(7, 20), 55), session(at(11, 30), 90)];
-    expect((nextSleep(plan, done, [], at(15, 5)) as { state: string }).state).toBe("open");
-    expect((nextSleep(plan, done, [], at(15, 50)) as { state: string }).state).toBe("open");
-    expect((nextSleep(plan, done, [], at(15, 56)) as { state: string }).state).toBe("skip"); // <20 min to 16:15
+  it("shrinks the cap to the day-sleep budget after a long day", () => {
+    const done = [night, session(at(7, 40), 90), session(at(11), 100)];
+    const s = nextSleep(plan, done, [], at(14, 30), pred(15, 0));
+    if (s.kind !== "nap") throw new Error(s.kind);
+    expect(s.capMin).toBe(20); // 210 − 190 = 20 left
   });
 
-  it("says skip when the hard stop is too close to be worth it", () => {
-    const done = [session(at(7, 20), 55), session(at(11, 30), 90)];
-    const s = nextSleep(plan, done, [], at(16));
-    expect(s.kind).toBe("nap");
-    expect((s as { state: string }).state).toBe("skip");
-  });
-
-  it("counts a skipped nap as taken and moves to bedtime, 30 min earlier", () => {
-    const done = [session(at(7, 20), 55), session(at(11, 30), 90)];
-    const ev = planEvents([event(at(16), "nap_skipped")]);
-    const s = nextSleep(plan, done, ev, at(17));
+  it("goes to bedtime once the last nap could not run 20 min before the hard stop", () => {
+    const done = [night, session(at(7, 40), 60), session(at(11, 30), 90)];
+    const s = nextSleep(plan, done, [], at(16), pred(16, 10));
     if (s.kind !== "bedtime") throw new Error(s.kind);
-    expect(toClock(s.at)).toBe("19:30");
-    expect(s.reason).toBe("skipped-last-nap");
-    expect(s.adjustedMin).toBe(30);
+    expect(s.why).toBe("no-nap-after");
+    expect(toClock(s.at)).toBe("19:30"); // pulled 30 min: no last nap
+  });
+
+  it("goes to bedtime when the budget is spent", () => {
+    const done = [night, session(at(7, 40), 60), session(at(11, 30), 90), session(at(14), 60)];
+    const s = nextSleep(plan, done, [], at(15, 30), pred(16, 0));
+    if (s.kind !== "bedtime") throw new Error(s.kind);
+    expect(s.why).toBe("budget");
+    expect(toClock(s.at)).toBe("20:00");
   });
 
   it("pulls bedtime earlier after a short last nap, and holds it after a full one", () => {
-    const short = [session(at(7, 20), 55), session(at(11, 30), 90), session(at(15, 15), 20)];
-    const s1 = nextSleep(plan, short, [], at(17));
+    const short = [night, session(at(7, 40), 60), session(at(11, 30), 90), session(at(15, 15), 20)];
+    const s1 = nextSleep(plan, short, [], at(17), pred(17, 30));
     if (s1.kind !== "bedtime") throw new Error(s1.kind);
     expect(s1.reason).toBe("short-last-nap");
     expect(toClock(s1.at)).toBe("19:30");
-
-    const full = [session(at(7, 20), 55), session(at(11, 30), 90), session(at(15, 15), 60)];
-    const s2 = nextSleep(plan, full, [], at(17));
-    if (s2.kind !== "bedtime") throw new Error(s2.kind);
-    expect(s2.reason).toBeNull();
-    expect(toClock(s2.at)).toBe("20:00");
   });
 
-  it("ignores yesterday's naps and the night sleep", () => {
-    const s = nextSleep(plan, [session(at(15, 15, -1), 60), session(at(21, 0, -1), 8 * 60)], [], at(6, 30));
+  it("reads a logged nap_skipped as a missing last nap for bedtime", () => {
+    const done = [night, session(at(7, 40), 60), session(at(11, 30), 90)];
+    const ev = planEvents([event(at(15, 50), "nap_skipped")]);
+    const s = nextSleep(plan, done, ev, at(17), pred(17, 30));
+    if (s.kind !== "bedtime") throw new Error(s.kind);
+    expect(s.reason).toBe("skipped-last-nap");
+    expect(toClock(s.at)).toBe("19:30");
+  });
+
+  it("falls back to the next band edge without a predictor", () => {
+    const s = nextSleep(plan, [night, session(at(7, 40), 60)], [], at(9));
     if (s.kind !== "nap") throw new Error(s.kind);
-    expect(s.napIndex).toBe(0);
-    expect(toClock(s.startAt)).toBe("07:15");
+    expect(s.fromBand).toBe(true);
+    expect(toClock(s.windowStart)).toBe("09:30");
+  });
+
+  it("uses the open session's own band while asleep, overdue past wake-by", () => {
+    const s = nextSleep(plan, [night, session(at(7, 40), 60), session(at(11, 30), 90), session(at(15, 40), null)], [], at(16, 25));
+    if (s.kind !== "asleep") throw new Error(s.kind);
+    expect(toClock(s.wakeBy)).toBe("16:15");
+    expect(s.overdueMin).toBe(10);
   });
 
   it("is none with nothing to plan", () => {

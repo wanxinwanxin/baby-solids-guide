@@ -191,30 +191,35 @@ function deriveBottles(o: Observed, band: AgeBand, bedtimeMin: number): { at: st
   return Array.from({ length: count }, (_, i) => ({
     at: hhmm(round15(first + (span * i) / (count - 1))),
     ml: i === count - 1 ? lastMl : otherMl,
+    ...(i === 0 ? { onWake: true } : {}),
   }));
 }
 
 /**
- * Naps: his own count, starts, and lengths, each length capped by age. The
- * last nap gets a hard stop that walks 60 minutes per step from where it
- * ends today to where the bedtime target needs it to end.
+ * Naps: caps by time of day. His own nap count sets how many bands; the
+ * bands split the day at the midpoints between where his naps usually
+ * start, so "the cap for a nap that starts around noon" is what is stored
+ * — never "nap 2". Each cap is his own usual length, capped by age. The
+ * last band gets a hard stop that walks 60 minutes per step from where
+ * the last nap ends today to where the bedtime target needs it to end.
  */
 function deriveNaps(o: Observed, band: AgeBand, bedtimeMin: number, step: number): NapTarget[] {
   const count = clamp(o.naps.length || band.napCaps.length, 2, 4);
   const targetEnd = bedtimeMin - band.finalWakeMin;
   const observedEnd = o.lastNapEndMin ?? targetEnd;
   const hardStop = round15(Math.max(targetEnd, observedEnd - 60 * step));
-  return Array.from({ length: count }, (_, i) => {
+  const starts = Array.from({ length: count }, (_, i) =>
+    o.naps[i] ? o.naps[i].startMin : (o.wakeMin ?? 6 * 60) + 120 + i * 240,
+  );
+  return starts.map((start, i) => {
     const cap = band.napCaps[Math.min(i, band.napCaps.length - 1)];
     const seen = o.naps[i];
     const capMin = seen ? clamp(round15(Math.min(seen.durMin, cap)), 30, cap) : cap;
-    let startMin = seen ? round15(seen.startMin) : round15((o.wakeMin ?? 6 * 60) + 120 + i * 240);
-    if (i === count - 1) {
-      // The last nap starts no later than it can still run its cap before the stop.
-      startMin = Math.min(startMin, hardStop - capMin);
-      return { startAt: hhmm(startMin), capMin, hardStopAt: hhmm(hardStop) };
-    }
-    return { startAt: hhmm(startMin), capMin };
+    const from = i === 0 ? 4 * 60 : round15((starts[i - 1] + start) / 2);
+    const to = i === count - 1 ? 19 * 60 : round15((start + starts[i + 1]) / 2);
+    return i === count - 1
+      ? { from: hhmm(from), to: hhmm(to), capMin, hardStopAt: hhmm(hardStop) }
+      : { from: hhmm(from), to: hhmm(to), capMin };
   });
 }
 
@@ -273,6 +278,9 @@ export function deriveIntervention(input: {
     flexMin: 45,
     feedWindows,
     naps,
+    ...(naps.length > 0 ? { maxDaySleepMin: naps.reduce((sum, n) => sum + n.capMin, 0) } : {}),
+    // His usual wake: an earlier wake followed by more sleep is still the night.
+    ...(o.wakeMin !== null ? { dayStartAt: hhmm(round15(o.wakeMin)) } : {}),
     ...(bedtimeMin !== undefined && (goals.includes("cap-day-sleep") || goals.includes("shift-bedtime"))
       ? { bedtimeAt: hhmm(bedtimeMin) }
       : {}),

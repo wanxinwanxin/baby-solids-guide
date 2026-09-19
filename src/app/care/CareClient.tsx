@@ -15,7 +15,7 @@ import { careMsgs } from "@/lib/i18n/messages/care";
 import { datetimeMsgs } from "@/lib/i18n/messages/datetime";
 import { interventionMsgs } from "@/lib/i18n/messages/intervention";
 import { localIsoDate } from "@/lib/food-utils";
-import { bottleMl, bottleOutcome, clockOn, nearestWindow, nextFeed } from "@/lib/plan/engine";
+import { bottleMl, bottleOutcome, clockOn, morningWake, nearestWindow, nextFeed } from "@/lib/plan/engine";
 import { dailySleep } from "@/lib/sleep/history";
 import { formatDuration, formatTime } from "@/lib/sleep/model";
 import { newId, useGuideStore } from "@/lib/storage/store";
@@ -310,7 +310,9 @@ export function CareClient() {
   const todayLogs = careLogs
     .filter((l) => localDateKey(l.at) === todayKey)
     .sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
-  const feed = plan ? nextFeed(plan, careLogs, now) : null;
+  // The first bottle follows the real morning wake, not its usual clock.
+  const morningWakeMs = plan ? morningWake(sleepSessions, now, plan.dayStartAt).nightEnd : null;
+  const feed = plan ? nextFeed(plan, careLogs, now, morningWakeMs) : null;
 
   // Previous days, newest first — bottles, diapers, and sleep in one line
   // per day, which is the "one place" a grandparent actually wants. Sleep
@@ -398,7 +400,9 @@ export function CareClient() {
         <p className="text-muted-foreground">{t.intro}</p>
       </div>
 
-      {plan && <FeedPlanBand plan={plan} careLogs={careLogs} babyId={baby.id} now={now} />}
+      {plan && (
+        <FeedPlanBand plan={plan} careLogs={careLogs} babyId={baby.id} now={now} morningWakeMs={morningWakeMs} />
+      )}
 
       <Card>
         <CardHeader>

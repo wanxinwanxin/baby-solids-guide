@@ -98,14 +98,27 @@ export const INTERVENTION_GOALS: InterventionGoal[] = [
   "self-settle",
 ];
 
-/** One planned bottle: local clock "HH:MM" and the target amount in ml. */
-export type FeedWindow = { at: string; ml: number };
 /**
- * One planned nap: when to put the baby down, the longest it may run, and an
- * optional wall-clock hard stop that wins over the cap (the afternoon nap
- * ends at 16:15 however short it was).
+ * One planned bottle: local clock "HH:MM" and the target amount in ml.
+ * `onWake` marks the first bottle of the day as "when he wakes" — the clock
+ * is only where that usually falls; a 04:50 wake opens it at 04:50.
  */
-export type NapTarget = { startAt: string; capMin: number; hardStopAt?: string };
+export type FeedWindow = { at: string; ml: number; onWake?: boolean };
+/**
+ * A nap cap for a band of the day, chosen by when the nap starts — not by
+ * how many naps came before. A 05:30 return-to-sleep, a stroller catnap,
+ * or a skipped nap must not shift every later cap onto the wrong sleep.
+ * `hardStopAt` is a wall clock the nap ends at however short it was.
+ * (`startAt` is the pre-2026-09-19 shape, read for compatibility.)
+ */
+export type NapTarget = {
+  from?: string;
+  to?: string;
+  capMin: number;
+  hardStopAt?: string;
+  /** @deprecated pre-band shape; the engine converts it. */
+  startAt?: string;
+};
 
 export type Intervention = {
   enabled: boolean;
@@ -118,6 +131,13 @@ export type Intervention = {
   flexMin: number;
   feedWindows: FeedWindow[];
   naps: NapTarget[];
+  /** Total day sleep the plan allows; the last nap's cap shrinks to fit. */
+  maxDaySleepMin?: number;
+  /**
+   * His usual final wake, local clock. A wake before this that is followed
+   * by more sleep within the hour is still the night, not nap 1.
+   */
+  dayStartAt?: string;
   /** Target "into the crib" time, local clock. */
   bedtimeAt?: string;
   /** Night-wean goal: before this clock time, resettle first; after it, feed. */

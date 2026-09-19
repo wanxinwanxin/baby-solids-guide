@@ -49,9 +49,15 @@ export const interventionMsgs = {
     zh: "每天 {n} 瓶，时间 {times}。每瓶 {ml} 毫升，睡前一瓶 {last} 毫升。中间不加奶。",
   },
   stepNaps: {
-    en: "Put down at {starts}. Wake at the caps ({caps} min). The last nap ends by {hard} however short it was.",
-    zh: "{starts} 放下睡。到上限就叫醒（{caps} 分钟）。最后一觉不管睡了多久，{hard} 一定结束。",
+    en: "Naps follow his own rhythm. Wake him at {caps} minutes (morning · midday · afternoon). The last nap ends by {hard} however short it was. About {total} of day sleep in all.",
+    zh: "小睡按他自己的节律来。到 {caps} 分钟就叫醒（早上 · 中午 · 下午）。最后一觉不管睡了多久，{hard} 一定结束。白天合计约 {total}。",
   },
+  stepFirstBottle: { en: "The first bottle is when he wakes (usually about {time}).", zh: "第一瓶在他醒来时喂（通常在 {time} 左右）。" },
+  fromLabel: { en: "Naps starting from", zh: "开始时间从" },
+  toLabel: { en: "to", zh: "到" },
+  budgetLabel: { en: "Day sleep in total (min)", zh: "白天睡眠合计（分钟）" },
+  dayStartLabel: { en: "His usual wake", zh: "他平时醒来的时间" },
+  onWakeLabel: { en: "on waking", zh: "醒来时" },
   stepNapsDelta: { en: "That is {dur} earlier than it ends today.", zh: "比现在结束的时间早 {dur}。" },
   stepBed: { en: "Into the crib by {time}.", zh: "{time} 前放进婴儿床。" },
   stepNight: {
@@ -106,7 +112,8 @@ export const interventionMsgs = {
   // ——— /care band ———
   nextBottle: { en: "Next bottle", zh: "下一瓶" },
   bottlesDone: { en: "All of today's bottles are done", zh: "今天的奶都喝完了" },
-  firstTomorrow: { en: "First tomorrow: {time} · {ml} ml", zh: "明天第一瓶：{time} · {ml} 毫升" },
+  firstTomorrow: { en: "First tomorrow: when he wakes, about {time} · {ml} ml", zh: "明天第一瓶：他醒来时，大约 {time} · {ml} 毫升" },
+  onWakeLine: { en: "When he wakes — usually about {time}.", zh: "他醒来时——通常在 {time} 左右。" },
   dontOfferBefore: { en: "Don't offer before {time}.", zh: "{time} 之前不要喂。" },
   opensIn: { en: "Opens in {dur}.", zh: "还有 {dur}。" },
   openNow: { en: "Offer it now.", zh: "现在可以喂。" },
@@ -152,6 +159,24 @@ export const interventionMsgs = {
   usualPattern: { en: "His usual pattern", zh: "他平时的规律" },
 
   // ——— /sleep band ———
+  nextNapTitle: { en: "Next nap", zh: "下一觉" },
+  asleepTitle: { en: "Asleep", zh: "睡着了" },
+  stillNightTitle: { en: "Still night", zh: "还在夜里" },
+  stillNightBody: {
+    en: "He went back to sleep after an early wake. That is the night continuing, not nap 1 — the day's caps start when he is up for good.",
+    zh: "他早醒之后又睡回去了。这算夜间睡眠的延续，不是第 1 觉——白天的上限从他真正起床之后才开始算。",
+  },
+  earlyTitle: { en: "Early wake", zh: "醒得早" },
+  earlyBody: {
+    en: "Up at {time}, before his usual {usual}. Back to the crib is fine — he may well sleep again, and if he does that is still the night. If he stays up an hour, the day has started.",
+    zh: "{time} 醒了，比平时的 {usual} 早。放回床里没问题——他很可能还会睡，睡了就仍算夜里。如果醒着超过一小时，就算白天开始了。",
+  },
+  napWindow: { en: "{a} – {b}", zh: "{a} – {b}" },
+  rhythmNote: { en: "from his own rhythm", zh: "按他自己的节律" },
+  bandNote: { en: "from the plan's day shape", zh: "按计划的时间段" },
+  budgetLeft: { en: "{dur} of day sleep left after this one", zh: "这一觉之后，白天还能睡 {dur}" },
+  bedtimeWhyBudget: { en: "Day sleep is used up for today — the next sleep is the night.", zh: "今天白天的睡眠已经睡够了——下一次睡就是夜里。" },
+  bedtimeWhyNoNap: { en: "Too late for another nap before the last-nap cutoff.", zh: "已经过了最后一觉的截止时间，不再安排小睡。" },
   putDownAt: { en: "Put him down", zh: "放下睡觉" },
   wakeBy: { en: "Wake him by {time}", zh: "{time} 前叫醒" },
   wakeByHard: { en: "Wake him by {time} — hard stop", zh: "{time} 一定叫醒——硬性截止" },

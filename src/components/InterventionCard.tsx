@@ -132,6 +132,7 @@ function Summary({ plan, observed, usedDefaults, name }: { plan: Intervention; o
     if (plan.feedWindows.length > 0) {
       const w = plan.feedWindows;
       step.push(fmt(t.stepBottles, { n: w.length, times: w.map((x) => x.at).join(" · "), ml: w[0].ml, last: w[w.length - 1].ml }));
+      if (w[0].onWake ?? true) step.push(fmt(t.stepFirstBottle, { time: w[0].at }));
     }
   }
   if (g.includes("cap-day-sleep") || g.includes("shift-bedtime")) {
@@ -143,11 +144,12 @@ function Summary({ plan, observed, usedDefaults, name }: { plan: Intervention; o
     }
     const last = plan.naps[plan.naps.length - 1];
     if (plan.naps.length > 0 && last) {
+      const total = plan.maxDaySleepMin ?? plan.naps.reduce((s, n) => s + n.capMin, 0);
       step.push(
         fmt(t.stepNaps, {
-          starts: plan.naps.map((n) => n.startAt).join(" · "),
-          caps: plan.naps.map((n) => n.capMin).join("/"),
+          caps: plan.naps.map((n) => n.capMin).join(" · "),
           hard: last.hardStopAt ?? "—",
+          total: formatDuration(total, locale),
         }),
       );
       if (last.hardStopAt && observed.lastNapEndMin !== null) {
@@ -217,7 +219,7 @@ function Editor({ plan, onSave }: { plan: Intervention; onSave: (p: Intervention
         <ul className="space-y-2">
           {d.feedWindows.map((w, i) => (
             <li key={i} className="flex flex-wrap items-end gap-2">
-              <Field id={`iv-fw-${i}-at`} label={t.timeLabel}>
+              <Field id={`iv-fw-${i}-at`} label={i === 0 && (w.onWake ?? true) ? `${t.timeLabel} · ${t.onWakeLabel}` : t.timeLabel}>
                 <Input id={`iv-fw-${i}-at`} type="time" value={w.at} onChange={(e) => editWindow(i, { at: e.target.value })} className="w-auto" />
               </Field>
               <Field id={`iv-fw-${i}-ml`} label={t.mlLabel}>
@@ -246,8 +248,11 @@ function Editor({ plan, onSave }: { plan: Intervention; onSave: (p: Intervention
         <ul className="space-y-2">
           {d.naps.map((n, i) => (
             <li key={i} className="flex flex-wrap items-end gap-2">
-              <Field id={`iv-nap-${i}-start`} label={t.startLabel}>
-                <Input id={`iv-nap-${i}-start`} type="time" value={n.startAt} onChange={(e) => editNap(i, { startAt: e.target.value })} className="w-auto" />
+              <Field id={`iv-nap-${i}-from`} label={t.fromLabel}>
+                <Input id={`iv-nap-${i}-from`} type="time" value={n.from ?? n.startAt ?? ""} onChange={(e) => editNap(i, { from: e.target.value, startAt: undefined })} className="w-auto" />
+              </Field>
+              <Field id={`iv-nap-${i}-to`} label={t.toLabel}>
+                <Input id={`iv-nap-${i}-to`} type="time" value={n.to ?? ""} onChange={(e) => editNap(i, { to: e.target.value })} className="w-auto" />
               </Field>
               <Field id={`iv-nap-${i}-cap`} label={t.capLabel}>
                 <Input id={`iv-nap-${i}-cap`} type="number" inputMode="numeric" min={10} max={240} value={Number.isFinite(n.capMin) ? n.capMin : ""} onChange={(e) => editNap(i, { capMin: num(e.target.value) })} className="w-24" />
@@ -261,12 +266,23 @@ function Editor({ plan, onSave }: { plan: Intervention; onSave: (p: Intervention
             </li>
           ))}
         </ul>
-        <Button size="sm" variant="outline" onClick={() => edit({ naps: [...d.naps, { startAt: "15:00", capMin: 60 }] })}>
+        <Button size="sm" variant="outline" onClick={() => {
+          const last = d.naps[d.naps.length - 1];
+          edit({ naps: [...d.naps, { from: last?.to ?? "14:00", to: "19:00", capMin: 60 }] });
+        }}>
           {t.addNap}
         </Button>
-        <Field id="iv-bed" label={t.bedtimeLabel}>
-          <Input id="iv-bed" type="time" value={d.bedtimeAt ?? ""} onChange={(e) => edit({ bedtimeAt: e.target.value || undefined })} className="w-auto" />
-        </Field>
+        <div className="flex flex-wrap items-end gap-2">
+          <Field id="iv-budget" label={t.budgetLabel}>
+            <Input id="iv-budget" type="number" inputMode="numeric" min={30} max={600} value={d.maxDaySleepMin ?? ""} onChange={(e) => edit({ maxDaySleepMin: e.target.value ? num(e.target.value) : undefined })} className="w-24" />
+          </Field>
+          <Field id="iv-daystart" label={t.dayStartLabel}>
+            <Input id="iv-daystart" type="time" value={d.dayStartAt ?? ""} onChange={(e) => edit({ dayStartAt: e.target.value || undefined })} className="w-auto" />
+          </Field>
+          <Field id="iv-bed" label={t.bedtimeLabel}>
+            <Input id="iv-bed" type="time" value={d.bedtimeAt ?? ""} onChange={(e) => edit({ bedtimeAt: e.target.value || undefined })} className="w-auto" />
+          </Field>
+        </div>
       </section>
 
       {d.goals.includes("night-wean") && (

@@ -87,13 +87,15 @@ describe("deriveIntervention", () => {
     const total = plan.feedWindows.reduce((s, w) => s + w.ml, 0);
     expect(total).toBeGreaterThanOrEqual(850);
     expect(total).toBeLessThanOrEqual(930);
-    // His own three naps, lengths capped by age, last one with a hard stop
-    // one hour earlier than it ends today.
+    // Three cap bands split at the midpoints of his usual nap starts,
+    // lengths capped by age, the last with a hard stop one hour earlier
+    // than the last nap ends today.
     expect(plan.naps.map((n) => n.capMin)).toEqual([60, 90, 60]);
-    expect(plan.naps[0].startAt).toBe("07:45");
-    expect(plan.naps[1].startAt).toBe("11:30");
+    expect(plan.naps.map((n) => [n.from, n.to])).toEqual([["04:00", "09:45"], ["09:45", "14:00"], ["14:00", "19:00"]]);
     expect(plan.naps[2].hardStopAt).toBe("17:15");
-    expect(plan.naps[2].startAt).toBe("16:15");
+    expect(plan.maxDaySleepMin).toBe(210);
+    expect(plan.dayStartAt).toBe("05:30");
+    expect(plan.feedWindows[0].onWake).toBe(true);
     expect(plan.bedtimeAt).toBe("20:00");
   });
 
@@ -103,7 +105,6 @@ describe("deriveIntervention", () => {
     expect(at(1).hardStopAt).toBe("17:15");
     expect(at(2).hardStopAt).toBe("16:15");
     expect(at(3).hardStopAt).toBe("16:15"); // 20:00 − 3h45 floor
-    expect(at(3).startAt).toBe("15:15");
   });
 
   it("shifts bedtime 30 min per step toward the age floor", () => {

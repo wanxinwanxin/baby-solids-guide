@@ -3,7 +3,6 @@ import type {
   CareLog,
   FeedWindow,
   Intervention,
-  NapTarget,
   PlanEventKind,
   SleepSession,
 } from "@/lib/storage/types";
@@ -65,18 +64,20 @@ export function defaultIntervention(ageMonths: number, startedOn: string): Inter
       ...base,
       goals: ["consolidate-feeds"],
       feedWindows: [
-        { at: "06:00", ml: 120 },
+        { at: "06:00", ml: 120, onWake: true },
         { at: "09:00", ml: 120 },
         { at: "12:00", ml: 120 },
         { at: "15:00", ml: 120 },
         { at: "18:00", ml: 150 },
       ],
       naps: [
-        { startAt: "07:30", capMin: 60 },
-        { startAt: "10:30", capMin: 90 },
-        { startAt: "13:30", capMin: 90 },
-        { startAt: "16:00", capMin: 45, hardStopAt: "17:00" },
+        { from: "04:00", to: "09:15", capMin: 60 },
+        { from: "09:15", to: "12:00", capMin: 90 },
+        { from: "12:00", to: "15:00", capMin: 90 },
+        { from: "15:00", to: "19:00", capMin: 45, hardStopAt: "17:00" },
       ],
+      maxDaySleepMin: 270,
+      dayStartAt: "06:30",
       bedtimeAt: "19:30",
     };
   }
@@ -85,17 +86,19 @@ export function defaultIntervention(ageMonths: number, startedOn: string): Inter
       ...base,
       goals: ["consolidate-feeds", "cap-day-sleep"],
       feedWindows: [
-        { at: "06:00", ml: 150 },
+        { at: "06:00", ml: 150, onWake: true },
         { at: "09:30", ml: 150 },
         { at: "13:15", ml: 150 },
         { at: "16:30", ml: 150 },
         { at: "19:00", ml: 180 },
       ],
       naps: [
-        { startAt: "07:15", capMin: 60 },
-        { startAt: "11:30", capMin: 90 },
-        { startAt: "15:15", capMin: 60, hardStopAt: "16:15" },
+        { from: "04:00", to: "09:30", capMin: 60 },
+        { from: "09:30", to: "13:30", capMin: 90 },
+        { from: "13:30", to: "19:00", capMin: 60, hardStopAt: "16:15" },
       ],
+      maxDaySleepMin: 210,
+      dayStartAt: "06:00",
       bedtimeAt: "20:00",
       nightCutoffAt: "04:00",
       nightFeedMl: 120,
@@ -105,15 +108,17 @@ export function defaultIntervention(ageMonths: number, startedOn: string): Inter
     ...base,
     goals: ["consolidate-feeds", "cap-day-sleep"],
     feedWindows: [
-      { at: "06:30", ml: 180 },
+      { at: "06:30", ml: 180, onWake: true },
       { at: "10:30", ml: 180 },
       { at: "14:30", ml: 180 },
       { at: "18:30", ml: 210 },
     ],
     naps: [
-      { startAt: "09:00", capMin: 90 },
-      { startAt: "13:30", capMin: 90, hardStopAt: "15:30" },
+      { from: "04:00", to: "11:30", capMin: 90 },
+      { from: "11:30", to: "19:00", capMin: 90, hardStopAt: "15:30" },
     ],
+    maxDaySleepMin: 180,
+    dayStartAt: "06:30",
     bedtimeAt: "19:30",
     nightCutoffAt: "05:00",
     nightFeedMl: 120,
@@ -176,18 +181,55 @@ export function nearestWindow(windows: FeedWindow[], at: number): number {
   return best;
 }
 
-export function nextFeed(plan: Intervention, careLogs: CareLog[], now: Date): FeedAction | null {
+/** Nothing before this counts as the morning bottle; earlier is a night feed. */
+const EARLIEST_MORNING_H = 4;
+
+/**
+ * Where each window opens today. The first window follows the morning wake
+ * when that is known and earlier than its clock — a 04:50 wake after a nine
+ * hour stretch is hungry now, not at 05:45.
+ */
+function windowTimes(windows: FeedWindow[], now: Date, morningWakeMs: number | null): number[] {
+  const times = windows.map((w) => clockOn(now, w.at));
+  const first = windows[0];
+  const onWake = first && (first.onWake ?? true);
+  if (onWake && morningWakeMs !== null) {
+    const floor = clockOn(now, `${String(EARLIEST_MORNING_H).padStart(2, "0")}:00`);
+    if (morningWakeMs >= floor && morningWakeMs < times[0]) times[0] = morningWakeMs;
+  }
+  return times;
+}
+
+export function nextFeed(
+  plan: Intervention,
+  careLogs: CareLog[],
+  now: Date,
+  morningWakeMs: number | null = null,
+): FeedAction | null {
   if (plan.feedWindows.length === 0) return null;
   const nowMs = now.getTime();
   const windows = [...plan.feedWindows].sort((a, b) => a.at.localeCompare(b.at));
+  const times = windowTimes(windows, now, morningWakeMs);
   const bottles = careLogs
     .filter((l) => l.kind === "formula" && l.amount)
     .sort((a, b) => ms(a.at) - ms(b.at));
   const todays = bottles.filter((l) => sameLocalDay(ms(l.at), nowMs));
 
+  const nearestToday = (at: number) => {
+    let best = -1;
+    let bestGap = Infinity;
+    times.forEach((t, i) => {
+      const gap = Math.abs(at - t) / MIN;
+      if (gap <= WINDOW_ASSIGN_MIN && gap < bestGap) {
+        best = i;
+        bestGap = gap;
+      }
+    });
+    return best;
+  };
   const consumed = new Set<number>();
   for (const b of todays) {
-    const i = nearestWindow(windows, ms(b.at));
+    const i = nearestToday(ms(b.at));
     if (i >= 0) consumed.add(i);
   }
 
@@ -218,9 +260,7 @@ export function nextFeed(plan: Intervention, careLogs: CareLog[], now: Date): Fe
 
   // The next window: first one not yet fed that has not gone stale (more than
   // two hours past with nothing logged reads as "skipped", not "late").
-  const idx = windows.findIndex(
-    (w, i) => !consumed.has(i) && clockOn(now, w.at) + WINDOW_ASSIGN_MIN * MIN > nowMs,
-  );
+  const idx = windows.findIndex((_, i) => !consumed.has(i) && times[i] + WINDOW_ASSIGN_MIN * MIN > nowMs);
   if (idx === -1) {
     const tomorrow = new Date(dayOf(now).getTime() + 24 * HOUR);
     return {
@@ -234,7 +274,7 @@ export function nextFeed(plan: Intervention, careLogs: CareLog[], now: Date): Fe
       reoffer,
     };
   }
-  const windowAt = clockOn(now, windows[idx].at);
+  const windowAt = times[idx];
   const earliestAt = windowAt - plan.flexMin * MIN;
   const state: FeedAction["state"] =
     nowMs < earliestAt ? "waiting" : nowMs <= windowAt + 60 * MIN ? "open" : "late";
@@ -267,7 +307,120 @@ export function fussyAdvice(feed: FeedAction, now: Date): FussyAdvice[] {
 
 // ——— Sleep ———
 
-/** A session that reads as day sleep on `day`: starts 05:00–19:00 and is under 4 h (or still open). */
+/** Minutes after midnight for an epoch ms, local. */
+const clockMinOf = (at: number) => {
+  const d = new Date(at);
+  return d.getHours() * 60 + d.getMinutes();
+};
+const parseClock = (hhmm: string) => {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+};
+
+/** A nap cap normalized to a clock band in minutes after midnight. */
+export type NapBand = { fromMin: number; toMin: number; capMin: number; hardStopAt?: string };
+
+/**
+ * The plan's caps as clock bands. A pre-2026-09-19 plan carried `startAt`
+ * per nap instead; those are split at the midpoints so the cap that used to
+ * belong to "nap 2" now belongs to "a nap that starts around then".
+ */
+export function napBands(plan: Intervention): NapBand[] {
+  const naps = plan.naps;
+  if (naps.length === 0) return [];
+  if (naps.every((n) => n.from && n.to)) {
+    return naps
+      .map((n) => ({ fromMin: parseClock(n.from!), toMin: parseClock(n.to!), capMin: n.capMin, hardStopAt: n.hardStopAt }))
+      .sort((a, b) => a.fromMin - b.fromMin);
+  }
+  const legacy = naps
+    .filter((n) => n.startAt)
+    .map((n) => ({ start: parseClock(n.startAt!), capMin: n.capMin, hardStopAt: n.hardStopAt }))
+    .sort((a, b) => a.start - b.start);
+  return legacy.map((n, i) => ({
+    fromMin: i === 0 ? 4 * 60 : Math.round((legacy[i - 1].start + n.start) / 2),
+    toMin: i === legacy.length - 1 ? 19 * 60 : Math.round((n.start + legacy[i + 1].start) / 2),
+    capMin: n.capMin,
+    hardStopAt: n.hardStopAt,
+  }));
+}
+
+/** The cap band a nap starting at `at` falls in; the last band past its end. */
+export function bandFor(bands: NapBand[], at: number): NapBand | null {
+  if (bands.length === 0) return null;
+  const m = clockMinOf(at);
+  return bands.find((b) => m >= b.fromMin && m < b.toMin) ?? (m >= bands[bands.length - 1].toMin ? bands[bands.length - 1] : bands[0]);
+}
+
+/** A wake followed by more sleep inside this gap, before this hour, is still the night. */
+export const NIGHT_CONTINUATION_GAP_MIN = 75;
+export const NIGHT_CONTINUATION_BEFORE_H = 7.5;
+/** Awake this long after a night wake and the day has started, early or not. */
+export const UP_FOR_GOOD_MIN = 60;
+
+export type Morning = {
+  /** When the night ended for good today (continuations merged); null if unknown. */
+  nightEnd: number | null;
+  /** He is back asleep on a night continuation right now. */
+  stillNight: boolean;
+  /** Awake after an early wake, before his usual time, and not yet up for good. */
+  earlyAwake: boolean;
+};
+
+/**
+ * Find this morning's real wake. The night session is the long sleep that
+ * ended this morning; any sleep that starts within 75 minutes of it, before
+ * 07:30, is a return to sleep — the night continuing — not the first nap.
+ */
+export function morningWake(sessions: SleepSession[], now: Date, dayStartAt?: string): Morning {
+  const nowMs = now.getTime();
+  const today = dayOf(now).getTime();
+  const sorted = [...sessions].sort((a, b) => ms(a.start) - ms(b.start));
+  const night = [...sorted]
+    .reverse()
+    .find((s) => {
+      const st = ms(s.start);
+      const en = s.end ? ms(s.end) : null;
+      const endsThisMorning = en !== null && sameLocalDay(en, nowMs) && clockMinOf(en) <= 12 * 60;
+      const longOrOvernight = en !== null && (en - st >= 4 * HOUR || st < today);
+      return endsThisMorning && longOrOvernight;
+    });
+  if (!night?.end) return { nightEnd: null, stillNight: false, earlyAwake: false };
+
+  let nightEnd = ms(night.end);
+  let stillNight = false;
+  for (const s of sorted) {
+    const st = ms(s.start);
+    if (st <= nightEnd) continue;
+    const gapOk = st - nightEnd <= NIGHT_CONTINUATION_GAP_MIN * MIN;
+    const earlyEnough = clockMinOf(st) < NIGHT_CONTINUATION_BEFORE_H * 60;
+    if (!gapOk || !earlyEnough) break;
+    if (!s.end) {
+      stillNight = true;
+      break;
+    }
+    nightEnd = ms(s.end);
+  }
+  const usual = clockOn(now, dayStartAt ?? "06:30");
+  const earlyAwake = !stillNight && nightEnd < usual && nowMs - nightEnd < UP_FOR_GOOD_MIN * MIN && nowMs < usual;
+  return { nightEnd, stillNight, earlyAwake };
+}
+
+/** Today's naps: sleeps after the real morning wake, before the evening, under 4 h (or open). */
+export function dayNaps(sessions: SleepSession[], now: Date, nightEnd: number | null): SleepSession[] {
+  const nowMs = now.getTime();
+  const floor = nightEnd ?? clockOn(now, "05:00");
+  return sessions
+    .filter((s) => {
+      const st = ms(s.start);
+      if (!sameLocalDay(st, nowMs) || st < floor) return false;
+      if (clockMinOf(st) >= 19 * 60) return false;
+      return !s.end || ms(s.end) - st < 4 * HOUR;
+    })
+    .sort((a, b) => ms(a.start) - ms(b.start));
+}
+
+/** Kept for the derive step: a session that reads as day sleep on `day`. */
 export function isDaySleepOn(s: SleepSession, day: Date): boolean {
   const start = ms(s.start);
   if (!sameLocalDay(start, day.getTime())) return false;
@@ -277,37 +430,42 @@ export function isDaySleepOn(s: SleepSession, day: Date): boolean {
 }
 
 /** When a nap that started at `start` must end: the cap, or the hard stop if earlier. */
-export function predictWakeBy(start: number, nap: NapTarget): number {
-  const byCap = start + nap.capMin * MIN;
-  if (!nap.hardStopAt) return byCap;
-  const hard = clockOn(new Date(start), nap.hardStopAt);
-  return Math.min(byCap, hard);
+export function predictWakeBy(start: number, band: { capMin: number; hardStopAt?: string }): number {
+  const byCap = start + band.capMin * MIN;
+  if (!band.hardStopAt) return byCap;
+  return Math.min(byCap, clockOn(new Date(start), band.hardStopAt));
 }
 
-/** Skip a nap when it could not run at least this long before its hard stop. */
+/** Skip a nap when it could not run at least this long. */
 export const MIN_WORTHWHILE_NAP_MIN = 20;
 /** Bedtime moves earlier by this much when the last nap was short or skipped. */
 export const SHORT_LAST_NAP_MIN = 30;
 export const EARLY_BEDTIME_SHIFT_MIN = 30;
 
 export type SleepAction =
+  | { kind: "night" }
+  | { kind: "early"; dayStartAt: string; nightEnd: number }
   | {
       kind: "asleep";
-      napIndex: number;
       wakeBy: number;
       /** Minutes past wake-by; ≤ 0 while there is still time. */
       overdueMin: number;
       hardStop: boolean;
+      /** Day sleep left after this nap ends at wake-by, minutes. */
+      budgetLeftMin: number;
     }
   | {
       kind: "nap";
-      napIndex: number;
-      startAt: number;
+      /** The predictor's window — his own rhythm — for when to put him down. */
+      windowStart: number;
+      windowEnd: number;
       capMin: number;
       wakeBy: number;
-      state: "waiting" | "open" | "late" | "skip";
-      /** Planned start minus the predictor's window start, minutes; null without a prediction. */
-      deltaMin: number | null;
+      hardStop: boolean;
+      state: "waiting" | "open" | "late";
+      budgetLeftMin: number;
+      /** The window came from the plan's band, not the predictor. */
+      fromBand: boolean;
     }
   | {
       kind: "bedtime";
@@ -316,6 +474,8 @@ export type SleepAction =
       /** Minutes pulled earlier because the last nap was short or skipped (0 or 30). */
       adjustedMin: number;
       reason: "short-last-nap" | "skipped-last-nap" | null;
+      /** Why the next sleep is bedtime and not a nap. */
+      why: "predictor" | "no-nap-after" | "budget";
     }
   | { kind: "none" };
 
@@ -327,6 +487,14 @@ export function planEvents(careLogs: CareLog[]): PlanEvent[] {
     .map((l) => ({ at: ms(l.at), event: l.event as PlanEventKind }));
 }
 
+/**
+ * The next sleep instruction. Timing comes from the predictor (his own
+ * rhythm); the plan supplies only what the predictor never had — a cap for
+ * the band the nap falls in, a hard stop on the last one, a day-sleep budget,
+ * and a bedtime target. So an early wake, a stroller catnap, or a skipped nap
+ * never shifts the caps onto the wrong sleep: whatever he does, the next
+ * instruction is read from the clock and the day so far.
+ */
 export function nextSleep(
   plan: Intervention,
   sessions: SleepSession[],
@@ -334,65 +502,90 @@ export function nextSleep(
   now: Date,
   prediction: SleepPrediction | null = null,
 ): SleepAction {
-  if (plan.naps.length === 0 && !plan.bedtimeAt) return { kind: "none" };
+  const bands = napBands(plan);
+  if (bands.length === 0 && !plan.bedtimeAt) return { kind: "none" };
   const nowMs = now.getTime();
-  const naps = sessions.filter((s) => isDaySleepOn(s, now)).sort((a, b) => ms(a.start) - ms(b.start));
+
+  const morning = morningWake(sessions, now, plan.dayStartAt);
+  if (morning.stillNight) return { kind: "night" };
+  if (morning.earlyAwake) return { kind: "early", dayStartAt: plan.dayStartAt ?? "06:30", nightEnd: morning.nightEnd! };
+
+  const naps = dayNaps(sessions, now, morning.nightEnd);
   const open = naps.find((s) => !s.end) ?? null;
-  const skipped = events.filter((e) => e.event === "nap_skipped" && sameLocalDay(e.at, nowMs)).length;
+  const usedMin = naps.filter((s) => s.end).reduce((sum, s) => sum + (ms(s.end!) - ms(s.start)) / MIN, 0);
+  const budget = plan.maxDaySleepMin ?? bands.reduce((sum, b) => sum + b.capMin, 0);
+  const lastBand = bands[bands.length - 1];
+  const noNapAfter = lastBand?.hardStopAt ? clockOn(now, lastBand.hardStopAt) : null;
 
   if (open) {
-    const idx = Math.min(naps.indexOf(open) + skipped, Math.max(plan.naps.length - 1, 0));
-    const nap = plan.naps[idx];
-    if (!nap) return { kind: "none" };
     const start = ms(open.start);
-    const wakeBy = predictWakeBy(start, nap);
+    const band: { capMin: number; hardStopAt?: string } = bandFor(bands, start) ?? { capMin: 60 };
+    const capMin = Math.max(MIN_WORTHWHILE_NAP_MIN, Math.min(band.capMin, budget - usedMin));
+    const wakeBy = predictWakeBy(start, { capMin, hardStopAt: band.hardStopAt });
     return {
       kind: "asleep",
-      napIndex: idx,
       wakeBy,
       overdueMin: (nowMs - wakeBy) / MIN,
-      hardStop: !!nap.hardStopAt && wakeBy < start + nap.capMin * MIN,
+      hardStop: !!band.hardStopAt && wakeBy < start + capMin * MIN,
+      budgetLeftMin: Math.max(0, budget - usedMin - (wakeBy - start) / MIN),
     };
   }
 
-  const idx = naps.length + skipped;
-  if (idx >= plan.naps.length) {
+  const skippedToday = events.some((e) => e.event === "nap_skipped" && sameLocalDay(e.at, nowMs));
+  const lastNap = naps[naps.length - 1];
+  const bedtime = (why: "predictor" | "no-nap-after" | "budget"): SleepAction => {
     const base = clockOn(now, plan.bedtimeAt ?? "20:00");
-    const lastNap = naps[naps.length - 1];
+    // A short last nap and a missing last nap both cost the night the same
+    // half hour; a long day that simply spent its budget costs nothing.
+    const lastWasInLastBand = !!lastNap && !!lastBand && bandFor(bands, ms(lastNap.start)) === lastBand;
     let reason: "short-last-nap" | "skipped-last-nap" | null = null;
-    if (skipped > 0 && naps.length < plan.naps.length) reason = "skipped-last-nap";
-    else if (lastNap?.end && (ms(lastNap.end) - ms(lastNap.start)) / MIN < SHORT_LAST_NAP_MIN) {
-      reason = "short-last-nap";
-    }
+    if (lastNap?.end && (ms(lastNap.end) - ms(lastNap.start)) / MIN < SHORT_LAST_NAP_MIN) reason = "short-last-nap";
+    else if (skippedToday || (why === "no-nap-after" && !lastWasInLastBand)) reason = "skipped-last-nap";
     const adjustedMin = reason ? EARLY_BEDTIME_SHIFT_MIN : 0;
     const at = base - adjustedMin * MIN;
-    return {
-      kind: "bedtime",
-      at,
-      deltaMin: prediction ? (at - prediction.windowStart) / MIN : null,
-      adjustedMin,
-      reason,
-    };
-  }
+    return { kind: "bedtime", at, deltaMin: prediction ? (at - prediction.windowStart) / MIN : null, adjustedMin, reason, why };
+  };
 
-  const nap = plan.naps[idx];
-  const startAt = clockOn(now, nap.startAt);
-  const wakeBy = predictWakeBy(startAt, nap);
-  const hard = nap.hardStopAt ? clockOn(now, nap.hardStopAt) : null;
-  let state: "waiting" | "open" | "late" | "skip";
-  if (hard !== null && nowMs + MIN_WORTHWHILE_NAP_MIN * MIN >= hard) state = "skip";
-  else if (nowMs < startAt - 15 * MIN) state = "waiting";
-  else if (nowMs <= startAt + 45 * MIN) state = "open";
-  else state = "late";
+  const remaining = budget - usedMin;
+  if (remaining < MIN_WORTHWHILE_NAP_MIN) return bedtime("budget");
+  if (noNapAfter !== null && nowMs + MIN_WORTHWHILE_NAP_MIN * MIN >= noNapAfter) return bedtime("no-nap-after");
+  if (prediction?.kind === "bedtime") return bedtime("predictor");
+
+  // Timing: the predictor's window when it has one, else the next band edge.
+  let windowStart: number;
+  let windowEnd: number;
+  let fromBand = false;
+  if (prediction) {
+    windowStart = prediction.windowStart;
+    windowEnd = prediction.windowEnd;
+  } else {
+    const nextBand = bands.find((b) => clockOn(now, hhmmOf(b.fromMin)) > nowMs) ?? lastBand;
+    windowStart = Math.max(nowMs, clockOn(now, hhmmOf(nextBand.fromMin)));
+    windowEnd = windowStart + 30 * MIN;
+    fromBand = true;
+  }
+  if (noNapAfter !== null && windowStart + MIN_WORTHWHILE_NAP_MIN * MIN >= noNapAfter) return bedtime("no-nap-after");
+
+  const band: { capMin: number; hardStopAt?: string } = bandFor(bands, windowStart) ?? { capMin: 60 };
+  const capMin = Math.max(MIN_WORTHWHILE_NAP_MIN, Math.min(band.capMin, remaining));
+  const wakeBy = predictWakeBy(windowStart, { capMin, hardStopAt: band.hardStopAt });
+  const state: "waiting" | "open" | "late" =
+    nowMs < windowStart - 15 * MIN ? "waiting" : nowMs <= windowEnd ? "open" : "late";
   return {
     kind: "nap",
-    napIndex: idx,
-    startAt,
-    capMin: nap.capMin,
+    windowStart,
+    windowEnd,
+    capMin,
     wakeBy,
+    hardStop: !!band.hardStopAt && wakeBy < windowStart + capMin * MIN,
     state,
-    deltaMin: prediction ? (startAt - prediction.windowStart) / MIN : null,
+    budgetLeftMin: Math.max(0, remaining - (wakeBy - windowStart) / MIN),
+    fromBand,
   };
+}
+
+function hhmmOf(m: number): string {
+  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 }
 
 /**

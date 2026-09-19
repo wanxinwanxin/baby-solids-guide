@@ -17,7 +17,7 @@ import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
 import { ACTIVITY_EMOJI } from "@/lib/i18n/messages/activities";
 import { fullDayMsgs } from "@/lib/i18n/messages/full-day";
 import { interventionMsgs } from "@/lib/i18n/messages/intervention";
-import { nextFeed, nextSleep, planEvents } from "@/lib/plan/engine";
+import { morningWake, nextFeed, nextSleep, planEvents } from "@/lib/plan/engine";
 import { dailySleep } from "@/lib/sleep/history";
 import { formatDuration, formatTime, openSession, predictNextSleep } from "@/lib/sleep/model";
 import { useSleepStore } from "@/lib/sleep/store";
@@ -149,15 +149,24 @@ export function FullDayToday({
     () => (plan ? nextSleep(plan, sleepSessions, planEvents(careLogs), now, prediction) : null),
     [plan, sleepSessions, careLogs, now, prediction],
   );
-  const planFeed = useMemo(() => (plan ? nextFeed(plan, careLogs, now) : null), [plan, careLogs, now]);
+  const morningWakeMs = useMemo(
+    () => (plan ? morningWake(sleepSessions, now, plan.dayStartAt).nightEnd : null),
+    [plan, sleepSessions, now],
+  );
+  const planFeed = useMemo(
+    () => (plan ? nextFeed(plan, careLogs, now, morningWakeMs) : null),
+    [plan, careLogs, now, morningWakeMs],
+  );
   const planSleepLine =
     planSleep?.kind === "asleep"
       ? fmt(iv.tileWakeBy, { time: formatTime(planSleep.wakeBy, locale) })
       : planSleep?.kind === "nap"
-        ? fmt(iv.tilePutDown, { time: formatTime(planSleep.startAt, locale) })
+        ? fmt(iv.tilePutDown, { time: formatTime(planSleep.windowStart, locale) })
         : planSleep?.kind === "bedtime"
           ? fmt(iv.tilePutDown, { time: formatTime(planSleep.at, locale) })
-          : null;
+          : planSleep?.kind === "early"
+            ? iv.earlyTitle
+            : null;
   const planFeedLine =
     planFeed && planFeed.state !== "done"
       ? fmt(iv.tileNextBottle, { time: formatTime(planFeed.windowAt, locale), ml: planFeed.targetMl })
