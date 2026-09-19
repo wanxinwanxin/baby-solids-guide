@@ -164,7 +164,10 @@ export function MobileTabBar() {
     <nav
       aria-label={m.navPrimary}
       data-tour="tabbar"
-      className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+      // No backdrop-blur: on iOS Safari a fixed element with backdrop-filter
+      // repaints a frame late and visibly rides the scroll. A solid ground
+      // plus its own compositing layer keeps the bar pinned.
+      className="fixed inset-x-0 bottom-0 z-40 border-t bg-card pb-[env(safe-area-inset-bottom)] [transform:translateZ(0)] md:hidden"
     >
       <div className="relative mx-auto flex max-w-md items-center pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))]">
         {caregiver ? (
