@@ -113,6 +113,11 @@ export function FeedPlanBand({
                 {fmt(t.sinceLast, { dur: formatDuration((nowMs - feed.lastBottle.at) / MIN, locale) })}
               </p>
             )}
+            {feed.gapCapped && (
+              <p className="text-xs text-muted-foreground">
+                {fmt(t.gapCappedNote, { clock: plan.feedWindows[feed.index]?.at ?? "" })}
+              </p>
+            )}
             {feed.reoffer && (
               <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm">
                 {fmt(t.reofferLine, {

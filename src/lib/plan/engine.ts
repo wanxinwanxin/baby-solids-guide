@@ -140,6 +140,13 @@ export function bottleOutcome(ml: number, targetMl: number): FeedOutcome {
 
 /** A bottle counts toward a window when it falls within this many minutes of it. */
 export const WINDOW_ASSIGN_MIN = 120;
+/**
+ * Whatever the clock says, the next bottle is never suggested more than
+ * this long after the last one, and the flex never opens one sooner than
+ * this after the last. The clock windows shape the day; these two bound it.
+ */
+export const MAX_GAP_MIN = 210;
+export const MIN_GAP_MIN = 150;
 /** A started bottle may be re-offered once at +30 and must be discarded at +60 (CDC). */
 export const REOFFER_AT_MIN = 30;
 export const DISCARD_AT_MIN = 60;
@@ -158,6 +165,8 @@ export type FeedAction = {
   lastBottle: { at: number; ml: number; targetMl: number | null; outcome: FeedOutcome | null } | null;
   /** Set while a partial/refused bottle can still be re-offered. */
   reoffer: { at: number; discardAt: number } | null;
+  /** The window was pulled earlier than its clock so the gap since the last bottle stays ≤ 3.5 h. */
+  gapCapped: boolean;
 };
 
 /** The ml of a bottle log, normalized; oz is converted so plans stay in ml. */
@@ -284,10 +293,18 @@ export function nextFeed(
       earliestAt: clockOn(tomorrow, windows[0].at) - plan.flexMin * MIN,
       lastBottle,
       reoffer,
+      gapCapped: false,
     };
   }
-  const windowAt = eff[idx].at;
-  const earliestAt = windowAt - plan.flexMin * MIN;
+  // Bound the clock by the last real bottle: no more than 3.5 h after it,
+  // and the flex may not open a window under 2.5 h after it.
+  const lastToday = todays.length > 0 ? ms(todays[todays.length - 1].at) : null;
+  const clockAt = eff[idx].at;
+  const windowAt = lastToday !== null ? Math.min(clockAt, lastToday + MAX_GAP_MIN * MIN) : clockAt;
+  const earliestAt =
+    lastToday !== null
+      ? Math.min(windowAt, Math.max(windowAt - plan.flexMin * MIN, lastToday + MIN_GAP_MIN * MIN))
+      : windowAt - plan.flexMin * MIN;
   const state: FeedAction["state"] =
     nowMs < earliestAt ? "waiting" : nowMs <= windowAt + 60 * MIN ? "open" : "late";
   return {
@@ -299,6 +316,7 @@ export function nextFeed(
     earliestAt,
     lastBottle,
     reoffer,
+    gapCapped: windowAt < clockAt,
   };
 }
 

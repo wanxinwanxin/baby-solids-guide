@@ -128,6 +128,10 @@ export const interventionMsgs = {
     zh: "{at} 再用同一瓶喂一次。{discard} 把剩下的倒掉——超过一小时就不安全了。",
   },
   sinceLast: { en: "{dur} since the last bottle", zh: "距上一瓶 {dur}" },
+  gapCappedNote: {
+    en: "Earlier than the usual {clock}: the plan never goes more than 3½ hours after the last bottle.",
+    zh: "比平时的 {clock} 早：计划里两瓶之间最多隔三个半小时。",
+  },
   fussyBtn: { en: "He's fussy", zh: "他闹了" },
   fussyTitle: { en: "Fussy before the window", zh: "时间没到就闹" },
   adviceOpenNow: {

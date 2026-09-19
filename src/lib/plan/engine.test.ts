@@ -130,10 +130,12 @@ describe("nextFeed", () => {
   });
 
   it("treats an early bottle as that window taken early, not as an extra", () => {
-    // 12:00 bottle is the 13:15 window pulled forward; the next one is 16:30.
+    // 12:00 bottle is the 13:15 window pulled forward; the next is the 16:30
+    // window, pulled to 15:30 so it is no more than 3.5 h after 12:00.
     const f = nextFeed(plan, [bottle(at(6), 150), bottle(at(9, 30), 150), bottle(at(12), 140)], at(12, 30))!;
     expect(f.index).toBe(3);
-    expect(toClock(f.windowAt)).toBe("16:30");
+    expect(toClock(f.windowAt)).toBe("15:30");
+    expect(f.gapCapped).toBe(true);
   });
 
   it("opens the first bottle on the morning wake when that comes early", () => {
@@ -158,6 +160,35 @@ describe("nextFeed", () => {
     // The 60 ml at 05:01 did not consume the morning window.
     const g = nextFeed(plan, [bottle(at(5, 1), 60), bottle(at(6, 49), 150)], at(7, 30), at(6, 21).getTime())!;
     expect(g.index).toBe(1);
+  });
+
+  it("never suggests more than 3.5 h after the last bottle, whatever the clock says", () => {
+    // Up at 04:55 for good, fed then: the 09:00 window is pulled to 08:25.
+    const f = nextFeed(plan, [bottle(at(4, 57), 150)], at(6), at(4, 55).getTime())!;
+    expect(toClock(f.windowAt)).toBe("08:27");
+    expect(f.gapCapped).toBe(true);
+    // A late bottle at 10:30 answers the 09:30 window; the next is then
+    // 14:00 (10:30 + 3.5 h), not the 13:15 clock... which is later? No:
+    // 13:15 is earlier than 14:00, so the clock stands here.
+    const g = nextFeed(plan, [bottle(at(6), 150), bottle(at(10, 30), 150)], at(11))!;
+    expect(g.index).toBe(2);
+    expect(toClock(g.windowAt)).toBe("13:15");
+    expect(g.gapCapped).toBe(false);
+    // But a bottle at 11:00 answering 09:30 late: 13:15 stands (2h15 later);
+    // and one at 11:30: 13:15 still stands. The cap only bites past 3.5 h.
+    const k = nextFeed(plan, [bottle(at(6), 150), bottle(at(9), 150), bottle(at(12), 150)], at(12, 30))!;
+    expect(toClock(k.windowAt)).toBe("15:30"); // 16:30 clock → 12:00 + 3.5 h
+    // On an ordinary day the clock stands.
+    const h = nextFeed(plan, [bottle(at(6), 150)], at(7))!;
+    expect(toClock(h.windowAt)).toBe("09:30");
+    expect(h.gapCapped).toBe(false);
+  });
+
+  it("does not let the flex open a window under 2.5 h after the last bottle", () => {
+    // Fed 07:00 (late first bottle); the 09:30 window's flex would allow 08:45 — floor is 09:30.
+    const f = nextFeed(plan, [bottle(at(7), 150)], at(8, 50))!;
+    expect(toClock(f.earliestAt)).toBe("09:30");
+    expect(f.state).toBe("waiting");
   });
 
   it("drops a clock window that lands within two hours of a late first wake", () => {
