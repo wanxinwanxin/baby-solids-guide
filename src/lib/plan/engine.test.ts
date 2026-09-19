@@ -149,6 +149,23 @@ describe("nextFeed", () => {
     expect(toClock(nextFeed(plan, [], at(3, 40), at(3, 30).getTime())!.windowAt)).toBe("06:00");
   });
 
+  it("makes the final morning wake the first bottle and treats a pre-wake bottle as night", () => {
+    // Woke 04:50, took 60 ml, slept again 05:38–06:21. Up for good at 06:21.
+    const f = nextFeed(plan, [bottle(at(5, 1), 60)], at(6, 30), at(6, 21).getTime())!;
+    expect(f.index).toBe(0);
+    expect(toClock(f.windowAt)).toBe("06:21");
+    expect(f.state).toBe("open");
+    // The 60 ml at 05:01 did not consume the morning window.
+    const g = nextFeed(plan, [bottle(at(5, 1), 60), bottle(at(6, 49), 150)], at(7, 30), at(6, 21).getTime())!;
+    expect(g.index).toBe(1);
+  });
+
+  it("drops a clock window that lands within two hours of a late first wake", () => {
+    // Up at 08:30: the 09:30 window would be an hour after the wake bottle.
+    const f = nextFeed(plan, [bottle(at(8, 35), 150)], at(9, 45), at(8, 30).getTime())!;
+    expect(f.index).toBe(2); // 13:15, not 09:30
+  });
+
   it("does not let a night bottle consume the morning window", () => {
     const f = nextFeed(plan, [bottle(at(1, 30), 130)], at(5, 50))!;
     expect(f.index).toBe(0);
@@ -273,6 +290,13 @@ describe("nextSleep", () => {
 
   it("says it is still night while he is back asleep before his usual wake", () => {
     expect(nextSleep(plan, [night, session(at(5, 30), null)], [], at(5, 45)).kind).toBe("night");
+  });
+
+  it("says night while last night's session is still open, and once tonight's has begun", () => {
+    const stillOpen = session(at(20, 30, -1), null);
+    expect(nextSleep(plan, [stillOpen], [], at(4, 52)).kind).toBe("night");
+    const tonight = session(at(20, 30), null);
+    expect(nextSleep(plan, [night, session(at(7, 40), 60), tonight], [], at(22)).kind).toBe("night");
   });
 
   it("says early morning after an early wake, not 'put him down at 07:45'", () => {

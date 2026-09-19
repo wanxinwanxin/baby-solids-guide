@@ -185,19 +185,28 @@ export function nearestWindow(windows: FeedWindow[], at: number): number {
 const EARLIEST_MORNING_H = 4;
 
 /**
- * Where each window opens today. The first window follows the morning wake
- * when that is known and earlier than its clock — a 04:50 wake after a nine
- * hour stretch is hungry now, not at 05:45.
+ * Today's windows as they actually fall. The first window is the morning
+ * wake when that is known — a 04:50 wake after a nine-hour stretch is hungry
+ * at 04:50, and a 06:20 wake after a return to sleep is hungry at 06:20, not
+ * at the 05:45 the clock said. Any clock window that then lands within two
+ * hours of the first is dropped: two bottles half an hour apart is what the
+ * plan exists to end.
  */
-function windowTimes(windows: FeedWindow[], now: Date, morningWakeMs: number | null): number[] {
-  const times = windows.map((w) => clockOn(now, w.at));
+function effectiveWindows(
+  windows: FeedWindow[],
+  now: Date,
+  morningWakeMs: number | null,
+): { at: number; ml: number; index: number }[] {
+  const eff = windows.map((w, index) => ({ at: clockOn(now, w.at), ml: w.ml, index }));
   const first = windows[0];
-  const onWake = first && (first.onWake ?? true);
-  if (onWake && morningWakeMs !== null) {
+  if (first && (first.onWake ?? true) && morningWakeMs !== null) {
     const floor = clockOn(now, `${String(EARLIEST_MORNING_H).padStart(2, "0")}:00`);
-    if (morningWakeMs >= floor && morningWakeMs < times[0]) times[0] = morningWakeMs;
+    if (morningWakeMs >= floor && sameLocalDay(morningWakeMs, now.getTime())) {
+      eff[0] = { ...eff[0], at: morningWakeMs };
+      return eff.filter((w, i) => i === 0 || w.at - eff[0].at >= WINDOW_ASSIGN_MIN * MIN);
+    }
   }
-  return times;
+  return eff;
 }
 
 export function nextFeed(
@@ -209,17 +218,20 @@ export function nextFeed(
   if (plan.feedWindows.length === 0) return null;
   const nowMs = now.getTime();
   const windows = [...plan.feedWindows].sort((a, b) => a.at.localeCompare(b.at));
-  const times = windowTimes(windows, now, morningWakeMs);
+  const eff = effectiveWindows(windows, now, morningWakeMs);
   const bottles = careLogs
     .filter((l) => l.kind === "formula" && l.amount)
     .sort((a, b) => ms(a.at) - ms(b.at));
-  const todays = bottles.filter((l) => sameLocalDay(ms(l.at), nowMs));
+  // Bottles before the final morning wake belong to the night, not the day.
+  const todays = bottles.filter(
+    (l) => sameLocalDay(ms(l.at), nowMs) && (morningWakeMs === null || ms(l.at) >= morningWakeMs),
+  );
 
   const nearestToday = (at: number) => {
     let best = -1;
     let bestGap = Infinity;
-    times.forEach((t, i) => {
-      const gap = Math.abs(at - t) / MIN;
+    eff.forEach((w, i) => {
+      const gap = Math.abs(at - w.at) / MIN;
       if (gap <= WINDOW_ASSIGN_MIN && gap < bestGap) {
         best = i;
         bestGap = gap;
@@ -260,7 +272,7 @@ export function nextFeed(
 
   // The next window: first one not yet fed that has not gone stale (more than
   // two hours past with nothing logged reads as "skipped", not "late").
-  const idx = windows.findIndex((_, i) => !consumed.has(i) && times[i] + WINDOW_ASSIGN_MIN * MIN > nowMs);
+  const idx = eff.findIndex((w, i) => !consumed.has(i) && w.at + WINDOW_ASSIGN_MIN * MIN > nowMs);
   if (idx === -1) {
     const tomorrow = new Date(dayOf(now).getTime() + 24 * HOUR);
     return {
@@ -274,14 +286,14 @@ export function nextFeed(
       reoffer,
     };
   }
-  const windowAt = times[idx];
+  const windowAt = eff[idx].at;
   const earliestAt = windowAt - plan.flexMin * MIN;
   const state: FeedAction["state"] =
     nowMs < earliestAt ? "waiting" : nowMs <= windowAt + 60 * MIN ? "open" : "late";
   return {
     windowAt,
-    targetMl: windows[idx].ml,
-    index: idx,
+    targetMl: eff[idx].ml,
+    index: eff[idx].index,
     state,
     minutesUntil: (windowAt - nowMs) / MIN,
     earliestAt,
@@ -512,6 +524,10 @@ export function nextSleep(
 
   const naps = dayNaps(sessions, now, morning.nightEnd);
   const open = naps.find((s) => !s.end) ?? null;
+  // Asleep, but not on one of today's naps: that is the night — last night's
+  // session still open at 04:52 because nobody has tapped "woke up" yet, or
+  // tonight's already begun.
+  if (!open && sessions.some((s) => !s.end)) return { kind: "night" };
   const usedMin = naps.filter((s) => s.end).reduce((sum, s) => sum + (ms(s.end!) - ms(s.start)) / MIN, 0);
   const budget = plan.maxDaySleepMin ?? bands.reduce((sum, b) => sum + b.capMin, 0);
   const lastBand = bands[bands.length - 1];
