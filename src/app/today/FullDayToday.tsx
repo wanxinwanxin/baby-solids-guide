@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import type { Food } from "@/content-schema/food";
-import { correctedAgeMonths } from "@/lib/age";
-import type { ScoredFood } from "@/lib/engine";
+import { calendarDaysBetween, correctedAgeMonths } from "@/lib/age";
+import { bandForAge, type ScoredFood } from "@/lib/engine";
 import {
   useActiveActivityLogs,
   useActiveCareLogs,
@@ -18,11 +18,12 @@ import { ACTIVITY_EMOJI } from "@/lib/i18n/messages/activities";
 import { fullDayMsgs } from "@/lib/i18n/messages/full-day";
 import { interventionMsgs } from "@/lib/i18n/messages/intervention";
 import { morningWake, nextFeed, nextSleep, planEvents } from "@/lib/plan/engine";
+import { INTRO_SPACING_DAYS, offPlanFoods, type PlanProgress } from "@/lib/plan-progress";
 import { dailySleep } from "@/lib/sleep/history";
 import { formatDuration, formatTime, openSession, predictNextSleep } from "@/lib/sleep/model";
 import { useSleepStore } from "@/lib/sleep/store";
 import { newId, useGuideStore } from "@/lib/storage/store";
-import type { ActivityId, BabyProfile, FormulaUnit } from "@/lib/storage/types";
+import type { ActivityId, BabyProfile, FormulaUnit, Plan } from "@/lib/storage/types";
 import { localIsoDate, todayIso } from "@/lib/food-utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { SwipeToComplete } from "@/components/SwipeToComplete";
@@ -33,7 +34,30 @@ import { SwipeToComplete } from "@/components/SwipeToComplete";
  * list is swipe-to-complete — swiping a food logs it eaten, swiping the
  * reading habit marks it done. Everything else is composed from data the app
  * already keeps, so nothing new is stored except the device-local habit.
+ *
+ * The list reads as the plan, in this order: the plan's own step (or a nudge
+ * to build a plan), the familiar foods that fill the tray around it, then
+ * the reading habit. A parent wrote in that the old list "was not aligned
+ * with our plan": the plan step sat unlabeled among variety picks, and the
+ * plan's silence during an observation window looked like the list ignoring
+ * the plan altogether.
  */
+
+/** A to-do row that is a link, not a swipe: the action lives on another page. */
+function LinkRow({ href, title, body }: { href: string; title: string; body: string }) {
+  return (
+    <Link
+      href={href}
+      className="block rounded-xl border border-primary/40 bg-secondary/30 px-4 py-3 hover:border-primary/70"
+    >
+      <span className="text-[15px] font-medium">{title}</span>
+      <span className="block text-xs text-muted-foreground">{body}</span>
+    </Link>
+  );
+}
+
+/** Distinct off-plan foods before the list nudges toward a re-suggest. */
+const OFF_PLAN_NUDGE = 3;
 
 function StatCard({
   title,
@@ -71,10 +95,16 @@ export function FullDayToday({
   baby,
   picks,
   foodBySlug,
+  foodPlan,
+  progress,
 }: {
   baby: BabyProfile;
   picks: ScoredFood[];
   foodBySlug: Map<string, Food>;
+  /** The saved food plan, null when the family has none. */
+  foodPlan: Plan | null;
+  /** Where that plan stands today (engine output), null without a plan. */
+  progress: PlanProgress | null;
 }) {
   const locale = useLocale();
   const t = useMsgs(fullDayMsgs);
@@ -116,9 +146,32 @@ export function FullDayToday({
     return names;
   }, [logs, today, foodBySlug]);
 
+  const everEaten = useMemo(() => {
+    const s = new Set<string>();
+    for (const l of logs) if (l.amountEaten !== "none") s.add(l.foodSlug);
+    return s;
+  }, [logs]);
+
+  // The plan's one step for today: the food whose turn it is, or the last
+  // introduction while it is still inside its observation window.
+  const hasPlan = !!progress && progress.total > 0;
+  const planStep = hasPlan ? (progress.now ?? progress.watching) : null;
+  const planSlug = planStep && !eatenToday.has(planStep.foodSlug) ? planStep.foodSlug : null;
+  const planStepIndex = planStep ? progress!.steps.indexOf(planStep) + 1 : 0;
+  const watchDay = planStep?.offeredOn
+    ? Math.min(INTRO_SPACING_DAYS, calendarDaysBetween(planStep.offeredOn, now) + 1)
+    : 0;
+  const offPlan = useMemo(
+    () => (hasPlan ? offPlanFoods(foodPlan, logs) : []),
+    [hasPlan, foodPlan, logs],
+  );
+
   const toTry = useMemo(
-    () => picks.filter((p) => !eatenToday.has(p.slug)).slice(0, 4),
-    [picks, eatenToday],
+    () =>
+      picks
+        .filter((p) => !eatenToday.has(p.slug) && p.slug !== planSlug)
+        .slice(0, planSlug ? 3 : 4),
+    [picks, eatenToday, planSlug],
   );
   const readDone = activityLogs.some((a) => a.activity === "read" && a.date === today);
   // Itemized reads (specific pieces from /read) and other logged activities.
@@ -186,7 +239,7 @@ export function FullDayToday({
     return [...m.entries()].map(([unit, v]) => `${Math.round(v * 10) / 10} ${unit}`).join(" + ");
   }, [bottles]);
 
-  const logEaten = (pick: ScoredFood) => {
+  const logEaten = (pick: Pick<ScoredFood, "slug" | "suggestedBand">) => {
     addLog({
       id: newId(),
       babyId: baby.id,
@@ -225,12 +278,53 @@ export function FullDayToday({
           <h2 className="text-sm font-semibold">{t.toDoTitle}</h2>
           <span className="text-xs text-muted-foreground">{t.toDoHint}</span>
         </div>
-        {toTry.length === 0 && readDone ? (
+        {!hasPlan && (
+          <LinkRow
+            href="/plan"
+            title={fmt(t.noPlanRow, { name: baby.nickname })}
+            body={t.noPlanRowBody}
+          />
+        )}
+        {hasPlan && offPlan.length >= OFF_PLAN_NUDGE && (
+          <LinkRow
+            href="/plan"
+            title={fmt(t.offPlanRow, { n: offPlan.length })}
+            body={fmt(t.offPlanRowBody, { name: baby.nickname })}
+          />
+        )}
+        {!planSlug && toTry.length === 0 && readDone ? (
           <p className="rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground">
             {t.allCaughtUp}
           </p>
         ) : (
           <div className="space-y-2">
+            {planSlug && planStep && (
+              <SwipeToComplete
+                key={planSlug}
+                onComplete={() =>
+                  logEaten({
+                    slug: planSlug,
+                    suggestedBand:
+                      picks.find((p) => p.slug === planSlug)?.suggestedBand ??
+                      bandForAge(foodBySlug.get(planSlug)!, ageMonths),
+                  })
+                }
+                completeLabel={t.markEaten}
+              >
+                <div className="px-4 py-3">
+                  <span className="text-[15px] font-medium">
+                    {fmt(planStep.offeredOn ? t.offerAgain : t.tryFood, {
+                      food: foodBySlug.get(planSlug)?.name ?? planSlug,
+                    })}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    {planStep.offeredOn
+                      ? fmt(t.planWatching, { day: watchDay, days: INTRO_SPACING_DAYS })
+                      : fmt(t.planStep, { k: planStepIndex, total: progress!.total })}
+                  </span>
+                </div>
+              </SwipeToComplete>
+            )}
             {toTry.map((p) => (
               <SwipeToComplete
                 key={p.slug}
@@ -239,7 +333,9 @@ export function FullDayToday({
               >
                 <div className="px-4 py-3">
                   <span className="text-[15px] font-medium">
-                    {fmt(t.tryFood, { food: foodBySlug.get(p.slug)?.name ?? p.name })}
+                    {fmt(everEaten.has(p.slug) ? t.keepOffering : t.tryFood, {
+                      food: foodBySlug.get(p.slug)?.name ?? p.name,
+                    })}
                   </span>
                   <span className="block text-xs text-muted-foreground">{p.reason}</span>
                 </div>
@@ -251,7 +347,10 @@ export function FullDayToday({
                 completeLabel={t.markRead}
               >
                 <div className="px-4 py-3">
-                  <span className="text-[15px] font-medium">{t.readHabit}</span>
+                  <span className="text-[15px] font-medium">
+                    {fmt(t.readHabit, { name: baby.nickname })}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">{t.readHabitBody}</span>
                 </div>
               </SwipeToComplete>
             )}

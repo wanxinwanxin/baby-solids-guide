@@ -356,7 +356,15 @@ export default function TodayPage() {
 
   // ——— Full day view: the whole-day dashboard (2026-09-10) ———
   if (fullDayMode) {
-    return <FullDayToday baby={baby} picks={rec.todaysPicks} foodBySlug={foodBySlug} />;
+    return (
+      <FullDayToday
+        baby={baby}
+        picks={rec.todaysPicks}
+        foodBySlug={foodBySlug}
+        foodPlan={plan}
+        progress={rec.plan}
+      />
+    );
   }
 
   // ——— State A: ready ———

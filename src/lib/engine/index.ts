@@ -273,7 +273,7 @@ export function deriveAllergenStates(input: {
   return result;
 }
 
-function bandForAge(food: Food, ageMonths: number): AgeBand {
+export function bandForAge(food: Food, ageMonths: number): AgeBand {
   const preferred: AgeBand = ageMonths < 9 ? "6-8m" : ageMonths < 12 ? "9-12m" : "12-24m";
   if (food.prepSpecs.some((p) => p.band === preferred)) return preferred;
   return food.prepSpecs[0].band;
