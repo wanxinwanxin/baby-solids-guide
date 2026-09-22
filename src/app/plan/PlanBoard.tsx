@@ -35,7 +35,7 @@ import {
   type PlanWarning,
 } from "@/lib/planner";
 import { eligibilityAgeMonths, foodExclusions, planBlocker, planWeekIndex } from "@/lib/engine";
-import { planProgress, type PlanStep } from "@/lib/plan-progress";
+import { offPlanFoods, planProgress, type PlanStep } from "@/lib/plan-progress";
 import { weeklyMenu, MENU_DAYS } from "@/lib/weekly-menu";
 import { correctedAgeMonths } from "@/lib/age";
 import { deriveFoodStats } from "@/lib/engine";
@@ -51,6 +51,8 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 const DAYS_PER_MONTH = 30.4375;
+/** Distinct off-plan foods before the board offers a re-suggest. */
+const OFF_PLAN_NUDGE = 3;
 /** Options rendered at once in the per-week combobox; the rest are counted. */
 const MAX_OPTIONS = 8;
 
@@ -396,6 +398,10 @@ export function PlanBoard() {
     () => (baby ? foodExclusions({ baby, logs, overrides, foods, today }, locale) : null),
     [baby, logs, overrides, foods, today, locale],
   );
+  // Foods eaten that the plan never listed. Past a few, the written plan
+  // has drifted from the diet and the board says so instead of waiting for
+  // the family to notice the re-suggest button on their own.
+  const offPlan = useMemo(() => offPlanFoods(plan, logs), [plan, logs]);
   const progress = useMemo(
     () =>
       baby && plan && exclusions
@@ -657,6 +663,23 @@ export function PlanBoard() {
         <Alert className="border-primary/40">
           <AlertTitle>{t.noPlanTitle}</AlertTitle>
           <AlertDescription>{fmt(t.noPlanBody, { name: baby.nickname })}</AlertDescription>
+        </Alert>
+      )}
+
+      {progress && progress.total > 0 && offPlan.length >= OFF_PLAN_NUDGE && (
+        <Alert className="border-primary/40">
+          <AlertTitle>{fmt(t.driftTitle, { n: offPlan.length })}</AlertTitle>
+          <AlertDescription className="space-y-2">
+            <p>
+              {fmt(t.driftBody, {
+                name: baby.nickname,
+                foods: offPlan.slice(0, 6).map(chipLabel).join(", ") + (offPlan.length > 6 ? "…" : ""),
+              })}
+            </p>
+            <Button variant="outline" size="sm" onClick={suggest}>
+              {fmt(t.driftButton, { name: baby.nickname })}
+            </Button>
+          </AlertDescription>
         </Alert>
       )}
 

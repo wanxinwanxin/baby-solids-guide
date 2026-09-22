@@ -226,3 +226,24 @@ export function planProgress(input: PlanProgressInput): PlanProgress {
     slipDays,
   };
 }
+
+/**
+ * Foods the baby has eaten that the plan never listed, oldest first. Content
+ * foods only: a custom food has no place on the board to begin with. Pouch
+ * families log fruit and vegetable blends the planner never picked, and a
+ * long list here is the sign that the written plan has drifted from the
+ * baby's actual diet.
+ */
+export function offPlanFoods(plan: Plan | null | undefined, logs: ExposureLog[]): string[] {
+  if (!plan || plan.entries.length === 0) return [];
+  const planned = new Set(plan.entries.map((e) => e.foodSlug));
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const log of [...logs].sort((a, b) => a.date.localeCompare(b.date))) {
+    if (log.amountEaten === "none" || planned.has(log.foodSlug) || seen.has(log.foodSlug)) continue;
+    if (log.foodSlug.startsWith("custom:")) continue;
+    seen.add(log.foodSlug);
+    out.push(log.foodSlug);
+  }
+  return out;
+}

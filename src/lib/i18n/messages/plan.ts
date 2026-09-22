@@ -31,6 +31,14 @@ export const planMsgs = {
     zh: "“生成建议计划”会根据{name}的月龄、过敏档案和你已记录的内容，搭好一个 12 周的起点——每一处都可以修改。",
   },
   worthALook: { en: "Worth a look", zh: "值得看一眼" },
+  // --- Plan drift (foods eaten that the plan never listed) ---
+  /** {n} = distinct eaten foods not on the plan, {name} = baby nickname. */
+  driftTitle: { en: "{n} foods eaten were never on the plan", zh: "已吃的 {n} 种食物不在计划里" },
+  driftBody: {
+    en: "{name} is eating around this plan: {foods}. Re-suggesting rebuilds the remaining steps from what has actually been eaten, and skips every food already tried.",
+    zh: "{name}吃的东西已经超出了这个计划：{foods}。重新生成会根据实际吃过的食物重排剩下的步骤，并跳过所有已经尝试过的食物。",
+  },
+  driftButton: { en: "Re-suggest from what {name} eats", zh: "按{name}实际吃的重新生成" },
   // --- First bite (shown while nothing has been eaten yet) ---
   /**
    * A mother wrote in from this exact state: a fresh plan, beef at the top,

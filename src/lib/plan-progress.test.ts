@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { INTRO_SPACING_DAYS, entryDay, planProgress } from "./plan-progress";
+import { INTRO_SPACING_DAYS, entryDay, offPlanFoods, planProgress } from "./plan-progress";
 import type { ExposureLog, Plan } from "./storage/types";
 
 const ANCHOR = "2026-08-24"; // a Monday
@@ -199,5 +199,25 @@ describe("planProgress", () => {
     expect(p.introducedCount).toBe(2);
     expect(p.now?.foodSlug).toBe("beef");
     expect(p.upcoming.map((s) => s.foodSlug)).toEqual(["yogurt"]);
+  });
+});
+
+describe("offPlanFoods", () => {
+  it("lists eaten content foods the plan never listed, oldest first, once each", () => {
+    const p = plan(["beef", "lentils"]);
+    const logs = [
+      ate("banana", 2),
+      ate("beef", 0),
+      ate("pear", 1),
+      ate("banana", 3),
+      ate("apple", 4, { amountEaten: "none" }),
+      ate("custom:pouch-blend", 1),
+    ];
+    expect(offPlanFoods(p, logs)).toEqual(["pear", "banana"]);
+  });
+
+  it("is empty without a plan", () => {
+    expect(offPlanFoods(null, [ate("banana", 0)])).toEqual([]);
+    expect(offPlanFoods(plan([]), [ate("banana", 0)])).toEqual([]);
   });
 });
