@@ -92,6 +92,23 @@ describe("mondayOf", () => {
 });
 
 describe("generatePlan (deterministic, gate-respecting)", () => {
+  it("does not let one category repeat inside the iron lead while another iron-rich category waits", () => {
+    // Mirrors the real catalog: legumes are iron-rich curated first foods, so
+    // with a plain distance penalty the third pick was a second legume.
+    const foods: Food[] = [
+      makeFood({ slug: "beef", category: "protein", ironRich: true, firstFoodPick: true }),
+      makeFood({ slug: "lentils", category: "legume", ironRich: true, firstFoodPick: true }),
+      makeFood({ slug: "mung-beans", category: "legume", ironRich: true, firstFoodPick: true }),
+      makeFood({ slug: "oat-cereal", category: "grain", ironRich: true }),
+      makeFood({ slug: "spinach", category: "vegetable", ironRich: true }),
+      makeFood({ slug: "carrot", category: "vegetable" }),
+    ];
+    const plan = generatePlan({ ...emptyInput, foods, baby: makeBaby() });
+    const order = [...plan.entries].sort((a, b) => entryDay(a) - entryDay(b)).map((e) => e.foodSlug);
+    expect(order.slice(0, 4)).toEqual(["beef", "lentils", "oat-cereal", "spinach"]);
+    expect(order[4]).toBe("mung-beans");
+  });
+
   it("same input ⇒ same plan; iron leads week 0; one allergen/week from week 1", () => {
     const a = generatePlan({ baby: makeBaby(), ...emptyInput });
     const b = generatePlan({ baby: makeBaby(), ...emptyInput });

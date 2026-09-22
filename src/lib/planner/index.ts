@@ -176,18 +176,24 @@ export const PREFERRED_VEHICLES: Record<AllergenId, string> = {
  *     rather than dragging every iron-rich food to the front.
  *  2. Curated first-food picks, whose textures are the easiest to get right.
  *  3. Category rotation, so the plan reads as a varied diet instead of an
- *     alphabetical run through one food group.
+ *     alphabetical run through one food group. The rotation outweighs the
+ *     iron pull for a category used in the last two picks, so the opening
+ *     week is not three legumes in a row.
  * Ties break on slug, keeping the whole thing deterministic.
  */
 const IRON_LEAD_PICKS = 6;
 const RECENT_CATEGORY_MEMORY = 4;
+const CATEGORY_REPEAT_WEIGHT = 2;
 
 function generalScore(food: Food, position: number, recent: string[]): number {
   let score = 0;
   if (food.ironRich) score += position < IRON_LEAD_PICKS ? 6 : 1;
   if (food.firstFoodPick) score += position < IRON_LEAD_PICKS ? 2 : 1;
+  // Weighted so that a category used in the last two picks loses to an
+  // iron-rich food from any other category. With the plain distance, three
+  // legumes landed in the first ten picks and no vegetable until week two.
   const seenAt = recent.indexOf(food.category);
-  if (seenAt !== -1) score -= recent.length - seenAt;
+  if (seenAt !== -1) score -= (recent.length - seenAt) * CATEGORY_REPEAT_WEIGHT;
   return score;
 }
 
