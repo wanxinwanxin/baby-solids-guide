@@ -266,6 +266,7 @@ export type CareLog = {
   plan?: { windowAt: string; targetMl: number };
   /** Minutes from a night wake to resolution — a bottle or resettling. */
   settleMinutes?: number;
+  /** Free text, up to 500 characters: which formula, spit-up, how the bottle went. */
   notes?: string;
   updatedAt?: string; // ISO datetime — LWW sync ordering
 };

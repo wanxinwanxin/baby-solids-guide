@@ -153,7 +153,9 @@ export const careLogSchema = z.object({
   event: z.enum(["fussy", "nap_skipped", "night_resettled", "off_day"]).optional(),
   plan: z.object({ windowAt: isoDateTime, targetMl: z.number().positive().max(500) }).optional(),
   settleMinutes: z.number().int().min(0).max(600).optional(),
-  notes: z.string().optional(),
+  // A free-text note on a bottle or change: which formula, spit-up, how it
+  // went. Bounded so a pasted document cannot sync as a log line.
+  notes: z.string().max(500).optional(),
   updatedAt: isoDateTime.optional(),
 });
 

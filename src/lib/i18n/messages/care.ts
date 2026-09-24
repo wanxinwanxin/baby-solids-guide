@@ -23,6 +23,11 @@ export const careMsgs = {
   customAmount: { en: "Custom", zh: "自定义" },
   logBottleBtn: { en: "Log bottle", zh: "记录喂奶" },
   fedAt: { en: "Fed at", zh: "喂奶时间" },
+  noteLabel: { en: "Note", zh: "备注" },
+  notePlaceholder: {
+    en: "Optional — which formula, spit-up, how it went…",
+    zh: "可选——哪种奶粉、吐奶、喝得怎么样……",
+  },
 
   // Diaper
   diaperTitle: { en: "Diaper", zh: "尿布" },

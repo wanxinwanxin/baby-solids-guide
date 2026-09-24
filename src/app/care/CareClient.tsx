@@ -24,6 +24,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { DateTimeField } from "@/components/DateTimeField";
 import { FeedPlanBand } from "@/components/plan/FeedPlanBand";
 import { TimeConfirm } from "@/components/TimeConfirm";
@@ -39,6 +40,9 @@ const DIAPER_EMOJI: Record<DiaperKind, string> = {
   mixed: "💧💩",
   dry: "✨",
 };
+
+/** Matches careLogSchema.notes. */
+const NOTE_MAX = 500;
 
 function Chip({
   active,
@@ -96,6 +100,7 @@ function CareRow({
   const [editAmount, setEditAmount] = useState("");
   const [editUnit, setEditUnit] = useState<FormulaUnit>("ml");
   const [editKind, setEditKind] = useState<DiaperKind>("wet");
+  const [editNote, setEditNote] = useState("");
   const [error, setError] = useState<"time" | "amount" | null>(null);
 
   const iv = useMsgs(interventionMsgs);
@@ -116,6 +121,7 @@ function CareRow({
     setEditAmount(log.amount ? String(log.amount.value) : "");
     setEditUnit(log.amount?.unit ?? "ml");
     setEditKind(log.diaper ?? "wet");
+    setEditNote(log.notes ?? "");
     setConfirmingDelete(false);
     setError(null);
     setEditing(true);
@@ -126,15 +132,16 @@ function CareRow({
       setError("time");
       return;
     }
+    const notes = editNote.trim().slice(0, NOTE_MAX) || undefined;
     if (log.kind === "formula") {
       const value = Number(editAmount);
       if (!Number.isFinite(value) || value <= 0 || value > 2000) {
         setError("amount");
         return;
       }
-      onUpdate(log.id, { at: editAt.toISOString(), amount: { value, unit: editUnit } });
+      onUpdate(log.id, { at: editAt.toISOString(), amount: { value, unit: editUnit }, notes });
     } else {
-      onUpdate(log.id, { at: editAt.toISOString(), diaper: editKind });
+      onUpdate(log.id, { at: editAt.toISOString(), diaper: editKind, notes });
     }
     setEditing(false);
   }
@@ -172,6 +179,10 @@ function CareRow({
           {editing ? t.cancel : t.editEntry}
         </button>
       </div>
+
+      {log.notes && !editing && (
+        <p className="mt-1 whitespace-pre-wrap text-xs text-muted-foreground">{log.notes}</p>
+      )}
 
       {editing && (
         <div className="mt-3 space-y-3 border-t pt-3">
@@ -216,6 +227,19 @@ function CareRow({
                 ))}
               </div>
             )}
+          </div>
+          <div className="space-y-0.5">
+            <label htmlFor={`edit-${log.id}-note`} className="block text-[11px] text-muted-foreground">
+              {t.noteLabel}
+            </label>
+            <Textarea
+              id={`edit-${log.id}-note`}
+              rows={2}
+              maxLength={NOTE_MAX}
+              placeholder={t.notePlaceholder}
+              value={editNote}
+              onChange={(e) => setEditNote(e.target.value)}
+            />
           </div>
           {error && (
             <p className="text-sm text-destructive">
@@ -292,6 +316,7 @@ export function CareClient() {
   const [unit, setUnit] = useState<FormulaUnit>("ml");
   const [amount, setAmount] = useState<number | null>(null);
   const [customText, setCustomText] = useState("");
+  const [note, setNote] = useState("");
   const [diaperKind, setDiaperKind] = useState<DiaperKind | null>(null);
 
   // The plan band counts down, so re-read the clock periodically.
@@ -453,6 +478,14 @@ export function CareClient() {
               className="w-28"
             />
           </div>
+          <Textarea
+            aria-label={t.noteLabel}
+            rows={2}
+            maxLength={NOTE_MAX}
+            placeholder={t.notePlaceholder}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
           <TimeConfirm
             id="log-bottle"
             buttonLabel={t.logBottleBtn}
@@ -480,8 +513,10 @@ export function CareClient() {
                 kind: "formula",
                 at: d.toISOString(),
                 amount: { value: amount, unit },
+                ...(note.trim() ? { notes: note.trim().slice(0, NOTE_MAX) } : {}),
                 ...stamp,
               });
+              setNote("");
             }}
           />
         </CardContent>
