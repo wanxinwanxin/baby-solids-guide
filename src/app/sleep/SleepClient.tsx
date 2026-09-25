@@ -30,6 +30,7 @@ import type { FellAsleepHow, WhereSlept } from "@/lib/storage/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { DateTimeField } from "@/components/DateTimeField";
 import { NightWakeCard } from "@/components/plan/NightWakeCard";
 import { SleepPlanBand } from "@/components/plan/SleepPlanBand";
@@ -49,6 +50,9 @@ const localDateKey = (iso: string) => {
  * row, and delete lives inside the edit panel (with a confirm step) so two
  * tiny targets never sit a thumb-width apart on a phone.
  */
+/** Matches sleepSessionSchema.notes. */
+const NOTE_MAX = 500;
+
 function SessionRow({
   session,
   nowMs,
@@ -68,6 +72,7 @@ function SessionRow({
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [editStart, setEditStart] = useState<Date | null>(null);
   const [editEnd, setEditEnd] = useState<Date | null>(null);
+  const [editNote, setEditNote] = useState("");
   const [error, setError] = useState<"time" | "order" | null>(null);
 
   const startMs = new Date(session.start).getTime();
@@ -78,6 +83,7 @@ function SessionRow({
   function startEditing() {
     setEditStart(new Date(session.start));
     setEditEnd(session.end ? new Date(session.end) : null);
+    setEditNote(session.notes ?? "");
     setConfirmingDelete(false);
     setError(null);
     setEditing(true);
@@ -95,6 +101,7 @@ function SessionRow({
     onUpdate(session.id, {
       start: editStart.toISOString(),
       end: editEnd ? editEnd.toISOString() : undefined,
+      notes: editNote.trim().slice(0, NOTE_MAX) || undefined,
     });
     setEditing(false);
   }
@@ -124,6 +131,10 @@ function SessionRow({
         </button>
       </div>
 
+      {session.notes && !editing && (
+        <p className="mt-1 whitespace-pre-wrap text-xs text-muted-foreground">{session.notes}</p>
+      )}
+
       {editing && (
         <div className="mt-3 space-y-3 border-t pt-3">
           <div className="flex flex-wrap gap-4">
@@ -141,6 +152,19 @@ function SessionRow({
             />
           </div>
           <p className="text-xs text-muted-foreground">{t.stillAsleepNote}</p>
+          <div className="space-y-0.5">
+            <label htmlFor={`edit-${session.id}-note`} className="block text-[11px] text-muted-foreground">
+              {t.noteLabel}
+            </label>
+            <Textarea
+              id={`edit-${session.id}-note`}
+              rows={2}
+              maxLength={NOTE_MAX}
+              placeholder={t.notePlaceholder}
+              value={editNote}
+              onChange={(e) => setEditNote(e.target.value)}
+            />
+          </div>
           {error && (
             <p className="text-sm text-destructive">
               {error === "order" ? t.addInvalid : dt.timeInvalid}
@@ -207,6 +231,7 @@ export function SleepClient() {
   const [wakeError, setWakeError] = useState(false);
   const [addStart, setAddStart] = useState<Date | null>(null);
   const [addEnd, setAddEnd] = useState<Date | null>(null);
+  const [addNote, setAddNote] = useState("");
   const [addError, setAddError] = useState<null | "order" | "future">(null);
   // Remount key: clears the add fields after a successful add.
   const [addFormKey, setAddFormKey] = useState(0);
@@ -356,9 +381,11 @@ export function SleepClient() {
       babyId: baby.id,
       start: addStart.toISOString(),
       ...(addEnd ? { end: addEnd.toISOString() } : {}),
+      ...(addNote.trim() ? { notes: addNote.trim().slice(0, NOTE_MAX) } : {}),
     });
     setAddStart(null);
     setAddEnd(null);
+    setAddNote("");
     setAddError(null);
     setAddFormKey((k) => k + 1);
   };
@@ -550,6 +577,14 @@ export function SleepClient() {
                 <DateTimeField id="add-end" label={t.addEndOptional} onChange={setAddEnd} />
               </div>
               <p className="text-xs text-muted-foreground">{t.manualEndOptional}</p>
+              <Textarea
+                aria-label={t.noteLabel}
+                rows={2}
+                maxLength={NOTE_MAX}
+                placeholder={t.notePlaceholder}
+                value={addNote}
+                onChange={(e) => setAddNote(e.target.value)}
+              />
               <Button variant="outline" onClick={submitManualAdd}>
                 {t.addBtn}
               </Button>

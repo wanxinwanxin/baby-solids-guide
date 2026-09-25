@@ -229,6 +229,8 @@ export type SleepSession = {
   fellAsleepHow?: FellAsleepHow;
   whereSlept?: WhereSlept;
   plan?: { startAt: string; wakeBy: string };
+  /** Free text, up to 500 characters: where, how, what woke him. */
+  notes?: string;
   updatedAt?: string; // ISO datetime — LWW sync ordering
 };
 

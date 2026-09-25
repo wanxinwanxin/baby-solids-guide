@@ -104,6 +104,11 @@ export const sleepMsgs = {
 
   // Edit a session
   editEntry: { en: "Edit", zh: "编辑" },
+  noteLabel: { en: "Note", zh: "备注" },
+  notePlaceholder: {
+    en: "Optional — where, how he fell asleep, what woke him…",
+    zh: "可选——在哪睡的、怎么睡着的、被什么弄醒……",
+  },
   editAria: { en: "Edit the sleep that started at {time}", zh: "编辑 {time} 开始的睡眠" },
   cancel: { en: "Cancel", zh: "取消" },
   saveChanges: { en: "Save", zh: "保存" },

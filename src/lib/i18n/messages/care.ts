@@ -28,6 +28,10 @@ export const careMsgs = {
     en: "Optional — which formula, spit-up, how it went…",
     zh: "可选——哪种奶粉、吐奶、喝得怎么样……",
   },
+  diaperNotePlaceholder: {
+    en: "Optional — color, texture, rash…",
+    zh: "可选——颜色、性状、红屁屁……",
+  },
 
   // Diaper
   diaperTitle: { en: "Diaper", zh: "尿布" },

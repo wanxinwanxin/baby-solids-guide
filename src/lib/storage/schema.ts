@@ -136,6 +136,7 @@ export const sleepSessionSchema = z.object({
   fellAsleepHow: z.enum(["fed", "rocked", "patted", "alone"]).optional(),
   whereSlept: z.enum(["crib", "arms", "stroller", "bed"]).optional(),
   plan: z.object({ startAt: isoDateTime, wakeBy: isoDateTime }).optional(),
+  notes: z.string().max(500).optional(),
   updatedAt: isoDateTime.optional(),
 });
 
