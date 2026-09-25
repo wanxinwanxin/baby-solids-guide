@@ -15,7 +15,7 @@ import { careMsgs } from "@/lib/i18n/messages/care";
 import { datetimeMsgs } from "@/lib/i18n/messages/datetime";
 import { interventionMsgs } from "@/lib/i18n/messages/intervention";
 import { localIsoDate } from "@/lib/food-utils";
-import { bottleMl, bottleOutcome, clockOn, morningWake, nearestWindow, nextFeed } from "@/lib/plan/engine";
+import { clockOn, morningWake, nearestWindow, nextFeed } from "@/lib/plan/engine";
 import { dailySleep } from "@/lib/sleep/history";
 import { formatDuration, formatTime } from "@/lib/sleep/model";
 import { newId, useGuideStore } from "@/lib/storage/store";
@@ -103,17 +103,11 @@ function CareRow({
   const [editNote, setEditNote] = useState("");
   const [error, setError] = useState<"time" | "amount" | null>(null);
 
-  const iv = useMsgs(interventionMsgs);
   const atMs = new Date(log.at).getTime();
   const label =
     log.kind === "formula"
       ? fmt(t.formulaEntry, { amount: log.amount ? `${log.amount.value} ${log.amount.unit}` : "—" })
       : fmt(t.diaperEntry, { kind: kindLabels[log.diaper ?? "wet"] });
-  // Intervention mode froze the target on the log, so the outcome is stable.
-  const outcome =
-    log.kind === "formula" && log.plan ? bottleOutcome(bottleMl(log), log.plan.targetMl) : null;
-  const outcomeLabel =
-    outcome === "took_full" ? iv.outcomeFull : outcome === "partial" ? iv.outcomePartial : iv.outcomeRefused;
   const emoji = log.kind === "formula" ? "🍼" : DIAPER_EMOJI[log.diaper ?? "wet"];
 
   function startEditing() {
@@ -155,16 +149,6 @@ function CareRow({
             {emoji}
           </span>
           {label}
-          {outcome && (
-            <span
-              className={cn(
-                "ml-2 rounded-full border px-2 py-0.5 text-xs",
-                outcome === "refused" && "border-destructive/50 text-destructive",
-              )}
-            >
-              {outcomeLabel}
-            </span>
-          )}
         </span>
         <button
           type="button"
@@ -317,6 +301,7 @@ export function CareClient() {
   const [amount, setAmount] = useState<number | null>(null);
   const [customText, setCustomText] = useState("");
   const [note, setNote] = useState("");
+  const [diaperNote, setDiaperNote] = useState("");
   const [diaperKind, setDiaperKind] = useState<DiaperKind | null>(null);
 
   // The plan band counts down, so re-read the clock periodically.
@@ -537,6 +522,14 @@ export function CareClient() {
               </Chip>
             ))}
           </div>
+          <Textarea
+            aria-label={t.noteLabel}
+            rows={2}
+            maxLength={NOTE_MAX}
+            placeholder={t.diaperNotePlaceholder}
+            value={diaperNote}
+            onChange={(e) => setDiaperNote(e.target.value)}
+          />
           <TimeConfirm
             id="log-diaper"
             buttonLabel={t.logDiaperBtn}
@@ -552,7 +545,9 @@ export function CareClient() {
                 kind: "diaper",
                 at: d.toISOString(),
                 diaper: diaperKind,
+                ...(diaperNote.trim() ? { notes: diaperNote.trim().slice(0, NOTE_MAX) } : {}),
               });
+              setDiaperNote("");
             }}
           />
         </CardContent>

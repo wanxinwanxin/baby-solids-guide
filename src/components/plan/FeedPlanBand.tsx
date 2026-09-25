@@ -4,7 +4,7 @@ import { useState } from "react";
 import { fmt } from "@/lib/i18n/config";
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
 import { interventionMsgs } from "@/lib/i18n/messages/intervention";
-import { fussyAdvice, nextFeed, planEvents, type FeedAction, type FussyAdvice } from "@/lib/plan/engine";
+import { fussyAdvice, nextFeed, planEvents, type FussyAdvice } from "@/lib/plan/engine";
 import { formatDuration, formatTime } from "@/lib/sleep/model";
 import { newId, useGuideStore } from "@/lib/storage/store";
 import type { CareLog, Intervention } from "@/lib/storage/types";
@@ -49,9 +49,6 @@ export function FeedPlanBand({
   const logEvent = (event: CareLog["event"]) =>
     addCareLog({ id: newId(), babyId, kind: "event", at: now.toISOString(), event });
 
-  const outcomeLabel = (o: NonNullable<FeedAction["lastBottle"]>["outcome"]) =>
-    o === "took_full" ? t.outcomeFull : o === "partial" ? t.outcomePartial : o === "refused" ? t.outcomeRefused : "";
-
   const adviceText: Record<FussyAdvice, string> = {
     "open-now": t.adviceOpenNow,
     "check-other-causes": t.adviceCheckOther,
@@ -94,21 +91,10 @@ export function FeedPlanBand({
             </p>
             {feed.lastBottle && (
               <p className="text-sm text-muted-foreground">
-                {feed.lastBottle.targetMl !== null
-                  ? fmt(t.lastBottleLine, {
-                      time: formatTime(feed.lastBottle.at, locale),
-                      ml: Math.round(feed.lastBottle.ml),
-                      target: feed.lastBottle.targetMl,
-                    })
-                  : fmt(t.lastBottleNoTarget, {
-                      time: formatTime(feed.lastBottle.at, locale),
-                      ml: Math.round(feed.lastBottle.ml),
-                    })}
-                {feed.lastBottle.outcome && (
-                  <span className="ml-2 rounded-full border px-2 py-0.5 text-xs">
-                    {outcomeLabel(feed.lastBottle.outcome)}
-                  </span>
-                )}
+                {fmt(t.lastBottleNoTarget, {
+                  time: formatTime(feed.lastBottle.at, locale),
+                  ml: Math.round(feed.lastBottle.ml),
+                })}
                 {" · "}
                 {fmt(t.sinceLast, { dur: formatDuration((nowMs - feed.lastBottle.at) / MIN, locale) })}
               </p>
@@ -116,14 +102,6 @@ export function FeedPlanBand({
             {feed.gapCapped && (
               <p className="text-xs text-muted-foreground">
                 {fmt(t.gapCappedNote, { clock: plan.feedWindows[feed.index]?.at ?? "" })}
-              </p>
-            )}
-            {feed.reoffer && (
-              <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm">
-                {fmt(t.reofferLine, {
-                  at: formatTime(feed.reoffer.at, locale),
-                  discard: formatTime(feed.reoffer.discardAt, locale),
-                })}
               </p>
             )}
             <div className="flex flex-wrap gap-2">
