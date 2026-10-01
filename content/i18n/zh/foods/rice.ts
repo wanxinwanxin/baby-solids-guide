@@ -3,7 +3,7 @@ import type { FoodL10n } from "@/content-schema/l10n";
 const zh: FoodL10n = {
   slug: "rice",
   name: "米饭",
-  aliases: ["大米", "白米饭"],
+  aliases: ["大米", "白米饭", "粥", "白粥", "米粥", "稀饭", "大米粥"],
   nutritionHighlights: [
     "强化白米除了提供易消化的碳水能量，还能补充铁和 B 族维生素",
     "对刚起步的小肠胃很温和，也是最不容易引起过敏的谷物之一",

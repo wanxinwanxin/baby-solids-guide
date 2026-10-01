@@ -4,7 +4,7 @@ import { SOURCES } from "../sources";
 const egg: Food = {
   slug: "egg",
   name: "Egg",
-  aliases: ["hen's egg", "chicken egg"],
+  aliases: ["hen's egg", "chicken egg", "egg yolk", "egg white", "whole egg"],
   category: "protein",
   minAgeMonths: 6,
   ironRich: true,

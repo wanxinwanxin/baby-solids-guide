@@ -4,7 +4,7 @@ import { SOURCES } from "../sources";
 const rice: Food = {
   slug: "rice",
   name: "Rice",
-  aliases: [],
+  aliases: ["congee", "rice porridge", "baby porridge", "rice congee"],
   category: "grain",
   minAgeMonths: 6,
   ironRich: false,

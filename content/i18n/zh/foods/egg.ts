@@ -3,7 +3,7 @@ import type { FoodL10n } from "@/content-schema/l10n";
 const zh: FoodL10n = {
   slug: "egg",
   name: "鸡蛋",
-  aliases: ["蛋", "蛋黄"],
+  aliases: ["蛋", "蛋黄", "蛋白", "蛋清", "全蛋", "鸡蛋黄"],
   nutritionHighlights: [
     "蛋黄的胆碱含量高，宝宝大脑发育正需要它",
     "完整蛋白加铁都有，辅食头几周宝宝就能吃上",
