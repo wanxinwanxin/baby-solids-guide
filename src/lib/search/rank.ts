@@ -25,7 +25,37 @@
  * matches the other way round — the QUERY contains the term — so 猪肝 (pork
  * liver) also reaches chicken liver. A class hit scores below every direct
  * hit, so the food the parent actually named still comes first.
+ *
+ * A component hit also runs the other way round: the query CONTAINS one of
+ * the entry's own names. Parents type the dish, not the ingredient — "鸡蛋红薯",
+ * "banana porridge", "pork with green beans and sweet potatoes" — and a
+ * picker that matched only whole queries showed nothing, so each dish became
+ * a one-off custom food. Now every food named inside the query surfaces,
+ * below any direct hit, and the parent taps them one by one. A name has to
+ * be at least two characters and, in Latin script, a whole word: "pea" inside
+ * "peanut" is not peas.
  */
+const COMPONENT_SCORE = 25;
+
+function isWordBounded(haystack: string, needle: string): boolean {
+  let from = 0;
+  for (;;) {
+    const i = haystack.indexOf(needle, from);
+    if (i === -1) return false;
+    const before = i === 0 ? "" : haystack[i - 1];
+    // A plural still names the food: "sweet potatoes" names sweet potato.
+    const tail = haystack.slice(i + needle.length);
+    if (!/[a-z0-9]/.test(before) && /^(?:e?s)?(?![a-z0-9])/.test(tail)) return true;
+    from = i + 1;
+  }
+}
+
+/** True when `term` names a part of the query. CJK needs no word boundary. */
+function namesPartOf(q: string, term: string): boolean {
+  if (term.length < 2 || term.length >= q.length) return false;
+  if (!q.includes(term)) return false;
+  return /^[a-z0-9 '&-]+$/.test(term) ? isWordBounded(q, term) : true;
+}
 export function scoreMatch(
   name: string,
   alt: readonly string[],
@@ -44,6 +74,8 @@ export function scoreMatch(
     else if (a.includes(q)) best = Math.max(best, 30);
   }
   if (best === 0) {
+    if (namesPartOf(q, n)) return COMPONENT_SCORE;
+    for (const raw of alt) if (namesPartOf(q, raw.toLowerCase())) return COMPONENT_SCORE;
     for (const raw of cls) {
       const c = raw.toLowerCase();
       if (c && q.includes(c)) return 20;

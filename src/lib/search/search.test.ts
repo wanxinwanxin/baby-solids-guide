@@ -154,4 +154,32 @@ describe("food picker ranking (src/lib/search/rank.ts)", () => {
     expect(rankMatches(allFoods, "   ", pickerTerms)).toHaveLength(0);
     expect(rankMatches(allFoods, "pea", pickerTerms, 3)).toHaveLength(3);
   });
+
+  // The food requests parents actually sent, each a dish made of catalog
+  // foods. Every component must surface so the parent can tap them one by one
+  // instead of adding the dish as a custom food.
+  it("surfaces every catalog food named inside a dish query", () => {
+    const cases: [string, string[]][] = [
+      ["鸡蛋红薯", ["egg", "sweet-potato"]],
+      ["Pork with green beans and sweet potatoes", ["pork", "green-beans", "sweet-potato"]],
+      ["Banana Porridge", ["banana", "oatmeal"]],
+      ["baby porridge", ["rice", "oatmeal"]],
+      ["Egg white", ["egg"]],
+    ];
+    for (const [q, slugs] of cases) {
+      const hits = rankMatches(allFoods, q, pickerTerms, 8).map((f) => f.slug);
+      for (const slug of slugs) expect(hits, `${q} → ${slug}`).toContain(slug);
+    }
+  });
+
+  it("a component hit sits below every direct hit and needs a whole word in Latin script", () => {
+    expect(scoreMatch("Egg", [], "egg white")).toBeLessThan(scoreMatch("Barley", ["pearl barley"], "pea"));
+    expect(scoreMatch("Egg", [], "egg white")).toBeGreaterThan(scoreMatch("Pork liver", [], "猪肝", ["肝"]));
+    expect(scoreMatch("Peas", [], "peanut stew")).toBe(0);
+    expect(scoreMatch("Pea", [], "peanut stew")).toBe(0);
+    expect(scoreMatch("Peas", [], "peas and carrots")).toBe(25);
+    expect(scoreMatch("Sweet potato", [], "pork with sweet potatoes")).toBe(25);
+    // One CJK character is too little to name a food inside a query.
+    expect(scoreMatch("Rice", ["粥"], "小米粥")).toBe(0);
+  });
 });
