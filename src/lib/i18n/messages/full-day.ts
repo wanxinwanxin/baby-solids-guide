@@ -33,19 +33,12 @@ export const fullDayMsgs = {
     en: "Re-suggest the rest of the plan from what {name} actually eats.",
     zh: "根据{name}实际吃过的食物，重新生成剩下的计划。",
   },
-  readHabit: { en: "📖 Read a book to {name}", zh: "📖 给{name}读一本书" },
-  readHabitBody: {
-    en: "A rhyme or a page counts. The Read to baby shelf has some.",
-    zh: "一首童谣或一页书都算。“读给宝宝”里有现成的。",
-  },
-  markRead: { en: "Read it", zh: "已读" },
 
   doneTitle: { en: "Done today", zh: "今天已完成" },
   solidsTitle: { en: "Solids", zh: "辅食" },
   sleepTitle: { en: "Sleep", zh: "睡眠" },
   formulaTitle: { en: "Formula", zh: "配方奶" },
   diapersTitle: { en: "Diapers", zh: "尿布" },
-  readingTitle: { en: "Reading", zh: "读书" },
 
   solidsEaten: { en: "{n} eaten", zh: "已吃 {n} 种" },
   noneYet: { en: "None yet", zh: "还没有" },
@@ -53,7 +46,6 @@ export const fullDayMsgs = {
   diapersCount: { en: "{n} changes", zh: "换了 {n} 次" },
   sleepSoFar: { en: "{dur} so far", zh: "已睡 {dur}" },
   nextWindow: { en: "Next: {a} – {b}", zh: "下次：{a}–{b}" },
-  readDone: { en: "Read today ✓", zh: "今天读过 ✓" },
   activitiesTitle: { en: "Activities", zh: "亲子活动" },
   activitiesCount: { en: "{n} logged", zh: "记了 {n} 次" },
   logActivity: { en: "Log activity", zh: "记录活动" },

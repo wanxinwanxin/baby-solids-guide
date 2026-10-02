@@ -116,7 +116,6 @@ export function FullDayToday({
   const addLog = useGuideStore((s) => s.addLog);
   const wakeAnchors = useSleepStore((s) => s.wakeAnchors);
   const activityLogs = useActiveActivityLogs();
-  const setActivityDone = useGuideStore((s) => s.setActivityDone);
 
   const now = useMemo(() => new Date(), []);
   const today = todayIso();
@@ -173,14 +172,7 @@ export function FullDayToday({
         .slice(0, planSlug ? 3 : 4),
     [picks, eatenToday, planSlug],
   );
-  const readDone = activityLogs.some((a) => a.activity === "read" && a.date === today);
-  // Itemized reads (specific pieces from /read) and other logged activities.
-  const readTitlesToday = activityLogs
-    .filter((a) => a.activity === "read" && a.date === today && a.itemTitle)
-    .map((a) => a.itemTitle as string);
-  const otherActivitiesToday = activityLogs.filter(
-    (a) => a.date === today && a.activity !== "read",
-  );
+  const otherActivitiesToday = activityLogs.filter((a) => a.date === today);
 
   // Sleep today + next window (mirrors the /sleep page logic).
   const open = useMemo(() => openSession(sleepSessions), [sleepSessions]);
@@ -292,7 +284,7 @@ export function FullDayToday({
             body={fmt(t.offPlanRowBody, { name: baby.nickname })}
           />
         )}
-        {!planSlug && toTry.length === 0 && readDone ? (
+        {!planSlug && toTry.length === 0 ? (
           <p className="rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground">
             {t.allCaughtUp}
           </p>
@@ -341,19 +333,6 @@ export function FullDayToday({
                 </div>
               </SwipeToComplete>
             ))}
-            {!readDone && (
-              <SwipeToComplete
-                onComplete={() => setActivityDone(baby.id, "read", today, true)}
-                completeLabel={t.markRead}
-              >
-                <div className="px-4 py-3">
-                  <span className="text-[15px] font-medium">
-                    {fmt(t.readHabit, { name: baby.nickname })}
-                  </span>
-                  <span className="block text-xs text-muted-foreground">{t.readHabitBody}</span>
-                </div>
-              </SwipeToComplete>
-            )}
           </div>
         )}
       </section>
@@ -400,18 +379,6 @@ export function FullDayToday({
             value={diapers.length > 0 ? fmt(t.diapersCount, { n: diapers.length }) : t.noneYet}
             href="/care"
             linkLabel={t.logDiaper}
-          />
-          <StatCard
-            title={t.readingTitle}
-            value={readDone ? t.readDone : t.noneYet}
-            sub={
-              readTitlesToday.length > 0
-                ? readTitlesToday.slice(0, 2).join(" · ") +
-                  (readTitlesToday.length > 2 ? ` +${readTitlesToday.length - 2}` : "")
-                : undefined
-            }
-            href="/read"
-            linkLabel={t.open}
           />
           <StatCard
             title={t.activitiesTitle}

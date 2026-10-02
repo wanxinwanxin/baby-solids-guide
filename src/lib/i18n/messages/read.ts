@@ -9,8 +9,8 @@ export const readMsgs = {
   },
   heading: { en: "Read to your baby", zh: "读给宝宝听" },
   intro: {
-    en: "Babies do not need to understand a word — they need your voice, rhythm, and repetition. A rhyme while the pot simmers counts. Everything here is public domain.",
-    zh: "宝宝不需要听懂——需要的是你的声音、节奏和重复。等饭出锅前念一首就很好。这里的作品都属于公共领域。",
+    en: "This shelf is for the grown-up: learn a rhyme or a poem here, then put the phone down and say it to your baby face to face. Babies need your eyes, your voice, and repetition, not a screen. Everything here is public domain.",
+    zh: "这个书架是给大人用的：在这里学会一首童谣或古诗，然后放下手机，面对面念给宝宝听。宝宝需要的是你的眼神、声音和重复，而不是屏幕。这里的作品都属于公共领域。",
   },
   englishSection: { en: "Rhymes & poems in English", zh: "英文童谣与诗歌" },
   chineseSection: { en: "古诗 · Chinese poems with pinyin", zh: "古诗（带拼音）" },

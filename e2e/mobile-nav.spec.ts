@@ -54,7 +54,7 @@ test.describe("Mobile chrome", () => {
     await bar.getByRole("link", { name: "More", exact: true }).click();
     await page.waitForURL("**/more");
     const main = page.getByRole("main");
-    for (const label of ["Learn", "Allergens", "Insights", "Safety", "Read to baby"]) {
+    for (const label of ["Learn", "Allergens", "Insights", "Safety", "Activities"]) {
       await expect(main.getByRole("link", { name: new RegExp(label) })).toBeVisible();
     }
 
