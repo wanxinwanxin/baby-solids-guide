@@ -71,6 +71,27 @@ export const careMsgs = {
   yesDelete: { en: "Yes, delete", zh: "确认删除" },
   keepEntry: { en: "Keep", zh: "保留" },
 
+  // Bottle history (src/components/FeedHistory.tsx)
+  feedHistoryTitle: { en: "Bottle history", zh: "喂奶历史" },
+  /** {n} complete days, {ml} avg per day, {count} avg bottles, {sips} % of bottles under the sip line. */
+  feedHistorySummary: {
+    en: "Last {n} days: about {ml} ml a day in {count} bottles. {sips}% of bottles were sips.",
+    zh: "最近 {n} 天：每天约 {ml} 毫升，分 {count} 瓶。其中 {sips}% 是小口。",
+  },
+  feedHistoryPerDay: { en: "ml per day", zh: "每天毫升" },
+  feedHistoryTimeline: { en: "When the bottles were", zh: "喂奶时段" },
+  feedHistoryChartAria: { en: "Formula per day, oldest to newest", zh: "每天奶量，从早到近" },
+  /** {ml} total, {n} bottles. */
+  feedHistoryRowStat: { en: "{ml} ml · {n}", zh: "{ml} 毫升 · {n} 瓶" },
+  feedHistoryRowAria: {
+    en: "{date}: {ml} ml in {n} bottles, {sips} of them sips",
+    zh: "{date}：{n} 瓶共 {ml} 毫升，其中 {sips} 瓶是小口",
+  },
+  feedLegendFull: { en: "Full, {ml} ml+", zh: "整瓶，{ml} 毫升以上" },
+  feedLegendSip: { en: "Sip, under {ml} ml", zh: "小口，不到 {ml} 毫升" },
+  feedLegendNight: { en: "Night sleep", zh: "夜间睡眠" },
+  feedLegendWindow: { en: "Plan window", zh: "计划窗口" },
+
   syncNote: {
     en: "With a signed-in family account, these logs stay in step on every member's device.",
     zh: "登录家庭账户后，这些记录会在所有成员的设备间保持同步。",

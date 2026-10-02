@@ -26,6 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { DateTimeField } from "@/components/DateTimeField";
+import { FeedHistory } from "@/components/FeedHistory";
 import { FeedPlanBand } from "@/components/plan/FeedPlanBand";
 import { TimeConfirm } from "@/components/TimeConfirm";
 import { cn } from "@/lib/utils";
@@ -596,6 +597,8 @@ export function CareClient() {
           )}
         </CardContent>
       </Card>
+
+      <FeedHistory />
 
       <Card>
         <CardHeader>
