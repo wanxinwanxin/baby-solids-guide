@@ -15,7 +15,7 @@ import { careMsgs } from "@/lib/i18n/messages/care";
 import { datetimeMsgs } from "@/lib/i18n/messages/datetime";
 import { interventionMsgs } from "@/lib/i18n/messages/intervention";
 import { localIsoDate } from "@/lib/food-utils";
-import { clockOn, morningWake, nearestWindow, nextFeed } from "@/lib/plan/engine";
+import { bottleMl, clockOn, morningWake, nearestWindow, nextFeed } from "@/lib/plan/engine";
 import { dailySleep } from "@/lib/sleep/history";
 import { formatDuration, formatTime } from "@/lib/sleep/model";
 import { newId, useGuideStore } from "@/lib/storage/store";
@@ -325,6 +325,7 @@ export function CareClient() {
   const morningWakeMs = plan ? morningWake(sleepSessions, now, plan.dayStartAt).nightEnd : null;
   const feed = plan ? nextFeed(plan, careLogs, now, morningWakeMs) : null;
 
+
   // Previous days, newest first — bottles, diapers, and sleep in one line
   // per day, which is the "one place" a grandparent actually wants. Sleep
   // minutes come from dailySleep, which clips a midnight-crossing session to
@@ -348,6 +349,31 @@ export function CareClient() {
       .sort((a, b) => b[1].at - a[1].at)
       .slice(0, 30);
   }, [careLogs, sleepSessions, todayKey]);
+
+  // Historical averages over complete days only (today is still being
+  // written), so the number is stable all day and comparable day to day.
+  const averages = useMemo(() => {
+    const days = recentDays.slice(0, 14);
+    if (days.length === 0) return null;
+    let bottles = 0;
+    let ml = 0;
+    let diapers = 0;
+    for (const [, day] of days) {
+      for (const l of day.logs) {
+        if (l.kind === "formula") {
+          bottles += 1;
+          ml += bottleMl(l);
+        } else if (l.kind === "diaper") diapers += 1;
+      }
+    }
+    const n = days.length;
+    return {
+      n,
+      bottles: Math.round((bottles / n) * 10) / 10,
+      ml: Math.round(ml / n),
+      diapers: Math.round((diapers / n) * 10) / 10,
+    };
+  }, [recentDays]);
 
   // Every sleep that touches a given local day, oldest first — the detail
   // behind the one-line sleep total when a day is opened.
@@ -609,6 +635,16 @@ export function CareClient() {
             <p className="text-sm text-muted-foreground">{t.recentEmpty}</p>
           ) : (
             <>
+              {averages && (
+                <p className="text-sm">
+                  {fmt(t.recentAverages, {
+                    n: averages.n,
+                    bottles: averages.bottles,
+                    ml: averages.ml,
+                    diapers: averages.diapers,
+                  })}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground">{t.recentHint}</p>
               <ul className="space-y-1 text-sm">
                 {recentDays.map(([key, day]) => {

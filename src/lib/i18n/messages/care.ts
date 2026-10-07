@@ -54,6 +54,11 @@ export const careMsgs = {
     zh: "点一天，查看当天每一次喝奶、尿布和睡眠，也可以在这里修改。",
   },
   recentEmpty: { en: "Older days appear here as you log.", zh: "记了几天之后，这里会按天汇总。" },
+  /** Averages over the complete days listed below. {n} days, {bottles}/day, {ml}/day, {diapers}/day. */
+  recentAverages: {
+    en: "Average over the last {n} days: {bottles} bottles · {ml} ml · {diapers} diaper changes a day.",
+    zh: "最近 {n} 天平均：每天 {bottles} 瓶 · {ml} 毫升 · 换尿布 {diapers} 次。",
+  },
   daySleepTitle: { en: "Sleep", zh: "睡眠" },
   dayNoCare: { en: "No bottles or diapers logged.", zh: "没有喝奶或尿布记录。" },
 
