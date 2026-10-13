@@ -1,8 +1,11 @@
-import { movementIdeas } from "../../../content/activities";
+import Link from "next/link";
+import { activityIdeas } from "../../../content/activities";
+import { IDEA_AREAS, type IdeaArea, type MovementIdea } from "@/content-schema/activity-ideas";
 import { fmt, msg, type Locale } from "@/lib/i18n/config";
-import { ACTIVITY_EMOJI, ACTIVITY_MSGS, activitiesMsgs } from "@/lib/i18n/messages/activities";
+import { ACTIVITY_EMOJI, IDEA_AREA_MSGS, activitiesMsgs } from "@/lib/i18n/messages/activities";
 import { pick } from "@/lib/i18n/config";
 import { LogItemButton } from "@/components/LogItemButton";
+import { cn } from "@/lib/utils";
 
 /**
  * The movement shelf, rendered on the server so the whole corpus stays out
@@ -18,12 +21,30 @@ import { LogItemButton } from "@/components/LogItemButton";
  * legs do, and grouping on the pair would splinter the shelf into headings
  * with a single idea under each.
  */
-function startAges(): number[] {
-  return [...new Set(movementIdeas.map((i) => i.fromMonths))].sort((a, b) => a - b);
+function startAges(ideas: MovementIdea[]): number[] {
+  return [...new Set(ideas.map((i) => i.fromMonths))].sort((a, b) => a - b);
 }
 
-export function MovementShelf({ locale }: { locale: Locale }) {
+/** Areas in their fixed order, so a mixed age group reads moving → routines. */
+const areaRank = (a: IdeaArea) => IDEA_AREAS.indexOf(a);
+
+/**
+ * The area filter is a set of plain links (`?area=hands`), so it works with
+ * no client JavaScript and the shelf stays a server component.
+ */
+export function MovementShelf({ locale, area }: { locale: Locale; area: IdeaArea | null }) {
   const t = pick(activitiesMsgs, locale);
+  const shown = (area ? activityIdeas.filter((i) => i.area === area) : activityIdeas)
+    .slice()
+    .sort((a, b) => areaRank(a.area) - areaRank(b.area));
+  const chips: { key: IdeaArea | null; label: string; count: number }[] = [
+    { key: null, label: t.areaAll, count: activityIdeas.length },
+    ...IDEA_AREAS.map((a) => ({
+      key: a,
+      label: msg(IDEA_AREA_MSGS[a], locale),
+      count: activityIdeas.filter((i) => i.area === a).length,
+    })),
+  ];
 
   return (
     <section className="space-y-4">
@@ -32,8 +53,31 @@ export function MovementShelf({ locale }: { locale: Locale }) {
         <p className="text-sm text-muted-foreground">{t.movementIntro}</p>
       </div>
 
-      {startAges().map((from) => {
-        const ideas = movementIdeas.filter((i) => i.fromMonths === from);
+      <nav aria-label={t.areaFilterLabel} className="flex flex-wrap gap-2">
+        {chips.map((c) => {
+          const active = c.key === area;
+          return (
+            <Link
+              key={c.key ?? "all"}
+              href={c.key ? `/activities?area=${c.key}` : "/activities"}
+              scroll={false}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors",
+                active ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/60",
+              )}
+            >
+              {c.label}
+              <span className={cn("font-data text-[11px]", active ? "opacity-80" : "text-muted-foreground")}>
+                {c.count}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
+
+      {startAges(shown).map((from) => {
+        const ideas = shown.filter((i) => i.fromMonths === from);
         return (
           <section key={from} className="space-y-2">
             <h3 className="font-data text-[12px] uppercase tracking-[0.12em] text-muted-foreground">
@@ -48,9 +92,12 @@ export function MovementShelf({ locale }: { locale: Locale }) {
                       <span aria-hidden="true">{ACTIVITY_EMOJI[idea.activity]}</span>{" "}
                       {msg(idea.title, locale)}
                     </span>
-                    <span className="font-data text-[11px] text-muted-foreground">
-                      {msg(ACTIVITY_MSGS[idea.activity], locale)}
-                    </span>
+                    {/* With a filter on, every card has the same area, so the label is noise. */}
+                    {!area && (
+                      <span className="font-data text-[11px] text-muted-foreground">
+                        {msg(IDEA_AREA_MSGS[idea.area], locale)}
+                      </span>
+                    )}
                   </summary>
                   <div className="mt-3 space-y-3 pb-1.5">
                     <ol className="list-decimal space-y-1.5 pl-5 text-sm">

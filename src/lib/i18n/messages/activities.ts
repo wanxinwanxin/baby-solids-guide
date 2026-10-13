@@ -1,3 +1,4 @@
+import type { IdeaArea } from "@/content-schema/activity-ideas";
 import type { ActivityId } from "@/lib/storage/types";
 import type { Msg, Msgs } from "../config";
 
@@ -29,9 +30,11 @@ export const activitiesMsgs = {
   },
   movementTitle: { en: "Things to do with the baby", zh: "可以和宝宝做的事" },
   movementIntro: {
-    en: "Ideas grouped by the age they usually start working, youngest first. Open one for the steps, the reason it helps, and the sign to stop. Every idea logs with one tap, the same way the read shelf does.",
-    zh: "按通常开始有效的月龄分组，从小月龄排起。展开一条就能看到步骤、它为什么有用，以及该停下来的信号。每一条都能一键记录，和“读给宝宝”书架一样。",
+    en: "Ideas grouped by the age they usually start working, youngest first. Pick an area to see only those ideas. Open one for the steps, the reason it helps, and the sign to stop. Every idea logs with one tap, the same way the read shelf does.",
+    zh: "按通常开始有效的月龄分组，从小月龄排起。选一个方面，就只看这一类。展开一条就能看到步骤、它为什么有用，以及该停下来的信号。每一条都能一键记录，和“读给宝宝”书架一样。",
   },
+  areaFilterLabel: { en: "Show ideas for", zh: "按方面筛选" },
+  areaAll: { en: "All", zh: "全部" },
   movementFromAge: { en: "From {from} months", zh: "{from} 个月起" },
   /** The 0-month group. "From 0 months" and "0 个月起" both read as machine output. */
   movementFromBirth: { en: "From birth", zh: "出生起" },
@@ -54,6 +57,17 @@ export const ACTIVITY_MSGS: Record<ActivityId, Msg> = {
   "tummy-time": { en: "Tummy time", zh: "趴卧练习" },
   outdoors: { en: "Outdoor time", zh: "户外活动" },
   play: { en: "Play & learning", zh: "游戏早教" },
+};
+
+/** Display names for the idea areas (IDEA_AREAS), the shelf's filter. */
+export const IDEA_AREA_MSGS: Record<IdeaArea, Msg> = {
+  moving: { en: "Moving", zh: "大运动" },
+  hands: { en: "Hands", zh: "精细动作" },
+  senses: { en: "Senses", zh: "感官" },
+  thinking: { en: "Thinking", zh: "认知" },
+  talking: { en: "Talking", zh: "语言" },
+  people: { en: "People & feelings", zh: "社交与情绪" },
+  routines: { en: "Daily routines", zh: "生活自理" },
 };
 
 /** Locale-independent icons for the same registry. */

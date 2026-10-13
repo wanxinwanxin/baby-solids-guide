@@ -109,7 +109,9 @@ const FEATURES: Feature[] = [
     keywords: [
       "sing", "singing", "exercise", "tummy time", "outdoors", "play",
       "movement", "crawling", "rolling", "cruising", "milestones", "what to do with baby",
+      "fine motor", "sensory play", "object permanence", "pincer grasp", "baby games", "peekaboo",
       "早教", "唱歌", "运动", "户外", "活动", "趴卧", "大运动", "爬", "翻身", "和宝宝玩什么",
+      "精细动作", "感官", "认知", "语言", "社交", "亲子游戏", "早教游戏",
     ],
   },
   {

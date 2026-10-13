@@ -92,3 +92,21 @@ test("the movement shelf reads for a visitor with no baby yet", async ({ page })
   await expect(page.getByText("Tummy time on your chest")).toBeVisible();
   await expect(page.getByRole("button", { name: /Did this today/ })).toHaveCount(0);
 });
+
+test("the area filter narrows the shelf to one area", async ({ page }) => {
+  await page.goto("/activities");
+  const filter = page.getByRole("navigation", { name: "Show ideas for" });
+  await expect(filter.getByRole("link", { name: /^All/ })).toHaveAttribute("aria-current", "page");
+
+  await filter.getByRole("link", { name: /^Hands/ }).click();
+  // The URL changes when the navigation commits, which in dev waits for
+  // the route to compile on its first visit.
+  await expect(page).toHaveURL(/\/activities\?area=hands$/, { timeout: 30_000 });
+  await expect(filter.getByRole("link", { name: /^Hands/ })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByText("Pass it hand to hand")).toBeVisible();
+  await expect(page.getByText("Tummy time on your chest")).toHaveCount(0);
+
+  // "All" brings the whole shelf back.
+  await filter.getByRole("link", { name: /^All/ }).click();
+  await expect(page.getByText("Tummy time on your chest")).toBeVisible();
+});

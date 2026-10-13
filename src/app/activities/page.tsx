@@ -6,6 +6,7 @@ import { activitiesMsgs } from "@/lib/i18n/messages/activities";
 import { ActivityHistory } from "./ActivityHistory";
 import { ActivityQuickLog } from "./ActivityQuickLog";
 import { MovementShelf } from "./MovementShelf";
+import { IDEA_AREAS, type IdeaArea } from "@/content-schema/activity-ideas";
 
 /**
  * Activities: one-tap logging for development and education activities —
@@ -32,9 +33,16 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function ActivitiesPage() {
+export default async function ActivitiesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const locale = await getLocale();
   const t = pick(activitiesMsgs, locale);
+  // An unknown or repeated ?area= value shows the whole shelf.
+  const raw = (await searchParams).area;
+  const area = typeof raw === "string" && (IDEA_AREAS as readonly string[]).includes(raw) ? (raw as IdeaArea) : null;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -49,7 +57,7 @@ export default async function ActivitiesPage() {
       </div>
 
       <ActivityQuickLog />
-      <MovementShelf locale={locale} />
+      <MovementShelf locale={locale} area={area} />
       <ActivityHistory />
     </div>
   );

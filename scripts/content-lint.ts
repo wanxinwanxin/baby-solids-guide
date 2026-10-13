@@ -249,7 +249,7 @@ async function main() {
     "../src/content-schema/activity-ideas"
   );
   const { ACTIVITY_IDS } = await import("../src/lib/storage/types");
-  const { movementIdeas } = await import("../content/activities");
+  const { activityIdeas: movementIdeas } = await import("../content/activities");
 
   // A movement idea logs as one of ACTIVITY_IDS. If an id here is absent
   // from that registry, a tap writes a row the UI cannot label.
@@ -299,8 +299,15 @@ async function main() {
   }
   if (movementIdeas.length < MOVEMENT_MIN) {
     errors.push(
-      `corpus: only ${movementIdeas.length} movement ideas (need \u2265${MOVEMENT_MIN})`,
+      `corpus: only ${movementIdeas.length} activity ideas (need \u2265${MOVEMENT_MIN})`,
     );
+  }
+  // The shelf filters on area. An area chip that opens on one or two ideas
+  // looks like content went missing.
+  const { IDEA_AREAS } = await import("../src/content-schema/activity-ideas");
+  for (const area of IDEA_AREAS) {
+    const n = movementIdeas.filter((i) => i.area === area).length;
+    if (n < 3) errors.push(`corpus: idea area "${area}" has only ${n} idea(s) (need \u22653)`);
   }
   // The shelf prints one heading per starting age, so a starting age with a
   // single idea renders as a heading with one row under it.
@@ -423,7 +430,7 @@ async function main() {
   }
 
   console.log(
-    `content-lint: ${allFoods.length} foods, ${allergensCovered.size}/9 allergens, ${ironRichCount} iron-rich, ${allGuides.length} guides, ${allRecipes.length} recipes (${ironPairingCount} iron-pairing), ${allFamilyRecipes.length} family recipes, ${movementIdeas.length} movement ideas, zh overlays: ${zhCounts.foods} foods / ${zhCounts.recipes} recipes / ${zhCounts.guides} guides / ${zhCounts.allergens} allergens.`,
+    `content-lint: ${allFoods.length} foods, ${allergensCovered.size}/9 allergens, ${ironRichCount} iron-rich, ${allGuides.length} guides, ${allRecipes.length} recipes (${ironPairingCount} iron-pairing), ${allFamilyRecipes.length} family recipes, ${movementIdeas.length} activity ideas, zh overlays: ${zhCounts.foods} foods / ${zhCounts.recipes} recipes / ${zhCounts.guides} guides / ${zhCounts.allergens} allergens.`,
   );
   finish(errors);
 }

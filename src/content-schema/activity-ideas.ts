@@ -25,14 +25,23 @@ export type Bilingual = z.infer<typeof bilingualSchema>;
  * (src/lib/storage/types.ts), so one tap on an idea lands in the same
  * per-day counts as the quick-log buttons above it.
  */
-export const MOVEMENT_ACTIVITIES = ["tummy-time", "exercise", "play", "outdoors"] as const;
+export const MOVEMENT_ACTIVITIES = ["tummy-time", "exercise", "play", "outdoors", "sing", "music"] as const;
 export type MovementActivity = (typeof MOVEMENT_ACTIVITIES)[number];
+
+/**
+ * The area of development that an idea works on. The shelf filters on this
+ * field, so a parent can ask for "something for the hands" and get only
+ * those ideas. Each idea has exactly one area: the main one it trains.
+ */
+export const IDEA_AREAS = ["moving", "hands", "senses", "thinking", "talking", "people", "routines"] as const;
+export type IdeaArea = (typeof IDEA_AREAS)[number];
 
 export const movementIdeaSchema = z
   .object({
     slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "kebab-case slug"),
     title: bilingualSchema,
     activity: z.enum(MOVEMENT_ACTIVITIES),
+    area: z.enum(IDEA_AREAS),
     /** Age window in months. `fromMonths` is inclusive, `toMonths` is not. */
     fromMonths: z.number().int().min(0).max(36),
     toMonths: z.number().int().min(1).max(36),

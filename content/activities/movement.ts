@@ -17,6 +17,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "chest-tummy-time",
     title: { en: "Tummy time on your chest", zh: "趴在你胸口" },
     activity: "tummy-time",
+    area: "moving",
     fromMonths: 0,
     toMonths: 4,
     steps: [
@@ -37,6 +38,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "floor-tummy-time-short",
     title: { en: "First tummy time on the floor", zh: "第一次在地上趴" },
     activity: "tummy-time",
+    area: "moving",
     fromMonths: 0,
     toMonths: 5,
     steps: [
@@ -57,6 +59,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "track-a-face",
     title: { en: "Follow my face", zh: "追着脸看" },
     activity: "play",
+    area: "senses",
     fromMonths: 0,
     toMonths: 4,
     steps: [
@@ -77,6 +80,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "bicycle-legs",
     title: { en: "Bicycle legs", zh: "蹬自行车" },
     activity: "exercise",
+    area: "moving",
     fromMonths: 0,
     toMonths: 7,
     steps: [
@@ -97,6 +101,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "side-lying-settle",
     title: { en: "Side-lying play", zh: "侧躺着玩" },
     activity: "play",
+    area: "hands",
     fromMonths: 0,
     toMonths: 5,
     steps: [
@@ -119,6 +124,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "propped-forearm-push",
     title: { en: "Push up on the forearms", zh: "用小臂撑起来" },
     activity: "tummy-time",
+    area: "moving",
     fromMonths: 3,
     toMonths: 8,
     steps: [
@@ -139,6 +145,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "reach-for-a-dangling-toy",
     title: { en: "Reach for what you want", zh: "伸手去拿" },
     activity: "play",
+    area: "hands",
     fromMonths: 3,
     toMonths: 8,
     steps: [
@@ -159,6 +166,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "assisted-rolling",
     title: { en: "Roll with a little help", zh: "帮一把翻身" },
     activity: "exercise",
+    area: "moving",
     fromMonths: 3,
     toMonths: 8,
     steps: [
@@ -179,6 +187,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "find-your-feet",
     title: { en: "Find your own feet", zh: "找到自己的脚" },
     activity: "exercise",
+    area: "moving",
     fromMonths: 4,
     toMonths: 9,
     steps: [
@@ -199,6 +208,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "supported-sitting",
     title: { en: "Sit inside your lap", zh: "坐在你腿中间" },
     activity: "exercise",
+    area: "moving",
     fromMonths: 4,
     toMonths: 9,
     steps: [
@@ -215,12 +225,101 @@ export const movementIdeas: MovementIdea[] = [
       zh: "你的腿就是两边的围挡，倒下来也是倒在你身上。不要用那种在宝宝还不会自己坐之前就把他撑直的坐垫和座椅。",
     },
   },
+  {
+    slug: "kick-a-target",
+    title: { en: "Kick at a target", zh: "小脚踢一踢" },
+    activity: "exercise",
+    area: "moving",
+    fromMonths: 4,
+    toMonths: 8,
+    steps: [
+      { en: "Lay the baby on their back on a firm mat.", zh: "让宝宝仰卧在硬一点的垫子上。" },
+      { en: "Hold a soft, crinkly toy or your flat palm at their feet, close enough to reach with a kick.", zh: "把一个软软的、一碰就沙沙响的玩具，或者你摊平的手掌，放在宝宝脚边，近到他一蹬就能碰到。" },
+      { en: "Each time a foot lands, let the toy crinkle, then wait for the next kick.", zh: "脚每碰到一次，就让玩具响一下，然后等他踢下一脚。" },
+      { en: "Move the target over to the other foot, so both legs get turns.", zh: "再把目标挪到另一只脚那边，两条腿轮流来。" },
+    ],
+    why: {
+      en: "A kick at something is a kick with a purpose. Lifting and aiming a leg works the stomach and hip muscles that rolling also uses, and the crinkle tells the baby that their own foot made the sound.",
+      zh: "冲着一个东西踢，就是有目的的踢。抬腿、瞄准，练的是腹部和髋部的肌肉，翻身用的也是这些肌肉。而那一声沙沙响会告诉宝宝：声音是我自己的脚弄出来的。",
+    },
+    watchFor: {
+      en: "Keep the target in your hand, never tied or hung up, and stop when the baby turns away. Take down crib mobiles and anything strung across a crib or play gym by five months, or as soon as the baby pushes up on hands and knees if that comes first — a baby who can reach a hanging toy can get tangled in it.",
+      zh: "目标一直拿在你手里，不要绑起来或吊起来，宝宝扭头不想玩了就停。挂在婴儿床上的床铃，以及横在婴儿床或健身架上的吊挂玩具，最晚五个月就要拿掉；如果宝宝更早就能用手和膝盖把身体撑起来，那就更早拿掉——够得着的吊挂物，宝宝可能会被缠住。",
+    },
+  },
+  {
+    slug: "stand-and-bounce-on-your-lap",
+    title: { en: "Stand and bounce on your lap", zh: "在你腿上蹦一蹦" },
+    activity: "exercise",
+    area: "moving",
+    fromMonths: 4,
+    toMonths: 9,
+    steps: [
+      { en: "Sit down and hold the baby upright facing you, your hands around the chest under the arms.", zh: "你坐好，让宝宝面朝你立起来，两只手从他腋下环住胸口。" },
+      { en: "Lower them until both feet rest flat on your thighs.", zh: "慢慢把他放低，让两只脚平踩在你的大腿上。" },
+      { en: "Let them push down and bounce at their own pace.", zh: "让他自己往下蹬、往上蹦，快慢由他。" },
+      { en: "Sit them on your lap as soon as the knees fold.", zh: "膝盖一软下去，就让他坐到你腿上。" },
+    ],
+    why: {
+      en: "Many babies this age push down hard through their feet when held standing, and bouncing turns that push into a game. The hips, knees, and ankles all work together, while you carry most of the weight.",
+      zh: "这个月龄的宝宝被抱着站的时候，很多都会用脚使劲往下蹬，蹦一蹦就把这股劲变成了游戏。髋、膝、踝一起出力，而大部分体重还是由你托着。",
+    },
+    watchFor: {
+      en: "Start only once the head is steady when held upright. Hold the trunk, never the hands or wrists — a sudden pull on a baby's arm can slip the elbow out of place, which is called nursemaid's elbow. Keep each round short, let the baby set the bounce, and sit them down when the legs fold.",
+      zh: "宝宝被竖着抱时头能稳住了，再开始玩。扶住躯干，千万不要拉着手或手腕——猛地一拉宝宝的胳膊，可能造成肘关节半脱位（也叫“牵拉肘”）。每次时间短一点，蹦多蹦少由宝宝决定，腿一软就让他坐下。",
+    },
+  },
+  {
+    slug: "rock-on-a-big-ball",
+    title: { en: "Rock on a big ball", zh: "趴在大球上摇一摇" },
+    activity: "exercise",
+    area: "moving",
+    fromMonths: 5,
+    toMonths: 10,
+    steps: [
+      { en: "Lay the baby tummy-down on a fully inflated exercise ball.", zh: "让宝宝趴在一个充足了气的健身球上。" },
+      { en: "Hold the hips or the trunk with both hands.", zh: "你两只手扶住他的髋部或者躯干。" },
+      { en: "Roll the ball slowly forward a little, so the baby props up on their arms.", zh: "把球慢慢往前滚一点，让宝宝用手臂撑起来。" },
+      { en: "Roll it slowly back again, and keep every rock small.", zh: "再慢慢滚回来，每一下的幅度都要小。" },
+    ],
+    why: {
+      en: "As the ball moves, the baby keeps adjusting to stay up: the head lifts, the arms push, and the back works. That steady, small correcting is balance practice that a flat floor cannot give.",
+      zh: "球一动，宝宝就得不停地调整自己才能稳住：抬头、手臂撑、后背出力。这种持续的小幅调整，就是平地给不了的平衡练习。",
+    },
+    watchFor: {
+      en: "Keep both hands on the baby the whole time, and roll slowly. Never tip the ball so far that the head points down toward the floor. Stop if the baby cries or the body goes floppy, and keep the ball on a clear floor with nothing hard around it.",
+      zh: "全程两只手都扶着宝宝，滚得要慢。不要把球滚到宝宝头朝下冲着地面的程度。宝宝一哭，或者身体软下去，就停。球要放在空旷的地面上，周围不要有硬东西。",
+    },
+  },
+  {
+    slug: "pivot-on-the-tummy",
+    title: { en: "Turn in a circle on the tummy", zh: "趴着转圈圈" },
+    activity: "tummy-time",
+    area: "moving",
+    fromMonths: 5,
+    toMonths: 8,
+    steps: [
+      { en: "Put the baby on their tummy on a firm mat on the floor.", zh: "让宝宝趴在地上的硬垫子上。" },
+      { en: "Show them a toy in front, then move it slowly to one side, just out of reach.", zh: "先在他面前拿出一个玩具，再慢慢移到一侧，放在刚好够不着的地方。" },
+      { en: "Wait while they push with the arms and legs to turn their body after it.", zh: "等着他用手和脚推着身体，转过去追玩具。" },
+      { en: "Keep the toy moving around in a slow arc, then go back the other way.", zh: "让玩具沿着弧线慢慢往前走，再往反方向转回来。" },
+    ],
+    why: {
+      en: "Turning on the belly means shifting weight onto one arm and reaching with the other. It is often the first way a baby gets to something by themselves, and it builds the shoulder and trunk control that crawling needs.",
+      zh: "趴着原地转圈，要把重心移到一只手臂上，再用另一只手去够。这往往是宝宝第一次靠自己去拿到想要的东西，练的也正是以后爬需要的肩膀和躯干控制。",
+    },
+    watchFor: {
+      en: "Tummy time is only for an awake, watched baby, so stay on the floor beside them. Stop when they put their face down or start to fuss, and put them on their back in the crib for any sleep.",
+      zh: "趴卧只能在宝宝清醒、有人看着的时候进行，你要待在旁边的地上。宝宝把脸埋下去或者开始闹，就停。一要睡觉，就仰面放回床上。",
+    },
+  },
 
   // ——— 6–10 months: sitting steady, and getting across the room ———
   {
     slug: "sitting-reach-across",
     title: { en: "Reach across while sitting", zh: "坐着够远处" },
     activity: "exercise",
+    area: "moving",
     fromMonths: 6,
     toMonths: 11,
     steps: [
@@ -238,9 +337,32 @@ export const movementIdeas: MovementIdea[] = [
     },
   },
   {
+    slug: "rock-on-hands-and-knees",
+    title: { en: "Rock on hands and knees", zh: "手膝撑着前后晃" },
+    activity: "exercise",
+    area: "moving",
+    fromMonths: 6,
+    toMonths: 10,
+    steps: [
+      { en: "On a firm floor, lay the baby tummy-down over a rolled towel or across your leg.", zh: "在硬地面上，让宝宝趴在一条卷起来的毛巾上，或者横趴在你的腿上。" },
+      { en: "Bring the knees up under the hips and the hands under the shoulders.", zh: "把他的膝盖收到髋部下面，两只手放到肩膀下面。" },
+      { en: "Let them rock forward and back on their own.", zh: "让他自己前后晃。" },
+      { en: "As they get steadier, take the towel away and keep a hand ready under the tummy.", zh: "等他稳一点了，就把毛巾拿掉，你的手放在他肚子下面，随时准备托一把。" },
+    ],
+    why: {
+      en: "Many babies rock on hands and knees for a while just before they crawl. It puts weight through the shoulders, wrists, and hips, and lets the baby feel how far forward they can lean before a hand has to move.",
+      zh: "很多宝宝在会爬之前，都会先手膝撑着前后晃一阵子。这个动作让肩、手腕和髋都承担体重，也让宝宝感觉到：身体往前倾到什么程度，就得挪一只手了。",
+    },
+    watchFor: {
+      en: "Keep a hand ready under the tummy, and stop when the arms buckle or the baby lowers to the floor. Do this on a firm floor, never on a bed or a sofa, with no furniture edges close by.",
+      zh: "手一直在宝宝肚子下面准备着，手臂一撑不住，或者他自己趴下去了，就停。要在硬地面上做，不要在床上或沙发上，旁边也不要有家具的边角。",
+    },
+  },
+  {
     slug: "crawl-to-a-target",
     title: { en: "Crawl to something you want", zh: "爬去拿想要的东西" },
     activity: "exercise",
+    area: "moving",
     fromMonths: 6,
     toMonths: 12,
     steps: [
@@ -261,6 +383,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "pass-it-hand-to-hand",
     title: { en: "Pass it hand to hand", zh: "两手倒着拿" },
     activity: "play",
+    area: "hands",
     fromMonths: 6,
     toMonths: 11,
     steps: [
@@ -281,6 +404,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "peekaboo-under-a-cloth",
     title: { en: "Peekaboo under a cloth", zh: "盖布躲猫猫" },
     activity: "play",
+    area: "thinking",
     fromMonths: 6,
     toMonths: 13,
     steps: [
@@ -301,6 +425,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "blanket-on-the-grass",
     title: { en: "A blanket on the grass", zh: "草地上铺块毯子" },
     activity: "outdoors",
+    area: "senses",
     fromMonths: 6,
     toMonths: 15,
     steps: [
@@ -317,12 +442,77 @@ export const movementIdeas: MovementIdea[] = [
       zh: "六个月以下的宝宝要避开直射阳光，用阴凉而不是防晒霜。先检查地面有没有烟头、玻璃，以及小到能进嘴的东西。",
     },
   },
+  {
+    slug: "side-to-sit",
+    title: { en: "From lying on the side to sitting", zh: "从侧躺到坐起来" },
+    activity: "exercise",
+    area: "moving",
+    fromMonths: 7,
+    toMonths: 11,
+    steps: [
+      { en: "Lay the baby on one side on the floor.", zh: "让宝宝侧躺在地上。" },
+      { en: "Put one hand on the top hip and the other on the top shoulder.", zh: "你一只手放在他上面那侧的髋部，另一只手放在上面那侧的肩膀上。" },
+      { en: "Help them push up through the lower arm, first onto the elbow, then onto the hand, until they sit.", zh: "帮他用下面那只胳膊往上撑，先撑到手肘，再撑到手掌，一直坐起来。" },
+      { en: "Next time, start from the other side.", zh: "下一次换另一侧开始。" },
+    ],
+    why: {
+      en: "Many babies first sit up on their own this way: from the side, pushing up through one arm. Knowing the route lets them get into sitting without help, which is worth more than being put there.",
+      zh: "很多宝宝第一次自己坐起来，走的就是这条路：从侧面，用一只胳膊撑起来。学会了这条路，宝宝就能不靠人自己坐起来，这比被大人摆成坐姿有用得多。",
+    },
+    watchFor: {
+      en: "Guide at the hip and the shoulder, and never pull the baby up by the hands or wrists. Clear a soft space around them first, because a new sitter often tips straight over to the other side.",
+      zh: "只在髋部和肩膀引导，不要拉着手或手腕把宝宝拽起来。先在周围清出一块软的空地，因为刚学会坐起来的宝宝，常常会直接往另一边倒。",
+    },
+  },
+  {
+    slug: "two-hands-busy-sitting",
+    title: { en: "Sit with both hands busy", zh: "两手抱着玩具坐" },
+    activity: "play",
+    area: "moving",
+    fromMonths: 7,
+    toMonths: 12,
+    steps: [
+      { en: "Sit the baby on the floor with a cushion behind them.", zh: "让宝宝坐在地上，背后放一个靠垫。" },
+      { en: "Hand them a toy big enough to need both hands, like a soft ball or a large stacking cup.", zh: "递给他一个得用两只手才拿得住的玩具，比如软球或者大号的叠叠杯。" },
+      { en: "Let them hold it, turn it, and bang it while they stay sitting.", zh: "让他抱着、转着、敲着玩，同时自己坐稳。" },
+    ],
+    why: {
+      en: "With both hands on a toy, the baby cannot prop on a hand to stay up, so the balance has to come from the trunk. This is the step from sitting with a hand on the floor to sitting with both hands free.",
+      zh: "两只手都抱着玩具，就没法用手撑地，平衡只能靠躯干自己。从“一只手撑着才能坐”到“两只手空出来也能坐”，靠的就是这一步。",
+    },
+    watchFor: {
+      en: "Stay within arm's reach, and keep a cushion behind them until sitting is steady. A slow tip to one side is normal and part of the practice, but a fast fall backward is the one to catch.",
+      zh: "人在伸手能碰到的距离，坐稳之前背后一直放着靠垫。慢慢往一边歪是正常的，也是练习的一部分，要接住的是突然往后倒。",
+    },
+  },
+  {
+    slug: "crawl-through-a-tunnel",
+    title: { en: "Crawl through a tunnel", zh: "钻山洞" },
+    activity: "exercise",
+    area: "moving",
+    fromMonths: 8,
+    toMonths: 14,
+    steps: [
+      { en: "Open both ends of a large cardboard box, or drape a blanket over two chairs.", zh: "找一个大纸箱，把两头都打开，或者把一条毯子搭在两把椅子上。" },
+      { en: "Kneel at the far end, where the baby can see your face.", zh: "你跪在另一头，让宝宝能看见你的脸。" },
+      { en: "Call them through to you, and cheer when they come out.", zh: "叫他爬过来，钻出来的时候为他欢呼。" },
+    ],
+    why: {
+      en: "Crawling into a small space asks the baby to keep the head low, feel where the sides are, and keep going toward you when the light changes. It also turns crawling practice into a game they will ask for again.",
+      zh: "钻进一个小空间，宝宝要低着头，感觉两边在哪里，光线变暗了也还要继续朝你爬。这也把练爬变成了一个他会一遍遍要求再来的游戏。",
+    },
+    watchFor: {
+      en: "Pull out every staple and strip of tape first, and keep both ends open so you can see the baby's face the whole time. Never close a baby inside a box, keep plastic bags and packing material away, and check that the chairs cannot tip when the blanket is pulled.",
+      zh: "先把订书钉和胶带全部清掉，两头都要一直敞开，让你随时能看见宝宝的脸。绝不能把宝宝关在箱子里，塑料袋和包装材料都要拿开。如果用椅子，要确认毯子被拉的时候椅子不会倒。",
+    },
+  },
 
   // ——— 9–13 months: up onto the feet ———
   {
     slug: "pull-to-stand-at-the-couch",
     title: { en: "Pull up at the couch", zh: "扶着沙发站起来" },
     activity: "exercise",
+    area: "moving",
     fromMonths: 9,
     toMonths: 15,
     steps: [
@@ -343,6 +533,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "cruise-along-the-couch",
     title: { en: "Cruise along the couch", zh: "扶着沙发横着走" },
     activity: "exercise",
+    area: "moving",
     fromMonths: 9,
     toMonths: 16,
     steps: [
@@ -363,6 +554,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "push-a-weighted-box",
     title: { en: "Push a loaded box", zh: "推装了东西的箱子" },
     activity: "exercise",
+    area: "moving",
     fromMonths: 9,
     toMonths: 16,
     steps: [
@@ -383,6 +575,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "drop-it-in-the-bucket",
     title: { en: "Drop it in the bucket", zh: "扔进桶里" },
     activity: "play",
+    area: "hands",
     fromMonths: 9,
     toMonths: 16,
     steps: [
@@ -403,6 +596,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "cushion-hill-climb",
     title: { en: "Climb the cushion hill", zh: "爬靠垫小山" },
     activity: "exercise",
+    area: "moving",
     fromMonths: 9,
     toMonths: 18,
     steps: [
@@ -425,6 +619,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "carry-and-deliver",
     title: { en: "Carry it to someone", zh: "拿给别人" },
     activity: "exercise",
+    area: "moving",
     fromMonths: 12,
     toMonths: 20,
     steps: [
@@ -445,6 +640,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "walk-on-uneven-ground",
     title: { en: "Walk on uneven ground", zh: "在不平的地面上走" },
     activity: "outdoors",
+    area: "moving",
     fromMonths: 12,
     toMonths: 24,
     steps: [
@@ -465,6 +661,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "stair-practice-on-all-fours",
     title: { en: "Stairs on all fours", zh: "手脚并用上楼梯" },
     activity: "exercise",
+    area: "moving",
     fromMonths: 12,
     toMonths: 22,
     steps: [
@@ -485,6 +682,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "squat-to-pick-up",
     title: { en: "Squat down and stand back up", zh: "蹲下再站起来" },
     activity: "exercise",
+    area: "moving",
     fromMonths: 12,
     toMonths: 24,
     steps: [
@@ -507,6 +705,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "kick-a-ball",
     title: { en: "Kick a ball", zh: "踢球" },
     activity: "exercise",
+    area: "moving",
     fromMonths: 18,
     toMonths: 30,
     steps: [
@@ -527,6 +726,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "animal-walks",
     title: { en: "Walk like animals", zh: "学动物走" },
     activity: "exercise",
+    area: "moving",
     fromMonths: 18,
     toMonths: 30,
     steps: [
@@ -547,6 +747,7 @@ export const movementIdeas: MovementIdea[] = [
     slug: "dance-and-stop",
     title: { en: "Dance and stop", zh: "跳舞和停住" },
     activity: "play",
+    area: "moving",
     fromMonths: 18,
     toMonths: 30,
     steps: [

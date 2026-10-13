@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { movementIdeas } from "./index";
-import { MOVEMENT_ACTIVITIES } from "@/content-schema/activity-ideas";
+import { activityIdeas as movementIdeas } from "./index";
+import { IDEA_AREAS, MOVEMENT_ACTIVITIES } from "@/content-schema/activity-ideas";
 import { ACTIVITY_IDS } from "@/lib/storage/types";
 
 /**
@@ -38,6 +38,13 @@ describe("movement ideas", () => {
     }
     for (const [from, n] of byStart) {
       expect(n, `${from}m`).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it("gives every area on the filter at least three ideas", () => {
+    // The shelf filters on area. A chip that opens on one idea looks broken.
+    for (const area of IDEA_AREAS) {
+      expect(movementIdeas.filter((i) => i.area === area).length, area).toBeGreaterThanOrEqual(3);
     }
   });
 
