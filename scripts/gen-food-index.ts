@@ -7,8 +7,8 @@ import path from "node:path";
 
 const FOODS_DIR = path.join(process.cwd(), "content", "foods");
 
-// search-terms.ts is a generated sibling (not a food) — never import it as one.
-const NON_FOOD = new Set(["index.ts", "search-terms.ts"]);
+// search-terms.ts and search-classes.ts are search data (not foods) — never import them as foods.
+const NON_FOOD = new Set(["index.ts", "search-terms.ts", "search-classes.ts"]);
 const files = fs
   .readdirSync(FOODS_DIR)
   .filter((f) => f.endsWith(".ts") && !NON_FOOD.has(f))
