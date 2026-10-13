@@ -77,6 +77,7 @@ import lentils from "./lentils";
 import limaBeans from "./lima-beans";
 import liver from "./liver";
 import lychee from "./lychee";
+import macadamia from "./macadamia";
 import mango from "./mango";
 import millet from "./millet";
 import mint from "./mint";
@@ -105,6 +106,7 @@ import pear from "./pear";
 import peas from "./peas";
 import pecan from "./pecan";
 import persimmon from "./persimmon";
+import pineNut from "./pine-nut";
 import pineapple from "./pineapple";
 import pintoBeans from "./pinto-beans";
 import pistachio from "./pistachio";
@@ -237,6 +239,7 @@ export const ZH_FOODS: Record<string, FoodL10n> = {
   [limaBeans.slug]: limaBeans,
   [liver.slug]: liver,
   [lychee.slug]: lychee,
+  [macadamia.slug]: macadamia,
   [mango.slug]: mango,
   [millet.slug]: millet,
   [mint.slug]: mint,
@@ -265,6 +268,7 @@ export const ZH_FOODS: Record<string, FoodL10n> = {
   [peas.slug]: peas,
   [pecan.slug]: pecan,
   [persimmon.slug]: persimmon,
+  [pineNut.slug]: pineNut,
   [pineapple.slug]: pineapple,
   [pintoBeans.slug]: pintoBeans,
   [pistachio.slug]: pistachio,
