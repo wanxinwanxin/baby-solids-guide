@@ -137,6 +137,11 @@ export const sleepMsgs = {
     en: "{date}: {dur} of sleep across {n} sleeps",
     zh: "{date}：共睡 {dur}，分 {n} 次",
   },
+  historyEditHint: {
+    en: "Tap a day to see each sleep — and to fix one.",
+    zh: "点一天，查看当天每一次睡眠，也可以在这里修改。",
+  },
+  historyDayToggle: { en: "Sleeps on {date}", zh: "{date}的睡眠" },
   legendNap: { en: "Nap", zh: "小睡" },
   legendNight: { en: "Night", zh: "夜间" },
 

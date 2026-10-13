@@ -102,6 +102,32 @@ test("sleep history shows per-day totals and a when-baby-slept timeline", async 
   await page.screenshot({ path: "test-results/sleep-history.png", fullPage: true });
 });
 
+test("a past day in the sleep history opens to its sleeps, and one can be fixed", async ({ page }) => {
+  await completeOnboarding(page);
+  await seedSleepHistory(page);
+  await page.goto("/sleep");
+
+  await expect(page.getByText("Tap a day to see each sleep — and to fix one.")).toBeVisible();
+  // Rows run newest first: today, then yesterday. Yesterday's 9:00 nap is sd0.
+  const yesterday = page.getByRole("button", { name: /^Sleeps on / }).nth(1);
+  await yesterday.click();
+  await expect(yesterday).toHaveAttribute("aria-expanded", "true");
+
+  const napRow = page
+    .locator("li")
+    .filter({ has: page.getByRole("button", { name: /started at 9:00\sAM/ }) })
+    .first();
+  await napRow.getByRole("button", { name: /started at 9:00\sAM/ }).click();
+  await page.locator("#edit-sd0-end-time").fill("10:30 am");
+  await napRow.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(napRow.getByText("1 h 30 min")).toBeVisible();
+
+  // The edit is a real store write: it survives a reload.
+  await page.reload();
+  await page.getByRole("button", { name: /^Sleeps on / }).nth(1).click();
+  await expect(page.getByText(/9:00\sAM – 10:30\sAM/)).toBeVisible();
+});
+
 test("predicts a window from a wake anchor and logs a session", async ({ page }) => {
   await completeOnboarding(page);
 

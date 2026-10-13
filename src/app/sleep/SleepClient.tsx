@@ -12,7 +12,6 @@ import {
 } from "@/lib/hooks";
 import { fmt } from "@/lib/i18n/config";
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
-import { datetimeMsgs } from "@/lib/i18n/messages/datetime";
 import { interventionMsgs } from "@/lib/i18n/messages/intervention";
 import { sleepMsgs } from "@/lib/i18n/messages/sleep";
 import { isNightSessionOpenNow, nextSleep, planEvents } from "@/lib/plan/engine";
@@ -22,7 +21,6 @@ import {
   formatTime,
   openSession,
   predictNextSleep,
-  type SleepSession,
 } from "@/lib/sleep/model";
 import { useSleepStore } from "@/lib/sleep/store";
 import { newId, useGuideStore } from "@/lib/storage/store";
@@ -36,6 +34,7 @@ import { NightWakeCard } from "@/components/plan/NightWakeCard";
 import { SleepPlanBand } from "@/components/plan/SleepPlanBand";
 import { TimeConfirm } from "@/components/TimeConfirm";
 import { SleepHistory } from "@/components/SleepHistory";
+import { SLEEP_NOTE_MAX, SleepSessionRow } from "@/components/SleepSessionRow";
 import { cn } from "@/lib/utils";
 
 const MIN = 60 * 1000;
@@ -44,164 +43,6 @@ const localDateKey = (iso: string) => {
   const d = new Date(iso);
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 };
-
-/**
- * One logged sleep. Mirrors the journal rows: a single Edit action on the
- * row, and delete lives inside the edit panel (with a confirm step) so two
- * tiny targets never sit a thumb-width apart on a phone.
- */
-/** Matches sleepSessionSchema.notes. */
-const NOTE_MAX = 500;
-
-function SessionRow({
-  session,
-  nowMs,
-  onUpdate,
-  onDelete,
-}: {
-  session: SleepSession;
-  nowMs: number;
-  onUpdate: (id: string, patch: Partial<Omit<SleepSession, "id" | "babyId">>) => void;
-  onDelete: (id: string) => void;
-}) {
-  const locale = useLocale();
-  const t = useMsgs(sleepMsgs);
-  const iv = useMsgs(interventionMsgs);
-  const dt = useMsgs(datetimeMsgs);
-  const [editing, setEditing] = useState(false);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [editStart, setEditStart] = useState<Date | null>(null);
-  const [editEnd, setEditEnd] = useState<Date | null>(null);
-  const [editNote, setEditNote] = useState("");
-  const [error, setError] = useState<"time" | "order" | null>(null);
-
-  const startMs = new Date(session.start).getTime();
-  const endMs = session.end ? new Date(session.end).getTime() : null;
-  // Sleep latency: the number the predictor cannot see from `start` alone.
-  const latencyMin = session.inBedAt ? (startMs - new Date(session.inBedAt).getTime()) / MIN : null;
-
-  function startEditing() {
-    setEditStart(new Date(session.start));
-    setEditEnd(session.end ? new Date(session.end) : null);
-    setEditNote(session.notes ?? "");
-    setConfirmingDelete(false);
-    setError(null);
-    setEditing(true);
-  }
-
-  function saveEdits() {
-    if (!editStart) {
-      setError("time");
-      return;
-    }
-    if (editEnd && editEnd.getTime() <= editStart.getTime()) {
-      setError("order");
-      return;
-    }
-    onUpdate(session.id, {
-      start: editStart.toISOString(),
-      end: editEnd ? editEnd.toISOString() : undefined,
-      notes: editNote.trim().slice(0, NOTE_MAX) || undefined,
-    });
-    setEditing(false);
-  }
-
-  return (
-    <li className="rounded-xl border px-4 py-2.5">
-      <div className="flex items-center justify-between gap-3">
-        <span className="font-data text-sm">
-          {formatTime(startMs, locale)} – {endMs === null ? t.ongoing : formatTime(endMs, locale)}
-          <span className="ml-2 text-muted-foreground">
-            {formatDuration(((endMs ?? nowMs) - startMs) / MIN, locale)}
-          </span>
-          {latencyMin !== null && latencyMin > 0 && (
-            <span className="ml-2 text-xs text-muted-foreground">
-              · {fmt(iv.latencyLine, { dur: formatDuration(latencyMin, locale) })}
-            </span>
-          )}
-        </span>
-        <button
-          type="button"
-          onClick={editing ? () => setEditing(false) : startEditing}
-          aria-expanded={editing}
-          aria-label={fmt(t.editAria, { time: formatTime(startMs, locale) })}
-          className="inline-flex min-h-9 shrink-0 items-center rounded-full border px-3 text-xs font-medium text-muted-foreground hover:border-primary/60 hover:text-foreground"
-        >
-          {editing ? t.cancel : t.editEntry}
-        </button>
-      </div>
-
-      {session.notes && !editing && (
-        <p className="mt-1 whitespace-pre-wrap text-xs text-muted-foreground">{session.notes}</p>
-      )}
-
-      {editing && (
-        <div className="mt-3 space-y-3 border-t pt-3">
-          <div className="flex flex-wrap gap-4">
-            <DateTimeField
-              id={`edit-${session.id}-start`}
-              label={t.addStart}
-              initial={editStart}
-              onChange={setEditStart}
-            />
-            <DateTimeField
-              id={`edit-${session.id}-end`}
-              label={t.addEnd}
-              initial={editEnd}
-              onChange={setEditEnd}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">{t.stillAsleepNote}</p>
-          <div className="space-y-0.5">
-            <label htmlFor={`edit-${session.id}-note`} className="block text-[11px] text-muted-foreground">
-              {t.noteLabel}
-            </label>
-            <Textarea
-              id={`edit-${session.id}-note`}
-              rows={2}
-              maxLength={NOTE_MAX}
-              placeholder={t.notePlaceholder}
-              value={editNote}
-              onChange={(e) => setEditNote(e.target.value)}
-            />
-          </div>
-          {error && (
-            <p className="text-sm text-destructive">
-              {error === "order" ? t.addInvalid : dt.timeInvalid}
-            </p>
-          )}
-          <div className="flex flex-wrap items-center gap-2">
-            <Button size="sm" onClick={saveEdits}>
-              {t.saveChanges}
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => setEditing(false)}>
-              {t.cancel}
-            </Button>
-            {confirmingDelete ? (
-              <span className="ml-auto flex items-center gap-2 text-xs">
-                <span>{t.deleteConfirm}</span>
-                <Button size="sm" variant="destructive" onClick={() => onDelete(session.id)}>
-                  {t.yesDelete}
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setConfirmingDelete(false)}>
-                  {t.keepEntry}
-                </Button>
-              </span>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setConfirmingDelete(true)}
-                className="ml-auto inline-flex min-h-9 items-center text-xs text-destructive underline-offset-2 hover:underline"
-              >
-                {t.deleteEntry}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-    </li>
-  );
-}
 
 export function SleepClient() {
   const hydrated = useHydrated();
@@ -216,7 +57,6 @@ export function SleepClient() {
   const babySessions = useActiveSleepSessions();
   const addSleepSession = useGuideStore((s) => s.addSleepSession);
   const updateSleepSession = useGuideStore((s) => s.updateSleepSession);
-  const deleteSleepSession = useGuideStore((s) => s.deleteSleepSession);
   const wakeAnchors = useSleepStore((s) => s.wakeAnchors);
   const setWakeAnchor = useSleepStore((s) => s.setWakeAnchor);
 
@@ -381,7 +221,7 @@ export function SleepClient() {
       babyId: baby.id,
       start: addStart.toISOString(),
       ...(addEnd ? { end: addEnd.toISOString() } : {}),
-      ...(addNote.trim() ? { notes: addNote.trim().slice(0, NOTE_MAX) } : {}),
+      ...(addNote.trim() ? { notes: addNote.trim().slice(0, SLEEP_NOTE_MAX) } : {}),
     });
     setAddStart(null);
     setAddEnd(null);
@@ -554,13 +394,7 @@ export function SleepClient() {
             <>
               <ul className="space-y-2">
                 {todaySessions.map((s) => (
-                  <SessionRow
-                    key={s.id}
-                    session={s}
-                    nowMs={nowMs}
-                    onUpdate={updateSleepSession}
-                    onDelete={deleteSleepSession}
-                  />
+                  <SleepSessionRow key={s.id} session={s} nowMs={nowMs} />
                 ))}
               </ul>
               <p className="text-sm text-muted-foreground">
@@ -580,7 +414,7 @@ export function SleepClient() {
               <Textarea
                 aria-label={t.noteLabel}
                 rows={2}
-                maxLength={NOTE_MAX}
+                maxLength={SLEEP_NOTE_MAX}
                 placeholder={t.notePlaceholder}
                 value={addNote}
                 onChange={(e) => setAddNote(e.target.value)}
@@ -598,7 +432,7 @@ export function SleepClient() {
         </CardContent>
       </Card>
 
-      <SleepHistory />
+      <SleepHistory now={now} />
 
       <div className="space-y-1 text-xs text-muted-foreground">
         <p>{t.syncNote}</p>

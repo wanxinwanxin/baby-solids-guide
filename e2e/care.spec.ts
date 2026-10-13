@@ -71,6 +71,38 @@ test("logs a formula bottle and a diaper, then edits the bottle", async ({ page 
   await expect(formulaCard).toBeTruthy();
 });
 
+test("a past day opens to its sleeps, and a sleep can be fixed there", async ({ page }) => {
+  await completeOnboarding(page);
+  // One nap two days ago, 13:00 → 14:00, and nothing else.
+  await page.evaluate(() => {
+    const raw = JSON.parse(localStorage.getItem("opensolids-v1")!);
+    const babyId = raw.state.babies[0].id;
+    const at = (h: number) => {
+      const d = new Date();
+      d.setDate(d.getDate() - 2);
+      d.setHours(h, 0, 0, 0);
+      return d.toISOString();
+    };
+    raw.state.sleepSessions = [{ id: "nap1", babyId, start: at(13), end: at(14) }];
+    localStorage.setItem("opensolids-v1", JSON.stringify(raw));
+  });
+  await page.reload();
+  await page.goto("/care");
+
+  await page.getByText("sleep 1 h", { exact: true }).click();
+  // The day itself is a list item too; the sleep row is the innermost one.
+  const napRow = page
+    .locator("li")
+    .filter({ has: page.getByRole("button", { name: /started at 1:00\sPM/ }) })
+    .last();
+  await napRow.getByRole("button", { name: /started at 1:00\sPM/ }).click();
+  await page.locator("#edit-nap1-end-time").fill("2:45 pm");
+  await napRow.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(napRow.getByText("1 h 45 min", { exact: true })).toBeVisible();
+  // The day's one-line summary follows the edit.
+  await expect(page.getByText("sleep 1 h 45 min", { exact: true })).toBeVisible();
+});
+
 test("reaches /care from the More page", async ({ page }) => {
   await completeOnboarding(page);
   await page.goto("/more");

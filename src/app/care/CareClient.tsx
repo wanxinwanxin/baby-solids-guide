@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DateTimeField } from "@/components/DateTimeField";
 import { FeedHistory } from "@/components/FeedHistory";
 import { FeedPlanBand } from "@/components/plan/FeedPlanBand";
+import { SleepSessionRow } from "@/components/SleepSessionRow";
 import { TimeConfirm } from "@/components/TimeConfirm";
 import { cn } from "@/lib/utils";
 
@@ -684,21 +685,10 @@ export function CareClient() {
                               <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                                 {t.daySleepTitle}
                               </p>
-                              <ul className="space-y-1">
-                                {sleeps.map((s) => {
-                                  const a = new Date(s.start).getTime();
-                                  const b = s.end ? new Date(s.end).getTime() : null;
-                                  return (
-                                    <li key={s.id} className="font-data text-sm">
-                                      🌙 {formatTime(a, locale)} – {b === null ? "…" : formatTime(b, locale)}
-                                      {b !== null && (
-                                        <span className="ml-2 text-muted-foreground">
-                                          {formatDuration((b - a) / MIN, locale)}
-                                        </span>
-                                      )}
-                                    </li>
-                                  );
-                                })}
+                              <ul className="space-y-2">
+                                {sleeps.map((s) => (
+                                  <SleepSessionRow key={s.id} session={s} nowMs={now.getTime()} icon="🌙" />
+                                ))}
                               </ul>
                             </div>
                           )}
