@@ -59,7 +59,7 @@ export function MovementShelf({ locale, area }: { locale: Locale; area: IdeaArea
           return (
             <Link
               key={c.key ?? "all"}
-              href={c.key ? `/activities?area=${c.key}` : "/activities"}
+              href={c.key ? `/activities?collection=everyday&area=${c.key}` : "/activities?collection=everyday"}
               scroll={false}
               aria-current={active ? "page" : undefined}
               className={cn(

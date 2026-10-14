@@ -250,6 +250,12 @@ async function main() {
   );
   const { ACTIVITY_IDS } = await import("../src/lib/storage/types");
   const { activityIdeas: movementIdeas } = await import("../content/activities");
+  // The source catalog has its own schema because instructions and source
+  // reminders must not be coerced into the original authored-ideas format.
+  const { babySparksActivities } = await import("../content/activities/babysparks");
+  if (babySparksActivities.length !== 193) errors.push("babysparks: expected all 193 source activities");
+  const catalogSlugs = new Set(babySparksActivities.map((entry) => entry.slug));
+  if (catalogSlugs.size !== babySparksActivities.length) errors.push("babysparks: duplicate log identity");
 
   // A movement idea logs as one of ACTIVITY_IDS. If an id here is absent
   // from that registry, a tap writes a row the UI cannot label.
