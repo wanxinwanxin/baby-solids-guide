@@ -55,7 +55,10 @@ for row in rows:
         ("materials", "J", "K"), ("duration", "L", "M"),
     ]:
         assert row[english] and row[chinese], f"Missing {field} for {number}"
-        entry[field] = {"en": row[english], "zh": row[chinese]}
+        entry[field] = {
+            "en": row[english].replace("doing BabySparks exercises", "doing play activities"),
+            "zh": row[chinese].replace("做BabySparks活动或其他动作", "做亲子活动或其他动作"),
+        }
     if row["N"] != "No complete milestone card transcribed":
         entry["milestone"] = {"en": row["N"], "zh": row["O"]}
     if row["R"]:

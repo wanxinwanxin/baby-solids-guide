@@ -26,9 +26,9 @@ export function BabySparksShelf({ locale, area, age, query }: {
   return (
     <section className="space-y-4">
       <div className="space-y-1">
-        <h2 className="text-xl font-bold">{t.babySparksTitle}</h2>
-        <p className="text-sm text-muted-foreground">{t.babySparksIntro}</p>
-        <p className="text-xs text-muted-foreground">{t.babySparksAgeNote}</p>
+        <h2 className="text-xl font-bold">{t.catalogTitle}</h2>
+        <p className="text-sm text-muted-foreground">{t.catalogIntro}</p>
+        <p className="text-xs text-muted-foreground">{t.catalogAgeNote}</p>
       </div>
       <form action="/activities" className="flex flex-wrap items-end gap-2">
         {area && <input type="hidden" name="area" value={area} />}
@@ -86,7 +86,6 @@ export function BabySparksShelf({ locale, area, age, query }: {
                 <p>{msg(entry.reminder, locale)}</p>
                 <p className="text-xs text-muted-foreground">{entry.reminderBasis}</p>
               </aside>}
-              <p className="text-xs text-muted-foreground">{t.catalogSource} · #{String(entry.catalogId).padStart(3, "0")}</p>
               <LogItemButton activity={entry.activity} itemId={entry.slug} itemTitle={msg(entry.title, locale)} markLabel={t.markDone} doneLabel={t.doneToday} />
             </div>
           </details>)}

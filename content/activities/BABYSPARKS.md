@@ -1,6 +1,9 @@
 The BabySparks collection is imported from the user-supplied
 `babysparks summary.xlsx`, sheet `中英对照`, rows 8–200 (IDs 001–193).
 English text and its existing Chinese translation are preserved as supplied.
+Product copy uses neutral labels, and brand references within the activity
+instructions are replaced with generic descriptions. Existing log identifiers
+remain unchanged so previously recorded activities still support undo.
 It is separate from the original OpenSolids everyday ideas.
 
 Regenerate with `python3 scripts/import-babysparks.py "babysparks summary.xlsx"`.

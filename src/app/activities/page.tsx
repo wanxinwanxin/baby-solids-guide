@@ -64,7 +64,7 @@ export default async function ActivitiesPage({
       <ActivityQuickLog />
       <nav aria-label={t.collectionLabel} className="flex gap-2 border-b pb-3">
         {[
-          { href: "/activities", label: t.babySparksTitle, active: !everyday },
+          { href: "/activities", label: t.catalogTitle, active: !everyday },
           { href: "/activities?collection=everyday", label: t.everydayTitle, active: everyday },
         ].map((collection) => <Link key={collection.href} href={collection.href}
           aria-current={collection.active ? "page" : undefined}

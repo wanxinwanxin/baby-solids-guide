@@ -8,7 +8,8 @@ function isoDaysAgo(days: number): string {
 test("BabySparks catalog combines filters, searches, and itemized logging", async ({ page }) => {
   await completeOnboarding(page);
   await page.goto("/activities");
-  await expect(page.getByRole("heading", { name: "BabySparks activities", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Activity library", exact: true })).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(/babysparks/i);
   await expect(page.getByRole("status")).toHaveText("193 of 193 activities");
   await page.getByRole("navigation", { name: "Catalog age", exact: true }).getByRole("link", { name: "4–6 months" }).click();
   await page.getByRole("navigation", { name: "Show ideas for" }).getByRole("link", { name: /^Daily routines/ }).click();

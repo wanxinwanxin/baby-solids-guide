@@ -11,13 +11,13 @@ export const activitiesMsgs = {
   },
   heading: { en: "Activities", zh: "亲子活动" },
   collectionLabel: { en: "Activity collection", zh: "活动集" },
-  babySparksTitle: { en: "BabySparks activities", zh: "BabySparks 亲子活动" },
+  catalogTitle: { en: "Activity library", zh: "亲子活动库" },
   everydayTitle: { en: "Everyday ideas", zh: "日常活动灵感" },
-  babySparksIntro: {
-    en: "193 activities from your BabySparks summary, with English and Chinese instructions. Browse by catalog age or development area, and log the activity you tried.",
-    zh: "来自 BabySparks 汇总的193项活动，包含中英文操作说明。按目录月龄或发展领域查找，做过后可一键记录。",
+  catalogIntro: {
+    en: "193 activities with English and Chinese instructions. Browse by catalog age or development area, and log the activity you tried.",
+    zh: "193项亲子活动，包含中英文操作说明。按目录月龄或发展领域查找，做过后可一键记录。",
   },
-  babySparksAgeNote: {
+  catalogAgeNote: {
     en: "These are catalog age groups, not personalized recommendations or milestone deadlines. Choose for your baby's current abilities, stay close, and stop if your baby is uncomfortable. Added reminders are separate from the source instructions.",
     zh: "这些是原目录的月龄分组，不是个性化推荐或里程碑期限。请按宝宝当前能力选择，全程陪伴，不舒服时就停止。“另加提醒”与原活动说明分开显示。",
   },
@@ -36,7 +36,6 @@ export const activitiesMsgs = {
   activityInstructions: { en: "How to do it", zh: "怎么做" },
   activityMilestone: { en: "Related milestone in the source", zh: "原文相关里程碑" },
   addedReminder: { en: "Added reminder", zh: "另加提醒" },
-  catalogSource: { en: "Source: BabySparks · supplied summary and translation", zh: "来源：BabySparks · 提供的汇总与翻译" },
   intro: {
     en: "One tap logs an activity for today. Reading a specific piece? Log it from the Read to baby shelf and the title comes along.",
     zh: "点一下就记录一次今天的活动。读了某一首具体的诗？从“读给宝宝”书架上记录，标题会一起记下来。",
