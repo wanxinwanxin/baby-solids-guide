@@ -236,11 +236,14 @@ export type SleepSession = {
 
 export type DiaperKind = "wet" | "dirty" | "mixed" | "dry";
 export type FormulaUnit = "ml" | "oz";
+/** What a bottle held. Absent means formula: every bottle before 2026-10-21 was. */
+export type BottleMilk = "formula" | "breast_milk";
+export type BreastSide = "left" | "right";
 
 /**
- * A non-food care event — a formula bottle or a diaper change — so the
- * whole family sees the day in one app. `amount` is set for kind "formula",
- * `diaper` for kind "diaper".
+ * A non-food care event — a breastfeed, a bottle, or a diaper change — so
+ * the whole family sees the day in one app. `amount` is set for kind
+ * "formula", `nursing` for kind "breast", `diaper` for kind "diaper".
  */
 /**
  * A moment in intervention mode that is neither a bottle nor a diaper but
@@ -253,10 +256,19 @@ export type PlanEventKind = "fussy" | "nap_skipped" | "night_resettled" | "off_d
 export type CareLog = {
   id: string;
   babyId: string;
-  kind: "formula" | "diaper" | "event";
+  /**
+   * "formula" is any bottle (the name predates breast-milk bottles; `milk`
+   * says what was in it). "breast" is a feed at the breast, with `at` as
+   * its start and `nursing` as the time on each side.
+   */
+  kind: "formula" | "diaper" | "event" | "breast";
   /** ISO datetime, device clock. */
   at: string;
   amount?: { value: number; unit: FormulaUnit };
+  /** Set on a bottle: what it held. Absent reads as formula. */
+  milk?: BottleMilk;
+  /** Set for kind "breast": seconds on each side, and the side it began on. */
+  nursing?: { leftSec: number; rightSec: number; startSide?: BreastSide };
   diaper?: DiaperKind;
   /** Set for kind "event". */
   event?: PlanEventKind;

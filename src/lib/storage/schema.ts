@@ -140,15 +140,29 @@ export const sleepSessionSchema = z.object({
   updatedAt: isoDateTime.optional(),
 });
 
+/** The longest time one side of a breastfeed can record: four hours. */
+export const NURSING_SIDE_MAX_SEC = 4 * 60 * 60;
+
 export const careLogSchema = z.object({
   id: z.string().min(1),
   babyId: z.string().min(1),
-  kind: z.enum(["formula", "diaper", "event"]),
+  kind: z.enum(["formula", "diaper", "event", "breast"]),
   at: isoDateTime,
   // Bounded like exposure quantities: a slipped decimal can't sync as a
   // 5-liter bottle.
   amount: z
     .object({ value: z.number().positive().max(2000), unit: z.enum(["ml", "oz"]) })
+    .optional(),
+  milk: z.enum(["formula", "breast_milk"]).optional(),
+  // Four hours a side is far past any real feed, so a timer left running
+  // overnight cannot sync as one.
+  nursing: z
+    .object({
+      leftSec: z.number().int().min(0).max(NURSING_SIDE_MAX_SEC),
+      rightSec: z.number().int().min(0).max(NURSING_SIDE_MAX_SEC),
+      startSide: z.enum(["left", "right"]).optional(),
+    })
+    .refine((n) => n.leftSec + n.rightSec > 0, "A feed needs time on at least one side.")
     .optional(),
   diaper: z.enum(["wet", "dirty", "mixed", "dry"]).optional(),
   event: z.enum(["fussy", "nap_skipped", "night_resettled", "off_day"]).optional(),

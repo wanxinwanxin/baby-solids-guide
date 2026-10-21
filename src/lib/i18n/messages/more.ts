@@ -38,8 +38,8 @@ export const moreMsgs = {
     zh: "根据宝宝节律推算小睡与就寝时段",
   },
   descCare: {
-    en: "Log formula bottles and diaper changes, synced to family",
-    zh: "记录配方奶与换尿布，与家人同步",
+    en: "Log breastfeeds, bottles, and diaper changes, synced to family",
+    zh: "记录亲喂、奶瓶与换尿布，与家人同步",
   },
   descTour: { en: "A 30-second walkthrough of the app", zh: "30 秒了解应用" },
 } satisfies Msgs;

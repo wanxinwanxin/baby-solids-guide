@@ -9,17 +9,25 @@ import {
   useHydrated,
   useIntervention,
 } from "@/lib/hooks";
-import { fmt } from "@/lib/i18n/config";
+import { fmt, type Locale } from "@/lib/i18n/config";
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
 import { careMsgs } from "@/lib/i18n/messages/care";
 import { datetimeMsgs } from "@/lib/i18n/messages/datetime";
 import { interventionMsgs } from "@/lib/i18n/messages/intervention";
 import { localIsoDate } from "@/lib/food-utils";
+import { formatNursingSeconds, minutesText, nursingTotals } from "@/lib/care/nursing";
 import { bottleMl, clockOn, morningWake, nearestWindow, nextFeed } from "@/lib/plan/engine";
 import { dailySleep } from "@/lib/sleep/history";
 import { formatDuration, formatTime } from "@/lib/sleep/model";
 import { newId, useGuideStore } from "@/lib/storage/store";
-import type { CareLog, DiaperKind, FormulaUnit, PlanEventKind } from "@/lib/storage/types";
+import type {
+  BottleMilk,
+  BreastSide,
+  CareLog,
+  DiaperKind,
+  FormulaUnit,
+  PlanEventKind,
+} from "@/lib/storage/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +39,8 @@ import { FeedPlanBand } from "@/components/plan/FeedPlanBand";
 import { SleepSessionRow } from "@/components/SleepSessionRow";
 import { TimeConfirm } from "@/components/TimeConfirm";
 import { cn } from "@/lib/utils";
+import { BreastfeedCard } from "./BreastfeedCard";
+import { NursingFields, readNursingDraft, type NursingDraft, type NursingError } from "./NursingFields";
 
 const MIN = 60 * 1000;
 const ML_PRESETS = [60, 90, 120, 150, 180];
@@ -58,6 +68,7 @@ function Chip({
   return (
     <button
       type="button"
+      aria-pressed={active}
       onClick={onClick}
       className={cn(
         "min-h-9 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
@@ -71,6 +82,8 @@ function Chip({
 
 const localDateKey = (iso: string) => localIsoDate(new Date(iso));
 
+const MILKS: BottleMilk[] = ["formula", "breast_milk"];
+
 /** "360 ml" / "360 ml + 4 oz" — totals never mix units silently. */
 function formatBottleTotal(logs: CareLog[]): string {
   const totals = new Map<FormulaUnit, number>();
@@ -81,7 +94,31 @@ function formatBottleTotal(logs: CareLog[]): string {
   return [...totals.entries()].map(([unit, v]) => `${Math.round(v * 10) / 10} ${unit}`).join(" + ");
 }
 
-/** One logged bottle or diaper — journal row pattern (Edit pill, delete inside). */
+type CareText = { [K in keyof typeof careMsgs]: string };
+
+/** "left 12 min, right 8 min", first side first. A side with no time is left out. */
+function nursingSides(log: CareLog, t: CareText, locale: Locale): string {
+  const n = log.nursing;
+  if (!n) return "—";
+  const order: BreastSide[] = n.startSide === "right" ? ["right", "left"] : ["left", "right"];
+  return order
+    .filter((s) => (s === "left" ? n.leftSec : n.rightSec) > 0)
+    .map((s) =>
+      fmt(s === "left" ? t.breastSideLeft : t.breastSideRight, {
+        dur: formatNursingSeconds(s === "left" ? n.leftSec : n.rightSec, locale),
+      }),
+    )
+    .join(locale === "zh" ? "，" : ", ");
+}
+
+/** "3 breastfeeds · 45 min", or null on a day without one. */
+function breastSummary(logs: CareLog[], t: CareText, locale: Locale): string | null {
+  const n = nursingTotals(logs);
+  if (n.count === 0) return null;
+  return fmt(t.breastSummary, { n: n.count, dur: formatNursingSeconds(n.leftSec + n.rightSec, locale) });
+}
+
+/** One logged feed or diaper — journal row pattern (Edit pill, delete inside). */
 function CareRow({
   log,
   kindLabels,
@@ -102,21 +139,41 @@ function CareRow({
   const [editAmount, setEditAmount] = useState("");
   const [editUnit, setEditUnit] = useState<FormulaUnit>("ml");
   const [editKind, setEditKind] = useState<DiaperKind>("wet");
+  const [editMilk, setEditMilk] = useState<BottleMilk>("formula");
+  const [editNursing, setEditNursing] = useState<NursingDraft | null>(null);
   const [editNote, setEditNote] = useState("");
-  const [error, setError] = useState<"time" | "amount" | null>(null);
+  const [error, setError] = useState<"time" | "amount" | NursingError | null>(null);
 
   const atMs = new Date(log.at).getTime();
+  const amountText = log.amount ? `${log.amount.value} ${log.amount.unit}` : "—";
   const label =
-    log.kind === "formula"
-      ? fmt(t.formulaEntry, { amount: log.amount ? `${log.amount.value} ${log.amount.unit}` : "—" })
-      : fmt(t.diaperEntry, { kind: kindLabels[log.diaper ?? "wet"] });
-  const emoji = log.kind === "formula" ? "🍼" : DIAPER_EMOJI[log.diaper ?? "wet"];
+    log.kind === "breast"
+      ? fmt(t.breastEntry, { sides: nursingSides(log, t, locale) })
+      : log.kind === "formula"
+        ? fmt(log.milk === "breast_milk" ? t.breastMilkEntry : t.formulaEntry, { amount: amountText })
+        : fmt(t.diaperEntry, { kind: kindLabels[log.diaper ?? "wet"] });
+  const emoji =
+    log.kind === "breast" ? "🤱" : log.kind === "formula" ? "🍼" : DIAPER_EMOJI[log.diaper ?? "wet"];
+  const what =
+    log.kind === "breast" ? t.breastTitle : log.kind === "formula" ? t.formulaTitle : t.diaperTitle;
 
   function startEditing() {
     setEditAt(new Date(log.at));
     setEditAmount(log.amount ? String(log.amount.value) : "");
     setEditUnit(log.amount?.unit ?? "ml");
     setEditKind(log.diaper ?? "wet");
+    setEditMilk(log.milk ?? "formula");
+    setEditNursing(
+      log.nursing
+        ? {
+            leftText: minutesText(log.nursing.leftSec),
+            rightText: minutesText(log.nursing.rightSec),
+            leftSec: log.nursing.leftSec,
+            rightSec: log.nursing.rightSec,
+            startSide: log.nursing.startSide ?? null,
+          }
+        : null,
+    );
     setEditNote(log.notes ?? "");
     setConfirmingDelete(false);
     setError(null);
@@ -129,13 +186,20 @@ function CareRow({
       return;
     }
     const notes = editNote.trim().slice(0, NOTE_MAX) || undefined;
-    if (log.kind === "formula") {
+    if (log.kind === "breast") {
+      const read = editNursing ? readNursingDraft(editNursing) : null;
+      if (!read || !read.ok) {
+        setError(read && !read.ok ? read.error : "needsTime");
+        return;
+      }
+      onUpdate(log.id, { at: editAt.toISOString(), nursing: read.nursing, notes });
+    } else if (log.kind === "formula") {
       const value = Number(editAmount);
       if (!Number.isFinite(value) || value <= 0 || value > 2000) {
         setError("amount");
         return;
       }
-      onUpdate(log.id, { at: editAt.toISOString(), amount: { value, unit: editUnit }, notes });
+      onUpdate(log.id, { at: editAt.toISOString(), amount: { value, unit: editUnit }, milk: editMilk, notes });
     } else {
       onUpdate(log.id, { at: editAt.toISOString(), diaper: editKind, notes });
     }
@@ -156,10 +220,7 @@ function CareRow({
           type="button"
           onClick={editing ? () => setEditing(false) : startEditing}
           aria-expanded={editing}
-          aria-label={fmt(t.editAria, {
-            what: log.kind === "formula" ? t.formulaTitle : t.diaperTitle,
-            time: formatTime(atMs, locale),
-          })}
+          aria-label={fmt(t.editAria, { what, time: formatTime(atMs, locale) })}
           className="inline-flex min-h-9 shrink-0 items-center rounded-full border px-3 text-xs font-medium text-muted-foreground hover:border-primary/60 hover:text-foreground"
         >
           {editing ? t.cancel : t.editEntry}
@@ -175,11 +236,15 @@ function CareRow({
           <div className="flex flex-wrap items-end gap-4">
             <DateTimeField
               id={`edit-${log.id}-at`}
-              label={log.kind === "formula" ? t.fedAt : t.changedAt}
+              label={log.kind === "breast" ? t.startedAt : log.kind === "formula" ? t.fedAt : t.changedAt}
               initial={editAt}
               onChange={setEditAt}
             />
-            {log.kind === "formula" ? (
+            {log.kind === "breast" ? (
+              editNursing && (
+                <NursingFields id={`edit-${log.id}`} draft={editNursing} onChange={setEditNursing} />
+              )
+            ) : log.kind === "formula" ? (
               <div className="flex items-end gap-2">
                 <div className="space-y-0.5">
                   <label
@@ -201,6 +266,11 @@ function CareRow({
                 {(["ml", "oz"] as const).map((u) => (
                   <Chip key={u} active={editUnit === u} onClick={() => setEditUnit(u)}>
                     {u}
+                  </Chip>
+                ))}
+                {MILKS.map((m) => (
+                  <Chip key={m} active={editMilk === m} onClick={() => setEditMilk(m)}>
+                    {m === "breast_milk" ? t.milkBreast : t.milkFormula}
                   </Chip>
                 ))}
               </div>
@@ -229,7 +299,13 @@ function CareRow({
           </div>
           {error && (
             <p className="text-sm text-destructive">
-              {error === "amount" ? t.amountInvalid : dt.timeInvalid}
+              {error === "amount"
+                ? t.amountInvalid
+                : error === "needsTime"
+                  ? t.feedNeedsTime
+                  : error === "tooLong"
+                    ? t.feedSideTooLong
+                    : dt.timeInvalid}
             </p>
           )}
           <div className="flex flex-wrap items-center gap-2">
@@ -305,6 +381,17 @@ export function CareClient() {
   const [note, setNote] = useState("");
   const [diaperNote, setDiaperNote] = useState("");
   const [diaperKind, setDiaperKind] = useState<DiaperKind | null>(null);
+  // Null until the parent picks: then a bottle defaults to what the last one held.
+  const [milkChoice, setMilkChoice] = useState<BottleMilk | null>(null);
+
+  // The log button's picker links to a card by hash (/care#breast). The
+  // cards render only after hydration, after the browser looked for the id.
+  const babyId = baby?.id;
+  useEffect(() => {
+    if (!hydrated || !babyId) return;
+    const id = window.location.hash.slice(1);
+    if (id) document.getElementById(id)?.scrollIntoView({ block: "start" });
+  }, [hydrated, babyId]);
 
   // The plan band counts down, so re-read the clock periodically.
   const [now, setNow] = useState(() => new Date());
@@ -359,12 +446,18 @@ export function CareClient() {
     let bottles = 0;
     let ml = 0;
     let diapers = 0;
+    let feeds = 0;
+    let feedSec = 0;
     for (const [, day] of days) {
       for (const l of day.logs) {
         if (l.kind === "formula") {
           bottles += 1;
           ml += bottleMl(l);
         } else if (l.kind === "diaper") diapers += 1;
+        else if (l.kind === "breast" && l.nursing) {
+          feeds += 1;
+          feedSec += l.nursing.leftSec + l.nursing.rightSec;
+        }
       }
     }
     const n = days.length;
@@ -373,6 +466,8 @@ export function CareClient() {
       bottles: Math.round((bottles / n) * 10) / 10,
       ml: Math.round(ml / n),
       diapers: Math.round((diapers / n) * 10) / 10,
+      feeds: Math.round((feeds / n) * 10) / 10,
+      feedSec: feedSec / n,
     };
   }, [recentDays]);
 
@@ -418,6 +513,8 @@ export function CareClient() {
 
   const daySummary = (logs: CareLog[], sleepMin: number): string => {
     const parts: string[] = [];
+    const breast = breastSummary(logs, t, locale);
+    if (breast) parts.push(breast);
     const bottles = logs.filter((l) => l.kind === "formula");
     const diapers = logs.filter((l) => l.kind === "diaper");
     if (bottles.length > 0) {
@@ -430,6 +527,10 @@ export function CareClient() {
 
   const todayBottles = todayLogs.filter((l) => l.kind === "formula");
   const todayDiapers = todayLogs.filter((l) => l.kind === "diaper");
+  const lastBottle = careLogs
+    .filter((l) => l.kind === "formula")
+    .reduce<CareLog | null>((a, l) => (!a || l.at > a.at ? l : a), null);
+  const milk: BottleMilk = milkChoice ?? lastBottle?.milk ?? "formula";
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -442,11 +543,21 @@ export function CareClient() {
         <FeedPlanBand plan={plan} careLogs={careLogs} babyId={baby.id} now={now} morningWakeMs={morningWakeMs} />
       )}
 
-      <Card>
+      <BreastfeedCard babyId={baby.id} careLogs={careLogs} todayLogs={todayLogs} now={now} />
+
+      <Card id="bottle" className="scroll-mt-20">
         <CardHeader>
           <CardTitle>{t.formulaTitle}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t.milkLabel}>
+            <span className="text-sm font-medium">{t.milkLabel}</span>
+            {MILKS.map((m) => (
+              <Chip key={m} active={milk === m} onClick={() => setMilkChoice(m)}>
+                {m === "breast_milk" ? t.milkBreast : t.milkFormula}
+              </Chip>
+            ))}
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-medium">{t.amountLabel}</span>
             {(["ml", "oz"] as const).map((u) => (
@@ -526,6 +637,7 @@ export function CareClient() {
                 kind: "formula",
                 at: d.toISOString(),
                 amount: { value: amount, unit },
+                milk,
                 ...(note.trim() ? { notes: note.trim().slice(0, NOTE_MAX) } : {}),
                 ...stamp,
               });
@@ -535,7 +647,7 @@ export function CareClient() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card id="diaper" className="scroll-mt-20">
         <CardHeader>
           <CardTitle>{t.diaperTitle}</CardTitle>
         </CardHeader>
@@ -607,6 +719,7 @@ export function CareClient() {
               </ul>
               <p className="text-sm text-muted-foreground">
                 {[
+                  breastSummary(todayLogs, t, locale),
                   todayBottles.length > 0
                     ? fmt(t.bottleSummary, {
                         n: todayBottles.length,
@@ -638,12 +751,19 @@ export function CareClient() {
             <>
               {averages && (
                 <p className="text-sm">
-                  {fmt(t.recentAverages, {
-                    n: averages.n,
-                    bottles: averages.bottles,
-                    ml: averages.ml,
-                    diapers: averages.diapers,
-                  })}
+                  {averages.bottles > 0 || averages.feeds === 0
+                    ? fmt(t.recentAverages, {
+                        n: averages.n,
+                        bottles: averages.bottles,
+                        ml: averages.ml,
+                        diapers: averages.diapers,
+                      })
+                    : fmt(t.recentAveragesNoBottles, { n: averages.n, diapers: averages.diapers })}
+                  {averages.feeds > 0 &&
+                    `${locale === "zh" ? "" : " "}${fmt(t.recentAveragesBreast, {
+                      feeds: averages.feeds,
+                      dur: formatNursingSeconds(averages.feedSec, locale),
+                    })}`}
                 </p>
               )}
               <p className="text-xs text-muted-foreground">{t.recentHint}</p>

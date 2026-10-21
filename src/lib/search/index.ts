@@ -128,11 +128,13 @@ const FEATURES: Feature[] = [
   },
   {
     href: "/care",
-    en: "Bottles & diapers",
-    zh: "奶瓶与尿布",
+    en: "Feeding & diapers",
+    zh: "喂奶与尿布",
     keywords: [
       "formula", "bottle", "feed", "milk", "diaper", "poop", "pee", "nappy", "change",
+      "breastfeed", "breastfeeding", "nursing", "nurse", "breast milk", "left side", "right side",
       "配方奶", "奶瓶", "喂奶", "奶量", "尿布", "换尿布", "大便", "小便", "拉屎",
+      "亲喂", "母乳", "哺乳", "喂母乳", "左侧", "右侧",
     ],
   },
   {

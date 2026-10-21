@@ -12,7 +12,7 @@ export const chromeMsgs = {
   navRead: { en: "Read to baby", zh: "读给宝宝" },
   navActivities: { en: "Activities", zh: "亲子活动" },
   navSleep: { en: "Sleep windows", zh: "睡眠时段" },
-  navCare: { en: "Bottles & diapers", zh: "奶瓶与尿布" },
+  navCare: { en: "Feeding & diapers", zh: "喂奶与尿布" },
   // Short forms for the nav/tab chrome, where the full names overflow.
   navSleepShort: { en: "Sleep", zh: "睡眠" },
   navCareShort: { en: "Care", zh: "护理" },
@@ -24,6 +24,8 @@ export const chromeMsgs = {
   navEmergency: { en: "Emergency", zh: "紧急" },
   navLog: { en: "+ Log", zh: "+ 记录" },
   navLogAria: { en: "Log a food", zh: "记录一种食物" },
+  /** The log button when it opens a picker instead of the food log. */
+  navLogPickerAria: { en: "Log a feed, diaper, sleep, or food", zh: "记录喂奶、尿布、睡眠或辅食" },
   navSignIn: { en: "Sign in", zh: "登录" },
   navAccount: { en: "Account", zh: "账户" },
   navSwitchBaby: { en: "Switch baby", zh: "切换宝宝" },
