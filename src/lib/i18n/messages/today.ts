@@ -41,6 +41,12 @@ export const todayMsgs = {
     en: "Our pediatrician advised us to start — begin today",
     zh: "儿科医生建议我们开始——今天就开始",
   },
+  // Gated screen: the milk-feeding months still have a place to log.
+  gatedCareTitle: { en: "Until then: feeds, diapers, and sleep", zh: "在那之前：喂奶、尿布和睡眠" },
+  gatedCareBody: {
+    en: "Log breastfeeds, bottles, diaper changes, and sleep. A signed-in family sees every entry.",
+    zh: "记录亲喂、奶瓶、换尿布和睡眠。登录家庭账户后，家人都能看到每一条记录。",
+  },
   meanwhileBefore: { en: "Meanwhile, browse the ", zh: "在此期间，可以先浏览" },
   foodLibraryLink: { en: "food library", zh: "食物库" },
   meanwhileMid: { en: " or update the ", zh: "，或更新" },

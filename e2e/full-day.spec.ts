@@ -62,7 +62,9 @@ test("toggle flips Today into the whole-day dashboard and promotes the nav", asy
   const tabbar = page.getByRole("navigation", { name: "Primary" });
   await expect(tabbar.getByRole("link", { name: "Sleep" })).toBeVisible();
   await expect(tabbar.getByRole("link", { name: "Care" })).toBeVisible();
-  await page.getByRole("button", { name: "Log a food" }).click();
+  await page.getByRole("button", { name: "Log a feed, diaper, sleep, or food" }).click();
+  await expect(tabbar.getByRole("link", { name: "Log food" })).toBeVisible();
+  await expect(tabbar.getByRole("link", { name: "Breastfeed" })).toBeVisible();
   await expect(tabbar.getByRole("link", { name: "Bottle" })).toBeVisible();
   await expect(tabbar.getByRole("link", { name: "Diaper" })).toBeVisible();
   await page.screenshot({ path: "test-results/full-day-mobile.png" });

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { useHydrated } from "@/lib/hooks";
+import { correctedAgeMonths } from "@/lib/age";
+import { useActiveBaby, useHydrated } from "@/lib/hooks";
 import { useGuideStore } from "@/lib/storage/store";
 import { useMsgs } from "@/lib/i18n/LocaleProvider";
 import { chromeMsgs } from "@/lib/i18n/messages/chrome";
@@ -133,7 +134,24 @@ export function MobileTabBar() {
   const hydrated = useHydrated();
   const caregiver = useGuideStore((s) => s.caregiverMode) && hydrated;
   const fullDay = useGuideStore((s) => s.fullDayMode) && hydrated;
+  const baby = useActiveBaby();
   const [logOpen, setLogOpen] = useState(false);
+  // Under 4 months no food can be logged (the app's hard floor for solids),
+  // so the log button offers feeds, diapers, and sleep instead of the food
+  // log. Full day view always offers every domain, food first.
+  const preSolids = hydrated && !!baby && correctedAgeMonths(baby, new Date()) < 4;
+  const careItems = [
+    { href: "/care#breast", label: q.logBreast },
+    { href: "/care#bottle", label: q.logBottle },
+    { href: "/care#diaper", label: q.logDiaper },
+    { href: "/sleep", label: q.logSleep },
+  ];
+  const pickerItems = fullDay
+    ? [{ href: "/log", label: q.logFood }, ...careItems]
+    : preSolids
+      ? careItems
+      : null;
+  const sideTabs = fullDay ? FULL_DAY_TABS : TABS;
   // In Full day view, Sleep and Care are dedicated tabs, so they no longer
   // belong to the "More" tab's active set.
   const morePrefixes = fullDay
@@ -172,24 +190,36 @@ export function MobileTabBar() {
       <div className="relative mx-auto flex max-w-md items-center pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))]">
         {caregiver ? (
           CAREGIVER_TABS.map(tab)
-        ) : fullDay ? (
+        ) : (
           <>
-            {FULL_DAY_TABS.slice(0, 2).map(tab)}
-            {/* Full day: one log button across domains, not just food. */}
-            <button
-              type="button"
-              aria-label={m.navLogAria}
-              aria-expanded={logOpen}
-              data-tour="log"
-              onClick={() => setLogOpen((v) => !v)}
-              className="mx-1 -mt-4 flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className={cn("size-6 transition-transform", logOpen && "rotate-45")} aria-hidden="true">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-            </button>
-            {FULL_DAY_TABS.slice(2).map(tab)}
-            {logOpen && (
+            {sideTabs.slice(0, 2).map(tab)}
+            {pickerItems ? (
+              <button
+                type="button"
+                aria-label={m.navLogPickerAria}
+                aria-expanded={logOpen}
+                data-tour="log"
+                onClick={() => setLogOpen((v) => !v)}
+                className="mx-1 -mt-4 flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className={cn("size-6 transition-transform", logOpen && "rotate-45")} aria-hidden="true">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </button>
+            ) : (
+              <Link
+                href="/log"
+                aria-label={m.navLogAria}
+                data-tour="log"
+                className="mx-1 -mt-4 flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="size-6" aria-hidden="true">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </Link>
+            )}
+            {sideTabs.slice(2).map(tab)}
+            {pickerItems && logOpen && (
               <>
                 <button
                   type="button"
@@ -198,15 +228,10 @@ export function MobileTabBar() {
                   onClick={() => setLogOpen(false)}
                   className="fixed inset-0 z-0 cursor-default"
                 />
-                <div className="absolute bottom-16 left-1/2 z-10 flex -translate-x-1/2 gap-2 rounded-2xl border bg-popover p-2 shadow-xl">
-                  {[
-                    { href: "/log", label: q.logFood },
-                    { href: "/care", label: q.logBottle },
-                    { href: "/care", label: q.logDiaper },
-                    { href: "/sleep", label: q.logSleep },
-                  ].map((item, i) => (
+                <div className="absolute bottom-16 left-1/2 z-10 flex w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap justify-center gap-2 rounded-2xl border bg-popover p-2 shadow-xl">
+                  {pickerItems.map((item) => (
                     <Link
-                      key={i}
+                      key={item.href}
                       href={item.href}
                       onClick={() => setLogOpen(false)}
                       className="rounded-xl border px-3 py-2 text-xs font-medium hover:border-primary/60"
@@ -217,21 +242,6 @@ export function MobileTabBar() {
                 </div>
               </>
             )}
-          </>
-        ) : (
-          <>
-            {TABS.slice(0, 2).map(tab)}
-            <Link
-              href="/log"
-              aria-label={m.navLogAria}
-              data-tour="log"
-              className="mx-1 -mt-4 flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="size-6" aria-hidden="true">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-            </Link>
-            {TABS.slice(2).map(tab)}
           </>
         )}
       </div>

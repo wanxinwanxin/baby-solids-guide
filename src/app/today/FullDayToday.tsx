@@ -12,6 +12,7 @@ import {
   useActiveSleepSessions,
   useIntervention,
 } from "@/lib/hooks";
+import { formatNursingSeconds, nursingTotals } from "@/lib/care/nursing";
 import { fmt } from "@/lib/i18n/config";
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
 import { ACTIVITY_EMOJI } from "@/lib/i18n/messages/activities";
@@ -224,6 +225,7 @@ export function FullDayToday({
     [careLogs, today],
   );
   const bottles = useMemo(() => careToday.filter((c) => c.kind === "formula"), [careToday]);
+  const breastToday = useMemo(() => nursingTotals(careToday), [careToday]);
   const diapers = useMemo(() => careToday.filter((c) => c.kind === "diaper"), [careToday]);
   const bottleTotals = useMemo(() => {
     const m = new Map<FormulaUnit, number>();
@@ -364,15 +366,23 @@ export function FullDayToday({
             linkLabel={t.logSleep}
           />
           <StatCard
-            title={t.formulaTitle}
+            title={t.feedingTitle}
             value={
-              bottles.length > 0
-                ? fmt(t.bottlesToday, { n: bottles.length, total: bottleTotals })
-                : t.noneYet
+              [
+                breastToday.count > 0
+                  ? fmt(t.breastfeedsToday, {
+                      n: breastToday.count,
+                      dur: formatNursingSeconds(breastToday.leftSec + breastToday.rightSec, locale),
+                    })
+                  : null,
+                bottles.length > 0 ? fmt(t.bottlesToday, { n: bottles.length, total: bottleTotals }) : null,
+              ]
+                .filter(Boolean)
+                .join(" · ") || t.noneYet
             }
             sub={planFeedLine ?? undefined}
             href="/care"
-            linkLabel={t.logBottle}
+            linkLabel={t.logFeed}
           />
           <StatCard
             title={t.diapersTitle}

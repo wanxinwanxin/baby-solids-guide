@@ -37,12 +37,14 @@ export const fullDayMsgs = {
   doneTitle: { en: "Done today", zh: "今天已完成" },
   solidsTitle: { en: "Solids", zh: "辅食" },
   sleepTitle: { en: "Sleep", zh: "睡眠" },
-  formulaTitle: { en: "Formula", zh: "配方奶" },
+  feedingTitle: { en: "Feeding", zh: "喂奶" },
   diapersTitle: { en: "Diapers", zh: "尿布" },
 
   solidsEaten: { en: "{n} eaten", zh: "已吃 {n} 种" },
   noneYet: { en: "None yet", zh: "还没有" },
   bottlesToday: { en: "{n} bottles · {total}", zh: "{n} 瓶 · {total}" },
+  /** {n} feeds at the breast, {dur} on both sides together. */
+  breastfeedsToday: { en: "{n} breastfeeds · {dur}", zh: "亲喂 {n} 次 · {dur}" },
   diapersCount: { en: "{n} changes", zh: "换了 {n} 次" },
   sleepSoFar: { en: "{dur} so far", zh: "已睡 {dur}" },
   nextWindow: { en: "Next: {a} – {b}", zh: "下次：{a}–{b}" },
@@ -53,6 +55,8 @@ export const fullDayMsgs = {
   // Quick actions / links
   logFood: { en: "Log food", zh: "记辅食" },
   logBottle: { en: "Bottle", zh: "奶瓶" },
+  logBreast: { en: "Breastfeed", zh: "亲喂" },
+  logFeed: { en: "Log feed", zh: "记喂奶" },
   logDiaper: { en: "Diaper", zh: "尿布" },
   logSleep: { en: "Sleep", zh: "睡眠" },
   history: { en: "History", zh: "历史" },

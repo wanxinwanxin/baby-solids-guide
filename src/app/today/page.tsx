@@ -20,6 +20,7 @@ import { fmt, msg } from "@/lib/i18n/config";
 import { useL10nFoods, useL10nRecipes } from "@/lib/i18n/content-client";
 import { allergenLabel, bandLabel, TEXTURE_STAGE_MSGS } from "@/lib/i18n/labels";
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
+import { fullDayMsgs } from "@/lib/i18n/messages/full-day";
 import { READINESS_SIGNS, todayMsgs } from "@/lib/i18n/messages/today";
 import { CutDiagram, isDiagramVariant } from "@/components/diagrams/CutDiagram";
 import { CaregiverToday } from "./CaregiverToday";
@@ -89,6 +90,7 @@ export default function TodayPage() {
   const hydrated = useHydrated();
   const locale = useLocale();
   const t = useMsgs(todayMsgs);
+  const fd = useMsgs(fullDayMsgs);
   const { foods: allFoods, foodBySlug } = useL10nFoods();
   const { recipes: allRecipes } = useL10nRecipes();
   const baby = useActiveBaby();
@@ -273,6 +275,27 @@ export default function TodayPage() {
               <li key={r}>• {r}</li>
             ))}
           </ul>
+        </div>
+
+        <div className="space-y-3 rounded-2xl bg-card p-5 ring-1 ring-border">
+          <h2 className="text-lg font-bold tracking-tight">{t.gatedCareTitle}</h2>
+          <p className="text-sm text-muted-foreground">{t.gatedCareBody}</p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { href: "/care#breast", label: fd.logBreast },
+              { href: "/care#bottle", label: fd.logBottle },
+              { href: "/care#diaper", label: fd.logDiaper },
+              { href: "/sleep", label: fd.logSleep },
+            ].map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="inline-flex min-h-10 items-center rounded-full border px-4 text-sm font-medium hover:border-primary/60"
+              >
+                {l.label}
+              </Link>
+            ))}
+          </div>
         </div>
 
         <div className="space-y-3 rounded-2xl bg-card p-5 ring-1 ring-border">
