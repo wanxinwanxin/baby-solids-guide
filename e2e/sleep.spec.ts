@@ -102,6 +102,37 @@ test("sleep history shows per-day totals and a when-baby-slept timeline", async 
   await page.screenshot({ path: "test-results/sleep-history.png", fullPage: true });
 });
 
+test("sleep history opens on the last week, and older days are one tap away", async ({ page }) => {
+  await completeOnboarding(page);
+  // One nap a day for 11 days back: 11 dated rows in all.
+  await page.evaluate(() => {
+    const raw = JSON.parse(localStorage.getItem("opensolids-v1")!);
+    const babyId = raw.state.babies[0].id;
+    const at = (daysAgo: number, h: number) => {
+      const d = new Date();
+      d.setDate(d.getDate() - daysAgo);
+      d.setHours(h, 0, 0, 0);
+      return d.toISOString();
+    };
+    raw.state.sleepSessions = Array.from({ length: 11 }, (_, i) => ({
+      id: `old${i}`,
+      babyId,
+      start: at(i + 1, 13),
+      end: at(i + 1, 14),
+    }));
+    localStorage.setItem("opensolids-v1", JSON.stringify(raw));
+  });
+  await page.reload();
+  await page.goto("/sleep");
+
+  const rows = page.getByRole("img", { name: /of sleep across \d+ sleeps/ });
+  await expect(rows).toHaveCount(7);
+  await page.getByRole("button", { name: "Show 4 older days" }).click();
+  await expect(rows).toHaveCount(11);
+  await page.getByRole("button", { name: "Show only the last 7 days" }).click();
+  await expect(rows).toHaveCount(7);
+});
+
 test("a past day in the sleep history opens to its sleeps, and one can be fixed", async ({ page }) => {
   await completeOnboarding(page);
   await seedSleepHistory(page);

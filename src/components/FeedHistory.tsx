@@ -17,6 +17,7 @@ import {
 import { planClockMin } from "@/lib/plan/derive";
 import { dailySleep, type SleepBlock } from "@/lib/sleep/history";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useRecentDays } from "@/components/RecentDays";
 import { SparkBars } from "@/components/charts/Spark";
 import { cn } from "@/lib/utils";
 
@@ -171,6 +172,8 @@ export function FeedHistory() {
   }, [plan]);
   const summary = useMemo(() => summarizeBottles(days, today), [days, today]);
 
+  const { visible: recentDays, toggle: moreDays } = useRecentDays(days);
+
   if (days.length === 0) return null;
 
   const chrono = [...days].reverse();
@@ -248,7 +251,7 @@ export function FeedHistory() {
             </div>
           </div>
           <div className="space-y-1.5">
-            {days.map((d) => (
+            {recentDays.map((d) => (
               <DayRow
                 key={d.dateIso}
                 day={d}
@@ -258,6 +261,7 @@ export function FeedHistory() {
               />
             ))}
           </div>
+          {moreDays}
         </div>
       </CardContent>
     </Card>

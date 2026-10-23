@@ -35,6 +35,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { DateTimeField } from "@/components/DateTimeField";
 import { FeedHistory } from "@/components/FeedHistory";
+import { useRecentDays } from "@/components/RecentDays";
 import { FeedPlanBand } from "@/components/plan/FeedPlanBand";
 import { SleepSessionRow } from "@/components/SleepSessionRow";
 import { TimeConfirm } from "@/components/TimeConfirm";
@@ -471,6 +472,8 @@ export function CareClient() {
     };
   }, [recentDays]);
 
+  const { visible: shownDays, toggle: moreDays } = useRecentDays(recentDays);
+
   // Every sleep that touches a given local day, oldest first — the detail
   // behind the one-line sleep total when a day is opened.
   const sleepOnDay = (key: string) =>
@@ -768,7 +771,7 @@ export function CareClient() {
               )}
               <p className="text-xs text-muted-foreground">{t.recentHint}</p>
               <ul className="space-y-1 text-sm">
-                {recentDays.map(([key, day]) => {
+                {shownDays.map(([key, day]) => {
                   const dayLogs = [...day.logs].sort(
                     (a, b) => new Date(a.at).getTime() - new Date(b.at).getTime(),
                   );
@@ -818,6 +821,7 @@ export function CareClient() {
                   );
                 })}
               </ul>
+              {moreDays}
             </>
           )}
         </CardContent>

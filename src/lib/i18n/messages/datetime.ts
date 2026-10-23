@@ -10,4 +10,7 @@ export const datetimeMsgs = {
     zh: "请输入时间，例如 19:35 或 下午 7:35。",
   },
   cancel: { en: "Cancel", zh: "取消" },
+  /** History lists open on the latest week. {n} = days still hidden. */
+  showOlderDays: { en: "Show {n} older days", zh: "显示更早的 {n} 天" },
+  showFewerDays: { en: "Show only the last 7 days", zh: "只看最近 7 天" },
 } satisfies Msgs;

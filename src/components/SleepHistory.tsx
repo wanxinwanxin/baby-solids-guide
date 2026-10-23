@@ -9,6 +9,7 @@ import { sleepMsgs } from "@/lib/i18n/messages/sleep";
 import { dailySleep, DAY_MINUTES, summarizeHistory, type DaySleep } from "@/lib/sleep/history";
 import { formatDuration, type SleepSession } from "@/lib/sleep/model";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useRecentDays } from "@/components/RecentDays";
 import { SparkBars } from "@/components/charts/Spark";
 import { SleepSessionRow } from "@/components/SleepSessionRow";
 
@@ -140,6 +141,8 @@ export function SleepHistory({ now }: { now: Date }) {
     return byDay;
   }, [sessions]);
 
+  const { visible: recentDays, toggle: moreDays } = useRecentDays(days);
+
   if (days.length === 0) return null;
 
   // The literal bar plot: hours of sleep per day, oldest → newest left to right.
@@ -206,7 +209,7 @@ export function SleepHistory({ now }: { now: Date }) {
             </div>
           </div>
           <div className="space-y-1.5">
-            {days.map((d) => (
+            {recentDays.map((d) => (
               <DayRow
                 key={d.dateIso}
                 day={d}
@@ -216,6 +219,7 @@ export function SleepHistory({ now }: { now: Date }) {
               />
             ))}
           </div>
+          {moreDays}
         </div>
       </CardContent>
     </Card>
