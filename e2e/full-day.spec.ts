@@ -101,6 +101,35 @@ test.describe("care tallies use local dates", () => {
   });
 });
 
+test("the progress bar counts solids and activities toward the day's goals", async ({ page }) => {
+  await completeOnboarding(page);
+  await enableFullDay(page);
+
+  // Two activities logged today.
+  await page.evaluate(() => {
+    const raw = JSON.parse(localStorage.getItem("opensolids-v1")!);
+    const s = raw.state;
+    const d = new Date();
+    const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    s.activityLogs.push(
+      { id: "act-1", babyId: s.activeBabyId, activity: "sing", date },
+      { id: "act-2", babyId: s.activeBabyId, activity: "tummy-time", date },
+    );
+    localStorage.setItem("opensolids-v1", JSON.stringify(raw));
+  });
+  await page.reload();
+  await page.goto("/today");
+
+  const bar = page.getByRole("progressbar", { name: /goals done today/ });
+  await expect(bar).toHaveAttribute("aria-valuenow", "2");
+  await expect(bar).toHaveAttribute("aria-valuemax", "6");
+  await expect(page.getByText("Activities 2 of 5")).toBeVisible();
+
+  // Eating a food from the to-do list fills the solids segment.
+  await page.getByRole("button", { name: "Ate it" }).first().click();
+  await expect(bar).toHaveAttribute("aria-valuenow", "3");
+});
+
 test("completing a food in the to-do list logs it eaten", async ({ page }) => {
   await completeOnboarding(page);
   await enableFullDay(page);

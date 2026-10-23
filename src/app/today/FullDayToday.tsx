@@ -28,6 +28,7 @@ import type { ActivityId, BabyProfile, FormulaUnit, Plan } from "@/lib/storage/t
 import { localIsoDate, todayIso } from "@/lib/food-utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { SwipeToComplete } from "@/components/SwipeToComplete";
+import { DayProgress } from "./DayProgress";
 
 /**
  * The Today screen in Full day view: one whole-day dashboard where solids,
@@ -61,12 +62,15 @@ function LinkRow({ href, title, body }: { href: string; title: string; body: str
 const OFF_PLAN_NUDGE = 3;
 
 function StatCard({
+  icon,
   title,
   value,
   sub,
   href,
   linkLabel,
 }: {
+  /** A glyph beside the title, so the grid reads at a glance. */
+  icon: string;
   title: string;
   value: string;
   sub?: string;
@@ -76,7 +80,10 @@ function StatCard({
   return (
     <Card>
       <CardContent className="space-y-1 p-4">
-        <p className="font-data text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
+        <p className="flex items-center gap-1.5 font-data text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
+          <span aria-hidden="true" className="text-base leading-none">
+            {icon}
+          </span>
           {title}
         </p>
         <p className="text-lg font-bold">{value}</p>
@@ -266,6 +273,16 @@ export function FullDayToday({
         </div>
       </div>
 
+      <DayProgress
+        solidsDone={planStep ? eatenToday.has(planStep.foodSlug) : eatenToday.size > 0}
+        solidsLabel={
+          planStep
+            ? fmt(t.progressPlanFood, { food: foodBySlug.get(planStep.foodSlug)?.name ?? planStep.foodSlug })
+            : t.progressSolids
+        }
+        activities={otherActivitiesToday.length}
+      />
+
       {/* To do today — swipe to complete. */}
       <section className="space-y-2">
         <div className="flex items-baseline justify-between">
@@ -344,6 +361,7 @@ export function FullDayToday({
         <h2 className="text-sm font-semibold">{t.doneTitle}</h2>
         <div className="grid grid-cols-2 gap-2">
           <StatCard
+            icon="🥄"
             title={t.solidsTitle}
             value={eatenCount > 0 ? eatenNames.join(" · ") : t.noneYet}
             sub={eatenCount > 0 ? fmt(t.solidsEaten, { n: eatenCount }) : undefined}
@@ -351,6 +369,7 @@ export function FullDayToday({
             linkLabel={t.logFood}
           />
           <StatCard
+            icon="🌙"
             title={t.sleepTitle}
             value={sleepMinToday > 0 ? fmt(t.sleepSoFar, { dur: formatDuration(sleepMinToday, locale) }) : t.noneYet}
             sub={
@@ -366,6 +385,7 @@ export function FullDayToday({
             linkLabel={t.logSleep}
           />
           <StatCard
+            icon="🍼"
             title={t.feedingTitle}
             value={
               [
@@ -385,12 +405,14 @@ export function FullDayToday({
             linkLabel={t.logFeed}
           />
           <StatCard
+            icon="💧"
             title={t.diapersTitle}
             value={diapers.length > 0 ? fmt(t.diapersCount, { n: diapers.length }) : t.noneYet}
             href="/care"
             linkLabel={t.logDiaper}
           />
           <StatCard
+            icon="🎈"
             title={t.activitiesTitle}
             value={
               otherActivitiesToday.length > 0

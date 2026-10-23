@@ -4,6 +4,16 @@ import type { Msgs } from "../config";
 export const fullDayMsgs = {
   greeting: { en: "Today for {name}", zh: "{name}的今天" },
 
+  // Today's progress bar (src/app/today/DayProgress.tsx)
+  progressTitle: { en: "Today's progress", zh: "今天的进度" },
+  /** {done} of {total} goals. */
+  progressAria: { en: "{done} of {total} goals done today", zh: "今天完成了 {done}/{total} 个目标" },
+  /** {food} = the plan's food for today. */
+  progressPlanFood: { en: "Plan food: {food}", zh: "计划食物：{food}" },
+  progressSolids: { en: "Solids today", zh: "今天吃辅食" },
+  /** {n} activities logged today, {goal} = the daily goal. */
+  progressActivities: { en: "Activities {n} of {goal}", zh: "亲子活动 {n}/{goal}" },
+  progressAllDone: { en: "Every goal done today. 🎉", zh: "今天的目标都完成啦。🎉" },
   toDoTitle: { en: "To do today", zh: "今天要做的" },
   toDoHint: { en: "Swipe right, or tap ✓, when it's done.", zh: "做完后向右滑动，或点 ✓。" },
   allCaughtUp: { en: "All caught up for today. 🎉", zh: "今天都做完啦。🎉" },
