@@ -324,7 +324,7 @@ export function generatePlan(input: GeneratePlanInput): Plan {
     day += INTRO_SPACING_DAYS;
   }
 
-  return { babyId: baby.id, anchorMonday: mondayOf(today), entries };
+  return { babyId: baby.id, anchorMonday: mondayOf(today), entries, suggestedOn: localIsoDate(today) };
 }
 
 export type PlanWarning = {

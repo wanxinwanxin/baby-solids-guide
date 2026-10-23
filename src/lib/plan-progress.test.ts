@@ -220,4 +220,12 @@ describe("offPlanFoods", () => {
     expect(offPlanFoods(null, [ate("banana", 0)])).toEqual([]);
     expect(offPlanFoods(plan([]), [ate("banana", 0)])).toEqual([]);
   });
+
+  it("counts only foods first eaten after the plan was suggested", () => {
+    // Suggested on day 3: banana and pear were tried by then, so the
+    // suggestion skipped them on purpose. Only kiwi is drift.
+    const p = { ...plan(["beef", "lentils"]), suggestedOn: new Date(at(3)).toISOString().slice(0, 10) };
+    const logs = [ate("banana", 1), ate("pear", 3), ate("banana", 5), ate("kiwi", 6)];
+    expect(offPlanFoods(p, logs)).toEqual(["kiwi"]);
+  });
 });

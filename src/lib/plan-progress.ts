@@ -233,6 +233,12 @@ export function planProgress(input: PlanProgressInput): PlanProgress {
  * families log fruit and vegetable blends the planner never picked, and a
  * long list here is the sign that the written plan has drifted from the
  * baby's actual diet.
+ *
+ * Only foods FIRST eaten after the plan was suggested count. A suggestion
+ * skips every food tried by then, so counting those foods made the drift
+ * note come straight back after "Re-suggest", and the button looked dead.
+ * A plan without `suggestedOn` (hand-built, or saved before the field)
+ * counts every eaten food, as before.
  */
 export function offPlanFoods(plan: Plan | null | undefined, logs: ExposureLog[]): string[] {
   if (!plan || plan.entries.length === 0) return [];
@@ -240,9 +246,10 @@ export function offPlanFoods(plan: Plan | null | undefined, logs: ExposureLog[])
   const seen = new Set<string>();
   const out: string[] = [];
   for (const log of [...logs].sort((a, b) => a.date.localeCompare(b.date))) {
-    if (log.amountEaten === "none" || planned.has(log.foodSlug) || seen.has(log.foodSlug)) continue;
-    if (log.foodSlug.startsWith("custom:")) continue;
+    if (log.amountEaten === "none" || seen.has(log.foodSlug)) continue;
     seen.add(log.foodSlug);
+    if (planned.has(log.foodSlug) || log.foodSlug.startsWith("custom:")) continue;
+    if (plan.suggestedOn && log.date <= plan.suggestedOn) continue;
     out.push(log.foodSlug);
   }
   return out;

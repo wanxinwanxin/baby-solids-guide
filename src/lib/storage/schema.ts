@@ -116,6 +116,7 @@ export const checkInSchema = z.object({
 export const planSchema = z.object({
   babyId: z.string().min(1),
   anchorMonday: isoDate,
+  suggestedOn: isoDate.optional(),
   entries: z.array(
     z.object({
       id: z.string().min(1),

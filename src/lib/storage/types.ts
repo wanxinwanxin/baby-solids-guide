@@ -371,6 +371,12 @@ export type Plan = {
   babyId: string;
   anchorMonday: string; // ISO date of week 0's Monday
   entries: PlanEntry[];
+  /**
+   * Local date the planner last suggested this plan. The suggestion skips
+   * every food tried by then, so only foods first eaten after it count as
+   * the diet drifting off the plan. Absent on hand-built and older plans.
+   */
+  suggestedOn?: string;
   updatedAt?: string;
 };
 

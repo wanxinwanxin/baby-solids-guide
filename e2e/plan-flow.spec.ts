@@ -312,3 +312,41 @@ test.describe("This week on the table", () => {
     await expect(menu.getByRole("link", { name: "All recipes →" })).toBeVisible();
   });
 });
+
+test("re-suggesting from what the baby eats clears the drift note", async ({ page }) => {
+  await completeOnboarding(page);
+  await page.goto("/plan");
+  await page.getByRole("button", { name: "Suggest a plan" }).click();
+
+  // A plan saved before suggestions were dated, and four foods eaten
+  // yesterday that it never listed.
+  await mutateStore(
+    page,
+    `(s) => {
+      const plan = s.plans[0];
+      delete plan.suggestedOn;
+      const planned = new Set(plan.entries.map((e) => e.foodSlug));
+      const offPlan = ["kiwi", "blueberry", "cucumber", "apricot", "fig", "guava", "lychee", "dates"]
+        .filter((slug) => !planned.has(slug))
+        .slice(0, 4);
+      const d = new Date(Date.now() - 86400000);
+      const date = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      for (const slug of offPlan) {
+        s.logs.push({
+          id: "drift-" + slug, babyId: s.activeBabyId, foodSlug: slug, date,
+          prepBandUsed: "6-8m", amountEaten: "some", enjoyment: "neutral", gagging: false, symptoms: [],
+        });
+      }
+    }`,
+  );
+  await page.reload();
+  await page.goto("/plan");
+  await expect(page.getByText("4 foods eaten were never on the plan")).toBeVisible();
+
+  await page.getByRole("button", { name: "Re-suggest from what Testling eats" }).click();
+  await expect(page.getByText(/foods eaten were never on the plan/)).toHaveCount(0);
+  // The note stays gone across a reload: the new plan knows when it was made.
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Re-suggest plan" })).toBeVisible();
+  await expect(page.getByText(/foods eaten were never on the plan/)).toHaveCount(0);
+});
