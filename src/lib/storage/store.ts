@@ -91,6 +91,8 @@ export type GuideState = {
   addLog: (l: ExposureLog) => void;
   /** Patch one entry in place (journal edits); re-stamps updatedAt for LWW. */
   updateLog: (id: string, patch: Partial<Omit<ExposureLog, "id" | "babyId">>) => void;
+  /** Move custom-food logs onto the catalog food they now match (log id → slug). */
+  relinkCustomFoods: (byId: Record<string, string>) => void;
   deleteLog: (id: string) => void;
   setOverride: (o: AllergenOverride) => void;
   clearOverride: (babyId: string, allergenId: AllergenId) => void;
@@ -380,6 +382,20 @@ export const useGuideStore = create<GuideState>()(
           logs: get().logs.map((l) =>
             l.id === id ? { ...l, ...patch, id: l.id, babyId: l.babyId, updatedAt: now() } : l,
           ),
+        });
+      },
+
+      relinkCustomFoods: (byId) => {
+        if (Object.keys(byId).length === 0) return;
+        const stamp = now();
+        set({
+          logs: get().logs.map((l) => {
+            const slug = byId[l.id];
+            if (!slug) return l;
+            const { customFoodName: _dropped, ...rest } = l;
+            void _dropped;
+            return { ...rest, foodSlug: slug, updatedAt: stamp };
+          }),
         });
       },
 

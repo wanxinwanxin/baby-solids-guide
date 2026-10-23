@@ -8,6 +8,7 @@ import { PageViewPing } from "@/components/PageViewPing";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { ShareApp } from "@/components/ShareApp";
 import { SyncProvider } from "@/components/SyncProvider";
+import { CustomFoodRelink } from "@/components/CustomFoodRelink";
 import { TourController } from "@/components/Tour";
 import { WhatsNewController } from "@/components/WhatsNew";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
@@ -65,6 +66,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <ServiceWorkerRegister />
           <PageViewPing />
           <SyncProvider />
+          <CustomFoodRelink />
           <AppNav />
           <TourController />
           <WhatsNewController />
