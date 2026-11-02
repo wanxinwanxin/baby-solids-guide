@@ -30,6 +30,15 @@ function dayStartMs(dateIso: string): number {
 }
 
 /**
+ * The next local midnight. A local day is 23 or 25 hours long on a
+ * daylight-saving change, so "start + 24 h" is not the next midnight.
+ */
+function nextDayStartMs(dateIso: string): number {
+  const [y, m, d] = dateIso.split("-").map(Number);
+  return new Date(y, m - 1, d + 1, 0, 0, 0, 0).getTime();
+}
+
+/**
  * Per-day sleep for the most recent `days` calendar days that have any logged
  * sleep, newest first. Days with no sleep are omitted so the list stays tight.
  */
@@ -47,7 +56,9 @@ export function dailySleep(sessions: SleepSession[], now: Date, days = 14): DayS
     while (cursor.getTime() < end) {
       const dateIso = localIsoDate(cursor);
       const dStart = dayStartMs(dateIso);
-      const dEnd = dStart + DAY_MINUTES * MIN;
+      // On the 25-hour fall-back day, "dStart + 24 h" is 11 p.m. of the same
+      // day, so the walk never left that day and the page froze.
+      const dEnd = nextDayStartMs(dateIso);
       const segStart = Math.max(start, dStart);
       const segEnd = Math.min(end, dEnd);
       if (segEnd > segStart) {
