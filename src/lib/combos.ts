@@ -9,10 +9,13 @@ import type { ExposureLog } from "@/lib/storage/types";
  * Foods settled enough to partner a brand-new food: eaten at least once,
  * never with allergen-pausing symptoms, and first eaten long enough ago
  * that a reaction today points at the new food rather than at this one.
+ * A food marked cleared without a log (BabyProfile.clearedFoods) was eaten
+ * before any log, so it is established unless a log paused it.
  */
 export function establishedSlugs(
   logs: ExposureLog[],
   now: Date,
+  cleared: readonly string[] = [],
   minDays: number = COMPANION_ESTABLISHED_DAYS,
 ): Set<string> {
   const firstEaten = new Map<string, string>();
@@ -28,6 +31,7 @@ export function establishedSlugs(
   for (const [slug, date] of firstEaten) {
     if (!paused.has(slug) && date <= cutoff) established.add(slug);
   }
+  for (const slug of cleared) if (!paused.has(slug)) established.add(slug);
   return established;
 }
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Food } from "@/content-schema/food";
 import type { BabyProfile, ExposureLog, Plan } from "@/lib/storage/types";
-import { recommend, type EngineInput } from "./index";
+import { deriveAllergenStates, deriveFoodStats, recommend, type EngineInput } from "./index";
 
 /** Fixed clock — the engine never reads Date.now(). */
 const TODAY = new Date("2026-08-22T12:00:00Z");
@@ -524,5 +524,29 @@ describe("a plan that follows what actually happened", () => {
     expect(rec.plan?.now).toBeNull();
     expect(rec.todaysPicks).toHaveLength(1);
     expect(rec.todaysPicks[0].slug).not.toBe("egg");
+  });
+});
+
+describe("foods marked cleared without a log (BabyProfile.clearedFoods)", () => {
+  it("count as three clean exposures with no date", () => {
+    const stats = deriveFoodStats([makeLog({ foodSlug: "apple" })], ["apple", "egg"]);
+    expect(stats.get("apple")).toMatchObject({ exposures: 3, lastDate: daysAgo(1) });
+    expect(stats.get("egg")).toMatchObject({ exposures: 3, attempts: 3 });
+    expect(stats.get("egg")?.lastDate).toBeUndefined();
+  });
+
+  it("put the allergen group into maintenance with no exposure date, and a reaction still pauses it", () => {
+    const states = deriveAllergenStates({ baby: makeBaby({ clearedFoods: ["egg", "yogurt"] }), logs: [makeLog({ foodSlug: "cheese", symptoms: ["hives-widespread"] })], overrides: [], foods: FOODS });
+    expect(states.get("egg")).toMatchObject({ status: "maintaining", exposureCount: 3 });
+    expect(states.get("egg")?.lastExposureDate).toBeUndefined();
+    expect(states.get("milk")?.status).toBe("reacted-paused");
+  });
+
+  it("take the allergen off the rail and raise no maintenance nudge", () => {
+    const logs = [daysAgo(4), daysAgo(3), daysAgo(2)].map((date) => makeLog({ foodSlug: "apple", date }));
+    const rec = run({ logs, baby: makeBaby({ clearedFoods: ["peanut-butter"] }) });
+    expect(rec.allergenRail.next?.allergenId).not.toBe("peanut");
+    expect(rec.allergenStates.find((s) => s.allergenId === "peanut")?.status).toBe("maintaining");
+    expect(rec.allergenRail.maintenance.some((n) => n.allergenId === "peanut")).toBe(false);
   });
 });

@@ -10,7 +10,7 @@ import { fmt, msg } from "@/lib/i18n/config";
 import { allergenLabel, CATEGORY_MSGS, categoryLabel } from "@/lib/i18n/labels";
 import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
 import { BROWSER_BAND_MSGS, foodBrowserMsgs } from "@/lib/i18n/messages/foods";
-import { useActiveLogs, useHydrated } from "@/lib/hooks";
+import { useActiveBaby, useActiveLogs, useHydrated } from "@/lib/hooks";
 import { rankMatches } from "@/lib/search/rank";
 import { FOOD_CLASS_TERMS } from "../../../content/foods/search-classes";
 import { CutDiagram, isDiagramVariant } from "@/components/diagrams/CutDiagram";
@@ -79,6 +79,7 @@ export function FoodBrowser({ foods }: { foods: SlimFood[] }) {
   const [band, setBand] = useState<AgeBand | null>(null);
   const hydrated = useHydrated();
   const logs = useActiveLogs();
+  const cleared = useActiveBaby()?.clearedFoods;
   const t = useMsgs(foodBrowserMsgs);
   const locale = useLocale();
 
@@ -93,17 +94,15 @@ export function FoodBrowser({ foods }: { foods: SlimFood[] }) {
   /** Per-food tried/safe state from the active baby's logs (empty for guests
    * with no history — the chips still work, they just match nothing). */
   const triedState = useMemo(() => {
-    const stats = deriveFoodStats(logs);
+    const stats = deriveFoodStats(logs, cleared);
     const tried = new Set<string>();
     const safe = new Set<string>();
-    for (const l of logs) {
-      if (l.amountEaten !== "none") {
-        tried.add(l.foodSlug);
-        if (!stats.get(l.foodSlug)?.hasPausingSymptoms) safe.add(l.foodSlug);
-      }
+    for (const slug of [...logs.filter((l) => l.amountEaten !== "none").map((l) => l.foodSlug), ...(cleared ?? [])]) {
+      tried.add(slug);
+      if (!stats.get(slug)?.hasPausingSymptoms) safe.add(slug);
     }
     return { tried, safe };
-  }, [logs]);
+  }, [logs, cleared]);
 
   const visible = useMemo(() => {
     const chipped = foods.filter((f) => {

@@ -193,8 +193,21 @@ type FoodStats = {
   lastSymptomDate?: string;
 };
 
-export function deriveFoodStats(logs: ExposureLog[]): Map<string, FoodStats> {
+/** Clean exposures a food marked cleared without a log counts as (BabyProfile.clearedFoods). */
+export const CLEARED_EXPOSURES = 3;
+
+/**
+ * Per-food stats from the logs. A slug in `cleared` (BabyProfile.clearedFoods)
+ * counts as at least CLEARED_EXPOSURES clean exposures, with no date.
+ */
+export function deriveFoodStats(
+  logs: ExposureLog[],
+  cleared: readonly string[] = [],
+): Map<string, FoodStats> {
   const stats = new Map<string, FoodStats>();
+  for (const slug of cleared) {
+    stats.set(slug, { attempts: 0, exposures: 0, hasPausingSymptoms: false });
+  }
   const sorted = [...logs].sort((a, b) => a.date.localeCompare(b.date));
   for (const log of sorted) {
     const s = stats.get(log.foodSlug) ?? {
@@ -211,6 +224,11 @@ export function deriveFoodStats(logs: ExposureLog[]): Map<string, FoodStats> {
       s.lastSymptomDate = log.date;
     }
     stats.set(log.foodSlug, s);
+  }
+  for (const slug of cleared) {
+    const s = stats.get(slug)!;
+    s.attempts = Math.max(s.attempts, CLEARED_EXPOSURES);
+    s.exposures = Math.max(s.exposures, CLEARED_EXPOSURES);
   }
   return stats;
 }
@@ -249,6 +267,16 @@ export function deriveAllergenStates(input: {
       state.status = "reacted-paused";
       state.lastReactionDate = log.date;
     }
+  }
+
+  // A food marked cleared without a log lifts its group to at least
+  // CLEARED_EXPOSURES, with no date: it is cleared, and no maintenance
+  // nudge or new-allergen spacing can count from a day nobody knows.
+  for (const slug of baby.clearedFoods ?? []) {
+    const allergen = allergenOfFood.get(slug);
+    if (!allergen) continue;
+    const state = result.get(allergen)!;
+    state.exposureCount = Math.max(state.exposureCount, CLEARED_EXPOSURES);
   }
 
   for (const id of ALLERGEN_IDS) {
@@ -452,7 +480,7 @@ export function foodExclusions(
 ): Map<string, FoodExclusion> {
   const t = (m: Msg) => msg(m, locale);
   const { baby, logs, overrides, foods, today } = input;
-  const stats = deriveFoodStats(logs);
+  const stats = deriveFoodStats(logs, baby.clearedFoods);
   const allergenStates = deriveAllergenStates({ baby, logs, overrides, foods });
   const eligibilityAge = eligibilityAgeMonths(baby, today);
 
@@ -502,7 +530,7 @@ export function recommend(input: EngineInput, locale: Locale = "en"): Recommenda
   const t = (m: Msg) => msg(m, locale);
   const { baby, logs, overrides, foods, today, plan } = input;
   const age = correctedAgeMonths(baby, today);
-  const stats = deriveFoodStats(logs);
+  const stats = deriveFoodStats(logs, baby.clearedFoods);
   const allergenStates = deriveAllergenStates({ baby, logs, overrides, foods });
   const warnings: Warning[] = [];
 

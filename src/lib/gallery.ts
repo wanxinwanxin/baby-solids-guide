@@ -25,6 +25,8 @@ export type FoodUnlock = {
   category: FoodCategory;
   /** Distinct days with an eaten (amountEaten !== "none") log. */
   eatenDays: number;
+  /** The family marked this food cleared without a log (BabyProfile.clearedFoods). */
+  marked: boolean;
   state: UnlockState;
 };
 
@@ -42,7 +44,17 @@ function hasReaction(own: ExposureLog[]): boolean {
   return own.some((log) => triage(log.symptoms).pausesAllergen);
 }
 
-export function foodGallery(logs: ExposureLog[], foods: Food[]): GallerySummary {
+/**
+ * `cleared` is BabyProfile.clearedFoods: a marked food unlocks with no log
+ * behind it. A logged reaction still wins, so a marked food that later
+ * reacts moves to the reactions shelf.
+ */
+export function foodGallery(
+  logs: ExposureLog[],
+  foods: Food[],
+  cleared: readonly string[] = [],
+): GallerySummary {
+  const marked = new Set(cleared);
   const bySlug = new Map<string, ExposureLog[]>();
   for (const log of logs) {
     bySlug.set(log.foodSlug, [...(bySlug.get(log.foodSlug) ?? []), log]);
@@ -59,7 +71,7 @@ export function foodGallery(logs: ExposureLog[], foods: Food[]): GallerySummary 
     if (hasReaction(own)) {
       state = "reacted";
       reactedCount += 1;
-    } else if (eatenDays >= UNLOCK_EXPOSURES) {
+    } else if (eatenDays >= UNLOCK_EXPOSURES || marked.has(food.slug)) {
       state = "unlocked";
       unlockedCount += 1;
     } else if (eatenDays > 0) {
@@ -74,6 +86,7 @@ export function foodGallery(logs: ExposureLog[], foods: Food[]): GallerySummary 
       emoji: food.emoji,
       category: food.category,
       eatenDays,
+      marked: marked.has(food.slug),
       state,
     };
   });

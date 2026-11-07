@@ -98,6 +98,15 @@ describe("foodGallery", () => {
     expect(g.unlockedCount).toBe(0);
   });
 
+  it("a food marked cleared unlocks with no logs, and a logged reaction still wins", () => {
+    const g = foodGallery([makeLog("egg", "2026-09-05", "taste", ["hives-widespread"])], foods, ["apple", "egg"]);
+    const apple = g.foods.find((f) => f.slug === "apple")!;
+    expect(apple).toMatchObject({ state: "unlocked", marked: true, eatenDays: 0 });
+    expect(g.foods.find((f) => f.slug === "egg")!.state).toBe("reacted");
+    expect(g.foods.find((f) => f.slug === "banana")!.marked).toBe(false);
+    expect(g.unlockedCount).toBe(1);
+  });
+
   it("gagging-only and contact redness do not count as reactions", () => {
     const logs = [
       makeLog("apple", "2026-09-01", "some", ["gagging-only"]),

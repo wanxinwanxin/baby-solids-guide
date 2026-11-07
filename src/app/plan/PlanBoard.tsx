@@ -439,12 +439,11 @@ export function PlanBoard() {
    */
   const menu = useMemo(() => {
     if (!baby || !progress || !exclusions) return null;
-    const stats = deriveFoodStats(logs);
+    const cleared = baby.clearedFoods ?? [];
+    const stats = deriveFoodStats(logs, cleared);
     const safeSlugs = new Set<string>();
-    for (const log of logs) {
-      if (log.amountEaten !== "none" && !stats.get(log.foodSlug)?.hasPausingSymptoms) {
-        safeSlugs.add(log.foodSlug);
-      }
+    for (const slug of [...logs.filter((l) => l.amountEaten !== "none").map((l) => l.foodSlug), ...cleared]) {
+      if (!stats.get(slug)?.hasPausingSymptoms) safeSlugs.add(slug);
     }
     const plannedByDate = new Map<string, string>();
     const due = progress.now ?? progress.watching;
@@ -458,6 +457,7 @@ export function PlanBoard() {
       recipes,
       foods: foodBySlug,
       logs,
+      cleared,
       safeSlugs,
       blockedSlugs: new Set(exclusions.keys()),
       plannedByDate,

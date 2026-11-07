@@ -147,8 +147,9 @@ export default function TodayPage() {
   const triedSlugs = useMemo(() => {
     const s = new Set<string>();
     for (const l of logs) if (l.amountEaten !== "none") s.add(l.foodSlug);
+    for (const slug of baby?.clearedFoods ?? []) s.add(slug);
     return s;
-  }, [logs]);
+  }, [logs, baby?.clearedFoods]);
   /** Attempts per food (all logs) — powers the "n tries" retry chips. */
   const attemptCounts = useMemo(() => {
     const m = new Map<string, number>();
@@ -158,19 +159,19 @@ export default function TodayPage() {
   /** Established safe: eaten at least once, never with allergen-pausing
    * symptoms — the baby's growing pantry. */
   const safeFoods = useMemo(() => {
-    const stats = deriveFoodStats(logs);
+    const stats = deriveFoodStats(logs, baby?.clearedFoods);
     return [...triedSlugs]
       .filter((slug) => !stats.get(slug)?.hasPausingSymptoms)
       .map((slug) => foodBySlug.get(slug))
       .filter((f): f is NonNullable<typeof f> => !!f)
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [logs, triedSlugs, foodBySlug]);
+  }, [logs, triedSlugs, foodBySlug, baby?.clearedFoods]);
   /** D3 — top meal combos from the pantry + today's picks. The blocked set
    * mirrors the engine's exclusions so a combo never smuggles in a food the
    * engine would refuse. */
   const combos = useMemo(() => {
     if (!baby || !rec || rec.gate !== "ready") return [];
-    const stats = deriveFoodStats(logs);
+    const stats = deriveFoodStats(logs, baby.clearedFoods);
     const pausedAllergens = new Set(
       rec.allergenStates
         .filter((s) => s.status === "reacted-paused" || s.status === "avoid-per-doctor")
@@ -188,7 +189,7 @@ export default function TodayPage() {
       safeSlugs: new Set(safeFoods.map((f) => f.slug)),
       // A brand-new food may only share the plate with foods that have been
       // settled for a week, so a reaction has one plausible cause.
-      establishedSlugs: establishedSlugs(logs, viewDate),
+      establishedSlugs: establishedSlugs(logs, viewDate, baby.clearedFoods),
       todaysPickSlugs: rec.todaysPicks.map((p) => p.slug),
       ageMonths: correctedAgeMonths(baby, viewDate),
       blockedSlugs,

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { FOOD_CATEGORIES } from "@/content-schema/food";
 import {
   ACHIEVEMENT_TIERS,
@@ -11,6 +11,7 @@ import {
   type FoodUnlock,
 } from "@/lib/gallery";
 import { useActiveBaby, useActiveLogs, useHydrated } from "@/lib/hooks";
+import { useGuideStore } from "@/lib/storage/store";
 import { fmt, msg } from "@/lib/i18n/config";
 import { useL10nFoods } from "@/lib/i18n/content-client";
 import { categoryLabel } from "@/lib/i18n/labels";
@@ -18,12 +19,17 @@ import { useLocale, useMsgs } from "@/lib/i18n/LocaleProvider";
 import { ACHIEVEMENT_NAME_MSGS, galleryMsgs } from "@/lib/i18n/messages/gallery";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 /**
  * Food gallery (user feedback, 2026-09-11): the catalog as a collectible
  * board. Unlock rules live in src/lib/gallery.ts; this page only renders.
+ *
+ * Mark mode (user feedback, 2026-10-25): a family can light up a food the
+ * baby cleared with no log behind it (eaten before the app, or a missed day
+ * nobody can date). Taps write BabyProfile.clearedFoods; no log is created.
  */
 
 const STATE_ORDER: Record<FoodUnlock["state"], number> = {
@@ -49,6 +55,55 @@ function ProgressPips({ eatenDays }: { eatenDays: number }) {
   );
 }
 
+const TILE_CLASS = "flex h-full w-full flex-col items-center gap-1 rounded-xl border bg-card p-2 text-center transition-colors";
+
+function MarkTile({
+  food,
+  label,
+  onToggle,
+}: {
+  food: FoodUnlock;
+  label: string;
+  onToggle: (slug: string) => void;
+}) {
+  // A food cleared by its logs, or one with a logged reaction, is not the
+  // family's to mark: the logs already say what happened.
+  const locked = food.state === "reacted" || (food.state === "unlocked" && !food.marked);
+  return (
+    <li>
+      <button
+        type="button"
+        disabled={locked}
+        aria-pressed={locked ? undefined : food.marked}
+        aria-label={label}
+        onClick={() => onToggle(food.slug)}
+        className={cn(
+          TILE_CLASS,
+          "relative",
+          locked ? "cursor-default opacity-35" : "hover:border-primary",
+          food.marked && "border-primary bg-primary/10",
+          !locked && !food.marked && "border-dashed",
+        )}
+      >
+        {food.marked && (
+          <span
+            aria-hidden="true"
+            className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] leading-none text-primary-foreground"
+          >
+            ✓
+          </span>
+        )}
+        <span aria-hidden="true" className="text-2xl leading-none">
+          {food.state === "reacted" ? "⚠️" : food.emoji ?? "🍽️"}
+        </span>
+        <span className="line-clamp-2 text-[10.5px] leading-tight text-foreground/80">
+          {food.name}
+        </span>
+      </button>
+    </li>
+  );
+}
+
 function Tile({ food, stateLabel }: { food: FoodUnlock; stateLabel: string }) {
   return (
     <li>
@@ -56,7 +111,8 @@ function Tile({ food, stateLabel }: { food: FoodUnlock; stateLabel: string }) {
         href={`/foods/${food.slug}`}
         aria-label={`${food.name} — ${stateLabel}`}
         className={cn(
-          "flex h-full flex-col items-center gap-1 rounded-xl border bg-card p-2 text-center transition-colors hover:border-primary",
+          TILE_CLASS,
+          "hover:border-primary",
           food.state === "unlocked" && "border-primary/50 bg-primary/5",
           food.state === "not-tried" && "opacity-45 grayscale",
           food.state === "reacted" && "border-destructive/50 bg-destructive/5",
@@ -81,8 +137,11 @@ export default function GalleryPage() {
   const locale = useLocale();
   const t = useMsgs(galleryMsgs);
   const { foods } = useL10nFoods();
+  const saveBaby = useGuideStore((s) => s.saveBaby);
+  const [marking, setMarking] = useState(false);
 
-  const gallery = useMemo(() => foodGallery(logs, foods), [logs, foods]);
+  const cleared = baby?.clearedFoods;
+  const gallery = useMemo(() => foodGallery(logs, foods, cleared), [logs, foods, cleared]);
   const progress = achievementProgress(gallery.unlockedCount);
 
   if (!hydrated) return null;
@@ -110,6 +169,25 @@ export default function GalleryPage() {
     reacted: t.legendReacted,
   };
   const reacted = gallery.foods.filter((f) => f.state === "reacted");
+  const markedCount = gallery.foods.filter((f) => f.marked && f.state === "unlocked").length;
+  const toggleMark = (slug: string) => {
+    const current = baby.clearedFoods ?? [];
+    saveBaby({
+      ...baby,
+      clearedFoods: current.includes(slug) ? current.filter((s) => s !== slug) : [...current, slug],
+    });
+  };
+  const markLabel = (f: FoodUnlock) =>
+    fmt(
+      f.state === "reacted"
+        ? t.markReactedAria
+        : f.marked
+          ? t.markedAria
+          : f.state === "unlocked"
+            ? t.markLoggedAria
+            : t.markTapAria,
+      { name: f.name },
+    );
   const barMax = progress.next?.threshold ?? gallery.totalFoods;
   const barPct = Math.min(100, Math.round((gallery.unlockedCount / Math.max(1, barMax)) * 100));
 
@@ -203,6 +281,30 @@ export default function GalleryPage() {
         </Card>
       )}
 
+      {marking ? (
+        <Card className="sticky top-2 z-10 border-primary/50 shadow-sm">
+          <CardContent className="space-y-2 pt-4 text-sm">
+            <div className="flex items-start justify-between gap-3">
+              <p className="font-semibold">{t.markTitle}</p>
+              <Button size="sm" onClick={() => setMarking(false)}>
+                {t.markDone}
+              </Button>
+            </div>
+            <p className="text-muted-foreground">{t.markHint}</p>
+            <p className="text-muted-foreground">{t.markAllergenNote}</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => setMarking(true)}>
+            {t.markStart}
+          </Button>
+          {markedCount > 0 && (
+            <span className="text-xs text-muted-foreground">{fmt(t.markCount, { n: markedCount })}</span>
+          )}
+        </div>
+      )}
+
       {FOOD_CATEGORIES.map((category) => {
         const own = gallery.foods
           .filter((f) => f.category === category)
@@ -218,9 +320,13 @@ export default function GalleryPage() {
               </span>
             </div>
             <ul className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8">
-              {own.map((f) => (
-                <Tile key={f.slug} food={f} stateLabel={stateLabels[f.state]} />
-              ))}
+              {own.map((f) =>
+                marking ? (
+                  <MarkTile key={f.slug} food={f} label={markLabel(f)} onToggle={toggleMark} />
+                ) : (
+                  <Tile key={f.slug} food={f} stateLabel={stateLabels[f.state]} />
+                ),
+              )}
             </ul>
           </section>
         );

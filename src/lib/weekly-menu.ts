@@ -72,6 +72,8 @@ export function weeklyMenu(input: {
   recipes: Recipe[];
   foods: Map<string, Food>;
   logs: ExposureLog[];
+  /** BabyProfile.clearedFoods: foods marked cleared with no log behind them. */
+  cleared?: readonly string[];
   /** The cleared pantry: eaten at least once, never with pausing symptoms. */
   safeSlugs: Set<string>;
   /** The engine's exclusions, exactly as Today builds them. */
@@ -89,7 +91,7 @@ export function weeklyMenu(input: {
   // Companions are judged as of today. A food introduced later this week is
   // not established by Friday, and pretending otherwise would put two
   // unproven foods on one plate.
-  const established = establishedSlugs(input.logs, input.today);
+  const established = establishedSlugs(input.logs, input.today, input.cleared);
 
   // Pass 1: what each day could serve.
   const candidates: { date: string; newFoodSlug?: string; ranked: RankedCombo[] }[] = [];

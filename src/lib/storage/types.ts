@@ -81,6 +81,15 @@ export type BabyProfile = {
    * the profile already syncs that way with no new tables.
    */
   intervention?: Intervention;
+  /**
+   * Foods the family marked as cleared (排敏 done) in the gallery with no
+   * log behind them (user feedback, 2026-10-25): a food the baby ate before
+   * the app, or a log someone missed and cannot date. Each one counts as
+   * CLEARED_EXPOSURES clean exposures with no date, so the gallery, the
+   * planner and the allergen board all treat it as cleared, and no day in
+   * the history changes. Lives on the profile so it syncs to the family.
+   */
+  clearedFoods?: string[];
   updatedAt?: string; // ISO datetime — LWW sync ordering (Phase 6)
 };
 

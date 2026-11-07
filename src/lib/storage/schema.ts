@@ -65,6 +65,7 @@ export const babyProfileSchema = z.object({
   }),
   disclaimerAcknowledgedAt: z.string().optional(),
   intervention: interventionSchema.optional(),
+  clearedFoods: z.array(z.string().min(1).max(80)).max(500).optional(),
   updatedAt: isoDateTime.optional(),
 });
 
