@@ -4,7 +4,7 @@ import { SOURCES } from "../sources";
 const sweetPotato: Food = {
   slug: "sweet-potato",
   name: "Sweet potato",
-  aliases: ["yam"],
+  aliases: ["yam", "purple sweet potato", "okinawan sweet potato"],
   category: "vegetable",
   minAgeMonths: 6,
   ironRich: false,

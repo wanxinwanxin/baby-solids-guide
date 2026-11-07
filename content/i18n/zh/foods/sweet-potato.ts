@@ -3,7 +3,7 @@ import type { FoodL10n } from "@/content-schema/l10n";
 const zh: FoodL10n = {
   slug: "sweet-potato",
   name: "红薯",
-  aliases: ["地瓜", "番薯", "山芋"],
+  aliases: ["地瓜", "番薯", "山芋", "紫薯", "紫心红薯"],
   nutritionHighlights: [
     "β-胡萝卜素含量格外高，进了身体会转化成维生素 A，视力和免疫系统发育正用得上",
     "钾含量不低，膳食纤维也温和，消化跟着顺当",

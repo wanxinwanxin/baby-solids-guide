@@ -147,7 +147,7 @@ export const FOOD_SEARCH_TERMS: Record<string, string[]> = {
   "split-peas": ["split peas","yellow split peas","green split peas","matar dal","豌豆瓣","去皮豌豆","黄豌豆瓣","干豌豆"],
   "strawberry": ["strawberry","草莓"],
   "sunflower-seed-butter": ["sunflower seed butter","sunflower butter","葵花籽酱","葵花子酱","葵瓜子酱"],
-  "sweet-potato": ["sweet potato","yam","红薯","地瓜","番薯","山芋"],
+  "sweet-potato": ["sweet potato","yam","purple sweet potato","okinawan sweet potato","红薯","地瓜","番薯","山芋","紫薯","紫心红薯"],
   "swiss-chard": ["swiss chard","chard","rainbow chard","silverbeet","瑞士甜菜","牛皮菜","叶用甜菜","彩虹甜菜"],
   "tahini": ["tahini","sesame paste","sesame","中东芝麻酱","芝麻酱","白芝麻酱"],
   "teff": ["teff","injera","苔麸","画眉草籽","英吉拉"],
