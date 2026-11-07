@@ -13,7 +13,8 @@ import type { ExposureLog } from "@/lib/storage/types";
  * one food. An ambiguous term stays custom.
  */
 
-const normalize = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+/** Case and spaces do not count: "Quailegg" is "quail egg", "Macadamia  Nut" is "macadamia nut". */
+const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, "");
 
 /** Term → slug, for terms that name exactly one catalog food. */
 export function uniqueTermIndex(terms: Record<string, string[]> = FOOD_SEARCH_TERMS): Map<string, string> {

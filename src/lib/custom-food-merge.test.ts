@@ -5,6 +5,7 @@ import type { ExposureLog } from "@/lib/storage/types";
 
 const TERMS = {
   macadamia: ["macadamia", "macadamia nut", "夏威夷果"],
+  "quail-egg": ["quail egg", "鹌鹑蛋"],
   "almond-butter": ["almond butter", "almond"],
   almond: ["almond", "ground almond"],
 };
@@ -35,6 +36,10 @@ describe("customLogsToRelink", () => {
       log("d", "macadamia"),
     ];
     expect(customLogsToRelink(logs, index)).toEqual({ a: "macadamia", b: "macadamia", c: "macadamia" });
+  });
+
+  it("ignores spaces, so a name typed run together still joins", () => {
+    expect(customLogsToRelink([log("a", "custom:quailegg", "Quailegg"), log("b", "custom:鹌鹑 蛋", "鹌鹑 蛋")], index)).toEqual({ a: "quail-egg", b: "quail-egg" });
   });
 
   it("leaves a name that two foods share, and a name no food has, as custom", () => {
