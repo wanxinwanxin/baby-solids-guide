@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type { Food } from "@/content-schema/food";
 import { calendarDaysBetween, correctedAgeMonths } from "@/lib/age";
 import { bandForAge, type ScoredFood } from "@/lib/engine";
@@ -26,9 +26,19 @@ import { useSleepStore } from "@/lib/sleep/store";
 import { newId, useGuideStore } from "@/lib/storage/store";
 import type { ActivityId, BabyProfile, FormulaUnit, Plan } from "@/lib/storage/types";
 import { localIsoDate, todayIso } from "@/lib/food-utils";
+import {
+  layoutBlocks,
+  normalizeTodayLayout,
+  type TodayWidgetId,
+} from "@/lib/today-layout";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SwipeToComplete } from "@/components/SwipeToComplete";
 import { DayProgress } from "./DayProgress";
+import { TodayLayoutEditor } from "./TodayLayoutEditor";
+
+/** dismissedNotices key for the one-time "choose your cards" tip. */
+const LAYOUT_TIP_KEY = "tip:today-layout";
 
 /**
  * The Today screen in Full day view: one whole-day dashboard where solids,
@@ -43,6 +53,10 @@ import { DayProgress } from "./DayProgress";
  * with our plan": the plan step sat unlabeled among variety picks, and the
  * plan's silence during an observation window looked like the list ignoring
  * the plan altogether.
+ *
+ * Each device chooses which cards show and in what order (2026-10-28
+ * feedback; design/today-widgets.md). The page builds every card, then
+ * renders the visible ones in the saved order.
  */
 
 /** A to-do row that is a link, not a swipe: the action lives on another page. */
@@ -124,6 +138,12 @@ export function FullDayToday({
   const addLog = useGuideStore((s) => s.addLog);
   const wakeAnchors = useSleepStore((s) => s.wakeAnchors);
   const activityLogs = useActiveActivityLogs();
+  const savedLayout = useGuideStore((s) => s.todayLayout);
+  const setTodayLayout = useGuideStore((s) => s.setTodayLayout);
+  const tipSeen = useGuideStore((s) => s.dismissedNotices.includes(LAYOUT_TIP_KEY));
+  const dismissNotice = useGuideStore((s) => s.dismissNotice);
+  const [editing, setEditing] = useState(false);
+  const layout = useMemo(() => normalizeTodayLayout(savedLayout), [savedLayout]);
 
   const now = useMemo(() => new Date(), []);
   const today = todayIso();
@@ -256,23 +276,8 @@ export function FullDayToday({
 
   const eatenCount = eatenToday.size;
 
-  return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-bold">{fmt(t.greeting, { name: baby.nickname })}</h1>
-          <p className="text-sm text-muted-foreground">{dateLabel}</p>
-        </div>
-        <div className="flex gap-3 text-sm">
-          <Link href="/history" className="text-primary underline underline-offset-2">
-            {t.history}
-          </Link>
-          <Link href="/plan" className="text-primary underline underline-offset-2">
-            {t.plan}
-          </Link>
-        </div>
-      </div>
-
+  const cards: Record<TodayWidgetId, ReactNode> = {
+    progress: (
       <DayProgress
         solidsDone={planStep ? eatenToday.has(planStep.foodSlug) : eatenToday.size > 0}
         solidsLabel={
@@ -282,8 +287,9 @@ export function FullDayToday({
         }
         activities={otherActivitiesToday.length}
       />
-
-      {/* To do today — swipe to complete. */}
+    ),
+    // To do today — swipe to complete.
+    todo: (
       <section className="space-y-2">
         <div className="flex items-baseline justify-between">
           <h2 className="text-sm font-semibold">{t.toDoTitle}</h2>
@@ -355,86 +361,187 @@ export function FullDayToday({
           </div>
         )}
       </section>
+    ),
+    solids: (
+      <StatCard
+        icon="🥄"
+        title={t.solidsTitle}
+        value={eatenCount > 0 ? eatenNames.join(" · ") : t.noneYet}
+        sub={eatenCount > 0 ? fmt(t.solidsEaten, { n: eatenCount }) : undefined}
+        href="/log"
+        linkLabel={t.logFood}
+      />
+    ),
+    sleep: (
+      <StatCard
+        icon="🌙"
+        title={t.sleepTitle}
+        value={sleepMinToday > 0 ? fmt(t.sleepSoFar, { dur: formatDuration(sleepMinToday, locale) }) : t.noneYet}
+        sub={
+          planSleepLine ??
+          (prediction
+            ? fmt(t.nextWindow, {
+                a: formatTime(prediction.windowStart, locale),
+                b: formatTime(prediction.windowEnd, locale),
+              })
+            : undefined)
+        }
+        href="/sleep"
+        linkLabel={t.logSleep}
+      />
+    ),
+    feeding: (
+      <StatCard
+        icon="🍼"
+        title={t.feedingTitle}
+        value={
+          [
+            breastToday.count > 0
+              ? fmt(t.breastfeedsToday, {
+                  n: breastToday.count,
+                  dur: formatNursingSeconds(breastToday.leftSec + breastToday.rightSec, locale),
+                })
+              : null,
+            bottles.length > 0 ? fmt(t.bottlesToday, { n: bottles.length, total: bottleTotals }) : null,
+          ]
+            .filter(Boolean)
+            .join(" · ") || t.noneYet
+        }
+        sub={planFeedLine ?? undefined}
+        href="/care"
+        linkLabel={t.logFeed}
+      />
+    ),
+    diapers: (
+      <StatCard
+        icon="💧"
+        title={t.diapersTitle}
+        value={diapers.length > 0 ? fmt(t.diapersCount, { n: diapers.length }) : t.noneYet}
+        href="/care"
+        linkLabel={t.logDiaper}
+      />
+    ),
+    activities: (
+      <StatCard
+        icon="🎈"
+        title={t.activitiesTitle}
+        value={
+          otherActivitiesToday.length > 0
+            ? fmt(t.activitiesCount, { n: otherActivitiesToday.length })
+            : t.noneYet
+        }
+        sub={
+          otherActivitiesToday.length > 0
+            ? [
+                ...new Set(
+                  otherActivitiesToday.map(
+                    (a) => ACTIVITY_EMOJI[a.activity as ActivityId] ?? "⭐",
+                  ),
+                ),
+              ].join(" ")
+            : undefined
+        }
+        href="/activities"
+        linkLabel={t.logActivity}
+      />
+    ),
+  };
 
-      {/* Done today — the whole day at a glance. */}
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold">{t.doneTitle}</h2>
-        <div className="grid grid-cols-2 gap-2">
-          <StatCard
-            icon="🥄"
-            title={t.solidsTitle}
-            value={eatenCount > 0 ? eatenNames.join(" · ") : t.noneYet}
-            sub={eatenCount > 0 ? fmt(t.solidsEaten, { n: eatenCount }) : undefined}
-            href="/log"
-            linkLabel={t.logFood}
-          />
-          <StatCard
-            icon="🌙"
-            title={t.sleepTitle}
-            value={sleepMinToday > 0 ? fmt(t.sleepSoFar, { dur: formatDuration(sleepMinToday, locale) }) : t.noneYet}
-            sub={
-              planSleepLine ??
-              (prediction
-                ? fmt(t.nextWindow, {
-                    a: formatTime(prediction.windowStart, locale),
-                    b: formatTime(prediction.windowEnd, locale),
-                  })
-                : undefined)
-            }
-            href="/sleep"
-            linkLabel={t.logSleep}
-          />
-          <StatCard
-            icon="🍼"
-            title={t.feedingTitle}
-            value={
-              [
-                breastToday.count > 0
-                  ? fmt(t.breastfeedsToday, {
-                      n: breastToday.count,
-                      dur: formatNursingSeconds(breastToday.leftSec + breastToday.rightSec, locale),
-                    })
-                  : null,
-                bottles.length > 0 ? fmt(t.bottlesToday, { n: bottles.length, total: bottleTotals }) : null,
-              ]
-                .filter(Boolean)
-                .join(" · ") || t.noneYet
-            }
-            sub={planFeedLine ?? undefined}
-            href="/care"
-            linkLabel={t.logFeed}
-          />
-          <StatCard
-            icon="💧"
-            title={t.diapersTitle}
-            value={diapers.length > 0 ? fmt(t.diapersCount, { n: diapers.length }) : t.noneYet}
-            href="/care"
-            linkLabel={t.logDiaper}
-          />
-          <StatCard
-            icon="🎈"
-            title={t.activitiesTitle}
-            value={
-              otherActivitiesToday.length > 0
-                ? fmt(t.activitiesCount, { n: otherActivitiesToday.length })
-                : t.noneYet
-            }
-            sub={
-              otherActivitiesToday.length > 0
-                ? [
-                    ...new Set(
-                      otherActivitiesToday.map(
-                        (a) => ACTIVITY_EMOJI[a.activity as ActivityId] ?? "⭐",
-                      ),
-                    ),
-                  ].join(" ")
-                : undefined
-            }
-            href="/activities"
-            linkLabel={t.logActivity}
-          />
+  const cardNames: Record<TodayWidgetId, { title: string; body: string; icon: string }> = {
+    progress: { title: t.progressTitle, body: t.cardProgressBody, icon: "📊" },
+    todo: { title: t.toDoTitle, body: t.cardTodoBody, icon: "✅" },
+    solids: { title: t.solidsTitle, body: t.cardSolidsBody, icon: "🥄" },
+    sleep: { title: t.sleepTitle, body: t.cardSleepBody, icon: "🌙" },
+    feeding: { title: t.feedingTitle, body: t.cardFeedingBody, icon: "🍼" },
+    diapers: { title: t.diapersTitle, body: t.cardDiapersBody, icon: "💧" },
+    activities: { title: t.activitiesTitle, body: t.cardActivitiesBody, icon: "🎈" },
+  };
+
+  const blocks = layoutBlocks(layout);
+  const openEditor = () => {
+    dismissNotice(LAYOUT_TIP_KEY);
+    setEditing(true);
+  };
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-6">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-bold">{fmt(t.greeting, { name: baby.nickname })}</h1>
+          <p className="text-sm text-muted-foreground">{dateLabel}</p>
         </div>
-      </section>
+        <div className="flex gap-3 text-sm">
+          <Link href="/history" className="text-primary underline underline-offset-2">
+            {t.history}
+          </Link>
+          <Link href="/plan" className="text-primary underline underline-offset-2">
+            {t.plan}
+          </Link>
+          {!editing && (
+            <button
+              type="button"
+              onClick={openEditor}
+              className="text-primary underline underline-offset-2"
+            >
+              {t.customize}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {!tipSeen && !editing && (
+        <Card className="border-primary/40 bg-secondary/30">
+          <CardContent className="space-y-3 p-4">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold">{t.tipTitle}</p>
+              <p className="text-sm text-muted-foreground">{t.tipBody}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={openEditor}>
+                {t.tipCustomize}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => dismissNotice(LAYOUT_TIP_KEY)}>
+                {t.tipDismiss}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {editing ? (
+        <TodayLayoutEditor
+          layout={layout}
+          names={cardNames}
+          onChange={setTodayLayout}
+          onReset={() => setTodayLayout(null)}
+          onDone={() => setEditing(false)}
+        />
+      ) : blocks.length === 0 ? (
+        <p className="rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground">
+          {t.allHidden}{" "}
+          <button type="button" onClick={openEditor} className="text-primary underline underline-offset-2">
+            {t.allHiddenLink}
+          </button>
+        </p>
+      ) : (
+        blocks.map((block) =>
+          block.kind === "card" ? (
+            <div key={block.id}>{cards[block.id]}</div>
+          ) : (
+            // Done today — neighboring stat cards share one grid.
+            <section key={block.ids.join("-")} className="space-y-2">
+              {block.first && <h2 className="text-sm font-semibold">{t.doneTitle}</h2>}
+              <div className="grid grid-cols-2 gap-2">
+                {block.ids.map((id) => (
+                  <div key={id} className="contents">
+                    {cards[id]}
+                  </div>
+                ))}
+              </div>
+            </section>
+          ),
+        )
+      )}
     </div>
   );
 }

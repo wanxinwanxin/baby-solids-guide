@@ -29,6 +29,7 @@ import {
 import { migrateLegacyPlan } from "@/lib/planner";
 import { mergeSnapshots } from "@/lib/sync/merge";
 import { deletePhoto } from "@/lib/media/photos";
+import type { TodayLayout } from "@/lib/today-layout";
 
 /**
  * GuideStore (ROADMAP §5.6, Part II) — the only module allowed to touch
@@ -84,6 +85,13 @@ export type GuideState = {
    * so only people who had the app before this release get the prompt once.
    */
   whatsNewSeen: boolean;
+  /**
+   * The card order and the hidden cards on Full day Today (2026-10-28
+   * feedback; design/today-widgets.md). Device-local like fullDayMode: each
+   * parent picks the cards for their own phone. Null means the default
+   * layout. Read it through normalizeTodayLayout.
+   */
+  todayLayout: TodayLayout | null;
 
   saveBaby: (b: BabyProfile) => void;
   setActiveBaby: (id: string) => void;
@@ -120,6 +128,8 @@ export type GuideState = {
   restoreNotices: () => void;
   setCaregiverMode: (on: boolean) => void;
   setFullDayMode: (on: boolean) => void;
+  /** Save the Full day Today card layout. Null restores the default. */
+  setTodayLayout: (layout: TodayLayout | null) => void;
   setWhatsNewSeen: (v: boolean) => void;
   /** Replace local state with a server-merged snapshot (Phase 6 sync). */
   applySnapshot: (s: SyncSnapshot) => void;
@@ -300,6 +310,7 @@ const EMPTY = {
   caregiverMode: false,
   fullDayMode: false,
   whatsNewSeen: true,
+  todayLayout: null as TodayLayout | null,
 };
 
 /** v1 persisted shape → v2 (single `baby` becomes `babies[]`; overrides stamped). */
@@ -530,6 +541,8 @@ export const useGuideStore = create<GuideState>()(
 
       setWhatsNewSeen: (whatsNewSeen) => set({ whatsNewSeen }),
 
+      setTodayLayout: (todayLayout) => set({ todayLayout }),
+
       reset: () => set({ ...EMPTY }),
 
       exportJson: () => {
@@ -721,6 +734,7 @@ export const useGuideStore = create<GuideState>()(
         caregiverMode,
         fullDayMode,
         whatsNewSeen,
+        todayLayout,
       }) => ({
         babies,
         activeBabyId,
@@ -742,6 +756,7 @@ export const useGuideStore = create<GuideState>()(
         caregiverMode,
         fullDayMode,
         whatsNewSeen,
+        todayLayout,
       }),
     },
   ),

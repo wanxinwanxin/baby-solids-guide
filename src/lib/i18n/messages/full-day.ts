@@ -72,4 +72,34 @@ export const fullDayMsgs = {
   history: { en: "History", zh: "历史" },
   plan: { en: "Plan", zh: "计划" },
   open: { en: "Open", zh: "打开" },
+
+  // Choose your cards (2026-10-28 feedback; design/today-widgets.md)
+  customize: { en: "Customize", zh: "自定义" },
+  customizeTitle: { en: "Choose your cards", zh: "选择要显示的卡片" },
+  customizeHint: {
+    en: "Turn off the cards you don't use, and move the ones you check most to the top. This changes only this phone.",
+    zh: "关掉用不上的卡片，把最常看的移到上面。只影响这台手机。",
+  },
+  customizeDone: { en: "Done", zh: "完成" },
+  customizeReset: { en: "Reset", zh: "恢复默认" },
+  /** {card} = a card name. */
+  moveUp: { en: "Move {card} up", zh: "把“{card}”上移" },
+  moveDown: { en: "Move {card} down", zh: "把“{card}”下移" },
+  showCard: { en: "Show {card}", zh: "显示“{card}”" },
+  allHidden: { en: "All cards are hidden.", zh: "所有卡片都已隐藏。" },
+  allHiddenLink: { en: "Choose cards", zh: "选择卡片" },
+  tipTitle: { en: "New: choose your cards", zh: "新功能：自选卡片" },
+  tipBody: {
+    en: "Hide the cards you don't use, and put the ones you check most at the top.",
+    zh: "隐藏用不上的卡片，把最常看的放在最上面。",
+  },
+  tipCustomize: { en: "Customize", zh: "去设置" },
+  tipDismiss: { en: "Got it", zh: "知道了" },
+  cardProgressBody: { en: "The plan food and the 5-activity goal", zh: "计划食物和 5 个亲子活动的目标" },
+  cardTodoBody: { en: "The plan food and foods to try — swipe to log", zh: "计划食物和推荐食物，滑动即可记录" },
+  cardSolidsBody: { en: "Foods eaten today", zh: "今天吃过的辅食" },
+  cardSleepBody: { en: "Sleep so far and the next window", zh: "今天的睡眠和下一个入睡窗口" },
+  cardFeedingBody: { en: "Bottles and breastfeeds today", zh: "今天的奶瓶和亲喂" },
+  cardDiapersBody: { en: "Diaper changes today", zh: "今天换尿布的次数" },
+  cardActivitiesBody: { en: "Activities done today", zh: "今天做过的亲子活动" },
 } satisfies Msgs;
