@@ -128,6 +128,7 @@ export const FOOD_SEARCH_TERMS: Record<string, string[]> = {
   "prunes": ["prunes","dried plums","西梅干","西梅","梅干"],
   "pumpkin-seed-butter": ["pumpkin seed butter","pepita butter","pumpkin seed spread","南瓜籽酱","南瓜子酱","南瓜籽泥"],
   "pumpkin": ["pumpkin","sugar pumpkin","pie pumpkin","南瓜","贝贝南瓜","小南瓜"],
+  "quail-egg": ["quail egg","quail eggs","quail's egg","quail's eggs","鹌鹑蛋","鹌鹑蛋黄"],
   "quinoa": ["quinoa","藜麦"],
   "radish": ["radish","red radish","daikon","萝卜","樱桃萝卜","小红萝卜","白萝卜"],
   "raspberry": ["raspberry","树莓","覆盆子","红树莓"],

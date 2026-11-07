@@ -120,6 +120,7 @@ import potato from "./potato";
 import prunes from "./prunes";
 import pumpkinSeedButter from "./pumpkin-seed-butter";
 import pumpkin from "./pumpkin";
+import quailEgg from "./quail-egg";
 import quinoa from "./quinoa";
 import radish from "./radish";
 import raspberry from "./raspberry";
@@ -282,6 +283,7 @@ export const ZH_FOODS: Record<string, FoodL10n> = {
   [prunes.slug]: prunes,
   [pumpkinSeedButter.slug]: pumpkinSeedButter,
   [pumpkin.slug]: pumpkin,
+  [quailEgg.slug]: quailEgg,
   [quinoa.slug]: quinoa,
   [radish.slug]: radish,
   [raspberry.slug]: raspberry,

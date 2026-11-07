@@ -120,6 +120,7 @@ import potato from "./potato";
 import prunes from "./prunes";
 import pumpkinSeedButter from "./pumpkin-seed-butter";
 import pumpkin from "./pumpkin";
+import quailEgg from "./quail-egg";
 import quinoa from "./quinoa";
 import radish from "./radish";
 import raspberry from "./raspberry";
@@ -285,6 +286,7 @@ export const allFoods: Food[] = [
   prunes,
   pumpkinSeedButter,
   pumpkin,
+  quailEgg,
   quinoa,
   radish,
   raspberry,
