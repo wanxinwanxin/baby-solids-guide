@@ -93,6 +93,7 @@ export const FOOD_SEARCH_TERMS: Record<string, string[]> = {
   "mushrooms": ["mushrooms","button mushrooms","cremini","portobello","蘑菇","口蘑","白蘑菇","褐菇"],
   "mussels": ["mussels","贻贝","青口","海虹"],
   "naan": ["naan","馕","印度烤饼"],
+  "napa-cabbage": ["napa cabbage","chinese cabbage","chinese leaf","nappa cabbage","napa","baby napa","wombok","celery cabbage","大白菜","白菜","黄芽白","黄芽菜","结球白菜","绍菜","娃娃菜"],
   "nectarine": ["nectarine","油桃"],
   "nori": ["nori (seaweed)","seaweed","laver","sushi seaweed","海苔","紫菜","寿司海苔"],
   "nutritional-yeast": ["nutritional yeast","nooch","savory yeast flakes","营养酵母","营养酵母片"],

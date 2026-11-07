@@ -85,6 +85,7 @@ import mungBeans from "./mung-beans";
 import mushrooms from "./mushrooms";
 import mussels from "./mussels";
 import naan from "./naan";
+import napaCabbage from "./napa-cabbage";
 import nectarine from "./nectarine";
 import nori from "./nori";
 import nutritionalYeast from "./nutritional-yeast";
@@ -248,6 +249,7 @@ export const ZH_FOODS: Record<string, FoodL10n> = {
   [mushrooms.slug]: mushrooms,
   [mussels.slug]: mussels,
   [naan.slug]: naan,
+  [napaCabbage.slug]: napaCabbage,
   [nectarine.slug]: nectarine,
   [nori.slug]: nori,
   [nutritionalYeast.slug]: nutritionalYeast,
