@@ -49,6 +49,16 @@ describe("customLogsToRelink", () => {
   it("knows macadamia in the real catalog", () => {
     expect(customLogsToRelink([log("a", "custom:macadamia", "Macadamia")])).toEqual({ a: "macadamia" });
   });
+
+  it("joins the November 2026 food requests in the real catalog", () => {
+    const logs = [
+      log("a", "custom:quailegg", "Quailegg"),
+      log("b", "custom:大白菜", "大白菜"),
+      log("c", "custom:紫薯", "紫薯"),
+      log("d", "custom:小松菜", "小松菜"),
+    ];
+    expect(customLogsToRelink(logs)).toEqual({ a: "quail-egg", b: "napa-cabbage", c: "sweet-potato", d: "komatsuna" });
+  });
 });
 
 describe("relinkCustomFoods", () => {
