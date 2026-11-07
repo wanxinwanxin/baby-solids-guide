@@ -71,6 +71,7 @@ import kale from "./kale";
 import kefir from "./kefir";
 import kidneyBeans from "./kidney-beans";
 import kiwi from "./kiwi";
+import komatsuna from "./komatsuna";
 import lamb from "./lamb";
 import leek from "./leek";
 import lentils from "./lentils";
@@ -235,6 +236,7 @@ export const ZH_FOODS: Record<string, FoodL10n> = {
   [kefir.slug]: kefir,
   [kidneyBeans.slug]: kidneyBeans,
   [kiwi.slug]: kiwi,
+  [komatsuna.slug]: komatsuna,
   [lamb.slug]: lamb,
   [leek.slug]: leek,
   [lentils.slug]: lentils,

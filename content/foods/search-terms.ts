@@ -79,6 +79,7 @@ export const FOOD_SEARCH_TERMS: Record<string, string[]> = {
   "kefir": ["kefir","milk kefir","drinkable yogurt","开菲尔","克菲尔","开菲尔发酵乳"],
   "kidney-beans": ["kidney beans","red kidney beans","rajma","红腰豆","芸豆","大红豆"],
   "kiwi": ["kiwi","kiwifruit","猕猴桃","奇异果"],
+  "komatsuna": ["komatsuna","japanese mustard spinach","mustard spinach","小松菜","日本油菜"],
   "lamb": ["lamb","羊肉","羔羊肉"],
   "leek": ["leek","韭葱","扁葱","西洋大葱"],
   "lentils": ["lentils","red lentils","dal","小扁豆","兵豆","红扁豆"],

@@ -71,6 +71,7 @@ import kale from "./kale";
 import kefir from "./kefir";
 import kidneyBeans from "./kidney-beans";
 import kiwi from "./kiwi";
+import komatsuna from "./komatsuna";
 import lamb from "./lamb";
 import leek from "./leek";
 import lentils from "./lentils";
@@ -238,6 +239,7 @@ export const allFoods: Food[] = [
   kefir,
   kidneyBeans,
   kiwi,
+  komatsuna,
   lamb,
   leek,
   lentils,
