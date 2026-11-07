@@ -171,9 +171,13 @@ export default function GalleryPage() {
   const reacted = gallery.foods.filter((f) => f.state === "reacted");
   const markedCount = gallery.foods.filter((f) => f.marked && f.state === "unlocked").length;
   const toggleMark = (slug: string) => {
-    const current = baby.clearedFoods ?? [];
+    // Read the profile from the store, not the render: two quick taps land
+    // before a re-render, and the second must see the first.
+    const fresh = useGuideStore.getState().babies.find((b) => b.id === baby.id);
+    if (!fresh) return;
+    const current = fresh.clearedFoods ?? [];
     saveBaby({
-      ...baby,
+      ...fresh,
       clearedFoods: current.includes(slug) ? current.filter((s) => s !== slug) : [...current, slug],
     });
   };
